@@ -1,0 +1,74 @@
+.container {
+    max-width: 600px;
+    margin: 50px auto;
+    text-align: center;
+}
+
+h1, h2 {
+    font-family: Arial, sans-serif;
+}
+
+h2 {
+    font-size: 48px;
+    color: #0077ff;
+}
+
+p {
+    font-size: 24px;
+}
+
+
+
+
+
+#piano {
+    width: 1050px;
+    height: 240px;   /* Adjusted height */
+    margin: 20px auto;
+    position: relative;
+    border: 1px solid #000;
+}
+
+.key {
+    height: 240px;   /* Adjusted height for white keys */
+    width: 70px;
+    float: left;
+    border: 1px solid #000;
+    box-sizing: border-box;
+}
+
+.white {
+    background-color: white;
+}
+
+.black {
+    background-color: black;
+    width: 40px;
+    height: 150px;   /* Adjusted height for black keys */
+    position: absolute;
+    margin-left: -20px;
+    z-index: 1;
+}
+
+.key.black[data-note="49"] { left: 60px; }
+.key.black[data-note="51"] { left: 140px; }
+.key.black[data-note="54"] { left: 270px; }
+.key.black[data-note="56"] { left: 350px; }
+.key.black[data-note="58"] { left: 425px; }
+.key.black[data-note="61"] { left: 550px; }
+.key.black[data-note="63"] { left: 630px; }
+.key.black[data-note="66"] { left: 760px; }
+.key.black[data-note="68"] { left: 840px; }
+.key.black[data-note="70"] { left: 920px; }
+
+.key.correct {
+    background-color: green;
+}
+
+.key.incorrect {
+    background-color: red;
+}
+
+.key.highlight {
+    background-color: yellow;
+}
