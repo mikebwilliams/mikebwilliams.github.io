@@ -1,50 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chord Challenge</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div class="container">
-        <h1>Chord Challenge</h1>
-        <h2 id="chordDisplay">C7</h2>
-        <p>Press the right keys!</p>
-    </div>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Chord Challenge</title>
+		<link rel="stylesheet" href="styles.css">
+	</head>
+	<body>
+		<div class="container">
+			<h1>Chord Challenge</h1>
+			<h2 id="chordDisplay">C7</h2>
+			<p>Press the right keys!</p>
+		</div>
 
-    <div id="piano">
-	    <!-- White keys -->
-	    <div class="key white" data-note="48"></div>
-	    <div class="key white" data-note="50"></div>
-	    <div class="key white" data-note="52"></div>
-	    <div class="key white" data-note="53"></div>
-	    <div class="key white" data-note="55"></div>
-	    <div class="key white" data-note="57"></div>
-	    <div class="key white" data-note="59"></div>
-	    <div class="key white" data-note="60"></div>
-	    <div class="key white" data-note="62"></div>
-	    <div class="key white" data-note="64"></div>
-	    <div class="key white" data-note="65"></div>
-	    <div class="key white" data-note="67"></div>
-	    <div class="key white" data-note="69"></div>
-	    <div class="key white" data-note="71"></div>
-	    <div class="key white" data-note="72"></div>
+		<div id="piano">
+			<!-- White keys -->
+			<div class="key white" data-note="48"></div>
+			<div class="key white" data-note="50"></div>
+			<div class="key white" data-note="52"></div>
+			<div class="key white" data-note="53"></div>
+			<div class="key white" data-note="55"></div>
+			<div class="key white" data-note="57"></div>
+			<div class="key white" data-note="59"></div>
+			<div class="key white" data-note="60"></div>
+			<div class="key white" data-note="62"></div>
+			<div class="key white" data-note="64"></div>
+			<div class="key white" data-note="65"></div>
+			<div class="key white" data-note="67"></div>
+			<div class="key white" data-note="69"></div>
+			<div class="key white" data-note="71"></div>
+			<div class="key white" data-note="72"></div>
 
-	    <!-- Black keys -->
-	    <div class="key black" data-note="49" ></div>
-	    <div class="key black" data-note="51" ></div>
-	    <div class="key black" data-note="54" ></div>
-	    <div class="key black" data-note="56" ></div>
-	    <div class="key black" data-note="58" ></div>
-	    <div class="key black" data-note="61" ></div>
-	    <div class="key black" data-note="63" ></div>
-	    <div class="key black" data-note="66" ></div>
-	    <div class="key black" data-note="68" ></div>
-	    <div class="key black" data-note="70" ></div>
-    </div>
+			<!-- Black keys -->
+			<div class="key black" data-note="49" ></div>
+			<div class="key black" data-note="51" ></div>
+			<div class="key black" data-note="54" ></div>
+			<div class="key black" data-note="56" ></div>
+			<div class="key black" data-note="58" ></div>
+			<div class="key black" data-note="61" ></div>
+			<div class="key black" data-note="63" ></div>
+			<div class="key black" data-note="66" ></div>
+			<div class="key black" data-note="68" ></div>
+			<div class="key black" data-note="70" ></div>
+		</div>
 
+		<h3>Select Chords</h3>
+		<div id="chordOptions">
+			<label><input type="checkbox" id="majorChord" checked> Major (e.g., C)</label>
+			<label><input type="checkbox" id="minorChord" checked> Minor (e.g., Cm)</label>
+			<label><input type="checkbox" id="seventhChord" checked> 7th (e.g., C7)</label>
+			<label><input type="checkbox" id="minorSeventhChord" checked> Minor 7th (e.g., Cm7)</label>
+			<label><input type="checkbox" id="sixthChord" checked> 6th (e.g., C6)</label>
+		</div>
+		<br>
 
-    <script src="scripts.js"></script>
-</body>
+		<h3>Select Keys</h3><br>
+		<div id="keyOptions">
+			<div id="presetButtons">
+				<button id="whiteKeys">White</button>
+				<button id="blackKeys">Black</button>
+				<button id="sharpKeys">Sharps</button>
+				<button id="flatKeys">Flats</button>
+				<button id="noKeys">None</button>
+				<button id="allKeys">All</button>
+			</div>
+			<br><br>
+			<label><input type="checkbox" id="C" checked> C</label>
+			<label><input type="checkbox" id="C#" checked> C#</label>
+			<label><input type="checkbox" id="Db" checked> D♭</label>
+			<label><input type="checkbox" id="D" checked> D</label>
+			<label><input type="checkbox" id="D#" checked> D#</label>
+			<label><input type="checkbox" id="Eb" checked> E♭</label>
+			<label><input type="checkbox" id="E" checked> E</label>
+			<label><input type="checkbox" id="F" checked> F</label>
+			<label><input type="checkbox" id="F#" checked> F#</label>
+			<label><input type="checkbox" id="Gb" checked> G♭</label>
+			<label><input type="checkbox" id="G" checked> G</label>
+			<label><input type="checkbox" id="G#" checked> G#</label>
+			<label><input type="checkbox" id="Ab" checked> A♭</label>
+			<label><input type="checkbox" id="A" checked> A</label>
+			<label><input type="checkbox" id="A#" checked> A#</label>
+			<label><input type="checkbox" id="Bb" checked> B♭</label>
+			<label><input type="checkbox" id="B" checked> B</label>
+		</div>
+
+		<script src="scripts.js"></script>
+	</body>
 </html>

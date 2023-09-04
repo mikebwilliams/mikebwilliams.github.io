@@ -18,9 +18,6 @@ p {
 }
 
 
-
-
-
 #piano {
     width: 1050px;
     height: 240px;   /* Adjusted height */
@@ -72,3 +69,26 @@ p {
 .key.highlight {
     background-color: yellow;
 }
+
+
+/* Style for all checkboxes in the option sections */
+#chordOptions input[type="checkbox"],
+#keyOptions input[type="checkbox"] {
+    transform: scale(1.5);   /* Increase the size of the checkbox */
+    margin-right: 10px;      /* Add some spacing to the right of the checkbox */
+}
+
+/* Style for the labels of the checkboxes */
+#chordOptions label,
+#keyOptions label {
+    font-size: 1.4em;        /* Increase font size for better readability */
+    margin-right: 15px;     /* Add some spacing to separate each checkbox-label pair */
+}
+
+/* Style for the key checkboxes to align in a row */
+#keyOptions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;              /* Add some gap between checkbox-label pairs */
+}
+
