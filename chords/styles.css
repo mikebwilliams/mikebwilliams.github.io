@@ -74,21 +74,48 @@ p {
 /* Style for all checkboxes in the option sections */
 #chordOptions input[type="checkbox"],
 #keyOptions input[type="checkbox"] {
+    font-size: 1.2em;
     transform: scale(1.5);   /* Increase the size of the checkbox */
     margin-right: 10px;      /* Add some spacing to the right of the checkbox */
+    margin-bottom: 10px;
+    align-items: center;
 }
 
 /* Style for the labels of the checkboxes */
 #chordOptions label,
 #keyOptions label {
     font-size: 1.4em;        /* Increase font size for better readability */
-    margin-right: 15px;     /* Add some spacing to separate each checkbox-label pair */
+    margin-right: 25px;     /* Add some spacing to separate each checkbox-label pair */
 }
 
 /* Style for the key checkboxes to align in a row */
 #keyOptions {
-    display: flex;
     flex-wrap: wrap;
     gap: 10px;              /* Add some gap between checkbox-label pairs */
 }
 
+#presetButtons {
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+
+button {
+    background-color: #007BFF;
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    margin: 5px 5px;
+    font-size: 1em;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+button:active {
+    transform: scale(0.95);
+}

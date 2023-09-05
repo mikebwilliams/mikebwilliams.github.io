@@ -9,8 +9,7 @@
 	<body>
 		<div class="container">
 			<h1>Chord Challenge</h1>
-			<h2 id="chordDisplay">C7</h2>
-			<p>Press the right keys!</p>
+			<h2 id="chordDisplay">Chord</h2>
 		</div>
 
 		<div id="piano">
@@ -48,22 +47,25 @@
 		<div id="chordOptions">
 			<label><input type="checkbox" id="majorChord" checked> Major (e.g., C)</label>
 			<label><input type="checkbox" id="minorChord" checked> Minor (e.g., Cm)</label>
+			<br>
 			<label><input type="checkbox" id="seventhChord" checked> 7th (e.g., C7)</label>
 			<label><input type="checkbox" id="minorSeventhChord" checked> Minor 7th (e.g., Cm7)</label>
+			<br>
 			<label><input type="checkbox" id="sixthChord" checked> 6th (e.g., C6)</label>
+			<label><input type="checkbox" id="minorSixthChord" checked> Minor 6th (e.g., Cm6)</label>
 		</div>
 		<br>
 
 		<h3>Select Keys</h3><br>
+		<div id="presetButtons">
+			<button id="whiteKeys">White</button>
+			<button id="blackKeys">Black</button>
+			<button id="sharpKeys">Sharps</button>
+			<button id="flatKeys">Flats</button>
+			<button id="noKeys">None</button>
+			<button id="allKeys">All</button>
+		</div>
 		<div id="keyOptions">
-			<div id="presetButtons">
-				<button id="whiteKeys">White</button>
-				<button id="blackKeys">Black</button>
-				<button id="sharpKeys">Sharps</button>
-				<button id="flatKeys">Flats</button>
-				<button id="noKeys">None</button>
-				<button id="allKeys">All</button>
-			</div>
 			<br><br>
 			<label><input type="checkbox" id="C" checked> C</label>
 			<label><input type="checkbox" id="C#" checked> C#</label>
@@ -72,11 +74,13 @@
 			<label><input type="checkbox" id="D#" checked> D#</label>
 			<label><input type="checkbox" id="Eb" checked> E♭</label>
 			<label><input type="checkbox" id="E" checked> E</label>
+			<br>
 			<label><input type="checkbox" id="F" checked> F</label>
 			<label><input type="checkbox" id="F#" checked> F#</label>
 			<label><input type="checkbox" id="Gb" checked> G♭</label>
 			<label><input type="checkbox" id="G" checked> G</label>
 			<label><input type="checkbox" id="G#" checked> G#</label>
+			<br>
 			<label><input type="checkbox" id="Ab" checked> A♭</label>
 			<label><input type="checkbox" id="A" checked> A</label>
 			<label><input type="checkbox" id="A#" checked> A#</label>
