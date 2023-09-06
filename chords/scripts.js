@@ -23,31 +23,74 @@ const chords = [
 const chordStructures = {
 	'': [0, 4, 7],       // Major
 	'm': [0, 3, 7],     // Minor
+	'dim': [0, 3, 6],
+	'aug': [0, 4, 8],
 
-	'maj7': [0, 4, 7, 11],
 	'6': [0, 4, 7, 9],
-	'maj9': [0, 4, 7, 11, 14],  // You can reduce these numbers mod 12 if you prefer
-	'maj13': [0, 4, 7, 11, 14, 21],
-
 	'm6': [0, 3, 7, 9],
-	'm7': [0, 3, 7, 10],
-	'm9': [0, 3, 7, 10, 14],
-	'm11': [0, 3, 7, 10, 14, 17],
-	'm13': [0, 3, 7, 10, 14, 17, 21],
 
 	'7': [0, 4, 7, 10],
+	'm7': [0, 3, 7, 10],
 	'M7': [0, 4, 7, 11],
+	'mM7': [0, 3, 7, 11],
+	'dim7': [0, 3, 6, 9],
+	'm7b5': [0, 3, 6, 10],  
+	'aug7': [0, 4, 8, 10],
+	'augM7': [0, 4, 8, 11],
+
 	'9': [0, 4, 7, 10, 14],
+	'm9': [0, 3, 7, 10, 14],
+	'M9': [0, 4, 7, 11, 14],
+
+	'11': [0, 4, 7, 10, 14],
+	'm11': [0, 3, 7, 10, 14, 17],
+	'M11': [0, 4, 7, 11, 14],
+
 	'13': [0, 4, 7, 10, 14, 21],
+	'm13': [0, 3, 7, 10, 14, 17, 21],
+	'M13': [0, 4, 7, 11, 14, 21],
+
 	'7b9': [0, 4, 7, 10, 13],
 	'7#9': [0, 4, 7, 10, 15],
 	'7#11': [0, 4, 7, 10, 18],
-
-	'dim': [0, 3, 6],
-	'°7': [0, 3, 6, 9],  // Alternative to dim7
-	'aug': [0, 4, 8],
-	'7#5': [0, 4, 8, 10],  // Alternative to 7+5
 };
+
+
+const chordStructureNames = {
+	'': [''],
+	'm': ['m', 'mi', 'min', '-'],
+	'dim': ['dim', 'o', 'º'],
+	'aug': ['aug', '+'],
+
+	'6': ['6'],
+	'm6': ['m6', 'mi6', 'min6', '-6'],
+
+	'7': ['7'],
+	'm7': ['m7', 'mi7', 'min7', '-7'],
+	'M7': [ 'M7', 'ma7', 'maj7', '△7', '△'],
+	'mM7': ['mM7', 'm maj7', '-△7', '-△'],
+	'dim7': ['dim7', 'o7', 'º7'],
+	'm7b5': ['m7b5', '-7b5', 'ø', 'ø7'],
+	'aug7': ['7#5', '+7', 'aug7', ],
+	'augM7': ['M7#5', '+M7', 'augM7', ],
+
+	'9': ['9'],
+	'm9': ['m9', 'min9', '-9'],
+	'M9': ['M9', 'maj9', '△9'],
+
+	'11': ['11'],
+	'm11': ['m11', 'min11', '-11'],
+	'M11': ['M11', 'maj11', '△11'],
+
+	'13': ['13'],
+	'm13': ['m13', 'min13', '-13'],
+	'M13': ['M13', 'maj13', '△13'],
+
+	'7b9': ['7b9'],
+	'7#9': ['7#9'],
+	'7#11': ['7#11'],
+};
+
 
 let lastChord = '';
 let currentChordNotes = [];
@@ -79,9 +122,21 @@ function getRandomChord() {
 	let selectedChordTypes = [];
 	if (document.getElementById('majorChord').checked) selectedChordTypes.push('');
 	if (document.getElementById('minorChord').checked) selectedChordTypes.push('m');
+	if (document.getElementById('augmentedChord').checked) selectedChordTypes.push('dim');
+	if (document.getElementById('diminishedChord').checked) selectedChordTypes.push('aug');
+
+	if (document.getElementById('sixthChord').checked) selectedChordTypes.push('6');
+	if (document.getElementById('minorSixthChord').checked) selectedChordTypes.push('m6');
+
 	if (document.getElementById('seventhChord').checked) selectedChordTypes.push('7');
 	if (document.getElementById('minorSeventhChord').checked) selectedChordTypes.push('m7');
-	if (document.getElementById('sixthChord').checked) selectedChordTypes.push('6');
+	if (document.getElementById('majorSeventhChord').checked) selectedChordTypes.push('M7');
+	if (document.getElementById('minorMajorSeventhChord').checked) selectedChordTypes.push('mM7');
+
+	if (document.getElementById('diminishedSeventhChord').checked) selectedChordTypes.push('dim7');
+	if (document.getElementById('halfDiminishedSeventhChord').checked) selectedChordTypes.push('m7b5');
+	if (document.getElementById('augmentedSeventhChord').checked) selectedChordTypes.push('aug7');
+	if (document.getElementById('augmentedMajorSeventhChord').checked) selectedChordTypes.push('augM7');
 
 	if (selectedRoots.length === 0 || selectedChordTypes.length === 0) {
 		alert("Please select at least one root key and one chord type!");
@@ -92,6 +147,13 @@ function getRandomChord() {
 	let randomChordType = selectedChordTypes[Math.floor(Math.random() * selectedChordTypes.length)];
 
 	currentChordNotes = generateNotesFromChordName(randomRoot + randomChordType);
+
+	if (document.getElementById('randomizeSpellings').checked) {
+		if( chordStructureNames.hasOwnProperty(randomChordType) ) {
+			randomChordType = chordStructureNames[randomChordType][Math.floor(Math.random() * chordStructureNames[randomChordType].length)];
+		}
+
+	}
 
 	return randomRoot + randomChordType;
 }
@@ -167,6 +229,7 @@ function onMIDIFailure(error) {
 
 function nextRandomChord() {
 	text = getRandomChord();
+
 	// Turn # and b into sharp and flat symbols
 	text = text.replace(/#/g, '♯');
 	text = text.replace(/b/g, '♭');

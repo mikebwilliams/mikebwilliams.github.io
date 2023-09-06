@@ -45,18 +45,28 @@
 
 		<h3>Select Chords</h3>
 		<div id="chordOptions">
-			<label><input type="checkbox" id="majorChord" checked> Major (e.g., C)</label>
-			<label><input type="checkbox" id="minorChord" checked> Minor (e.g., Cm)</label>
-			<br>
-			<label><input type="checkbox" id="seventhChord" checked> 7th (e.g., C7)</label>
-			<label><input type="checkbox" id="minorSeventhChord" checked> Minor 7th (e.g., Cm7)</label>
-			<br>
-			<label><input type="checkbox" id="sixthChord" checked> 6th (e.g., C6)</label>
-			<label><input type="checkbox" id="minorSixthChord" checked> Minor 6th (e.g., Cm6)</label>
+			<div>
+				<label><input type="checkbox" id="majorChord" checked> Major ( C )</label>
+				<label><input type="checkbox" id="augmentedChord" checked> Diminished ( Cdim )</label>
+				<label><input type="checkbox" id="sixthChord" checked> 6th ( C6 )</label>
+				<label><input type="checkbox" id="seventhChord" checked> 7th ( C7 )</label>
+				<label><input type="checkbox" id="majorSeventhChord" checked> Major 7th ( Cmaj7)</label>
+				<label><input type="checkbox" id="diminishedSeventhChord" checked> Diminished 7th ( Cdim7 )</label>
+				<label><input type="checkbox" id="augmentedSeventhChord" checked> Augmented 7th ( Caug7 )</label>
+			</div>
+			<div>
+				<label><input type="checkbox" id="minorChord" checked> Minor ( Cm )</label>
+				<label><input type="checkbox" id="diminishedChord" checked> Augmented ( Caug )</label>
+				<label><input type="checkbox" id="minorSixthChord" checked> Minor 6th ( Cm6 )</label>
+				<label><input type="checkbox" id="minorSeventhChord" checked> Minor 7th ( Cm7 )</label>
+				<label><input type="checkbox" id="minorMajorSeventhChord" checked> Minor Major 7th ( CmM7 )</label>
+				<label><input type="checkbox" id="halfDiminishedSeventhChord" checked> Half-Diminished 7th ( Cm7♭5 )</label>
+				<label><input type="checkbox" id="augmentedMajorSeventhChord" checked> Augmented Major 7th ( CaugM7 )</label>
+			</div>
 		</div>
 		<br>
 
-		<h3>Select Keys</h3><br>
+		<h3>Select Keys</h3>
 		<div id="presetButtons">
 			<button id="whiteKeys">White</button>
 			<button id="blackKeys">Black</button>
@@ -87,6 +97,12 @@
 			<label><input type="checkbox" id="Bb" checked> B♭</label>
 			<label><input type="checkbox" id="B" checked> B</label>
 		</div>
+
+		<h3>Select Options</h3>
+		<div id="options">
+			<label><input type="checkbox" id="randomizeSpellings" checked> Use Alternate Spellings ( Cm7♭5 => △ )</label>
+		</div>
+
 
 		<script src="scripts.js"></script>
 	</body>

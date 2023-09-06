@@ -13,6 +13,10 @@ h2 {
     color: #0077ff;
 }
 
+h3 {
+    font-size: 36px;
+}
+
 p {
     font-size: 24px;
 }
@@ -72,8 +76,7 @@ p {
 
 
 /* Style for all checkboxes in the option sections */
-#chordOptions input[type="checkbox"],
-#keyOptions input[type="checkbox"] {
+input[type="checkbox"] {
     font-size: 1.2em;
     transform: scale(1.5);   /* Increase the size of the checkbox */
     margin-right: 10px;      /* Add some spacing to the right of the checkbox */
@@ -82,8 +85,7 @@ p {
 }
 
 /* Style for the labels of the checkboxes */
-#chordOptions label,
-#keyOptions label {
+label {
     font-size: 1.4em;        /* Increase font size for better readability */
     margin-right: 25px;     /* Add some spacing to separate each checkbox-label pair */
 }
@@ -118,4 +120,25 @@ button:hover {
 
 button:active {
     transform: scale(0.95);
+}
+
+#chordOptions {
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 800px; /* Adjust this as per your needs */
+}
+
+#chordOptions > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 5px;
+}
+
+#chordOptions label {
+    margin-bottom: 10px;
+}
+
+#chordOptions input[type="checkbox"] {
+    margin-right: 5px;
 }
