@@ -62,18 +62,17 @@ p {
 .key.black[data-note="68"] { left: 840px; }
 .key.black[data-note="70"] { left: 920px; }
 
-.key.correct {
-    background-color: green;
+.key.highlight {
+    background-color: yellow;
 }
 
 .key.incorrect {
     background-color: red;
 }
 
-.key.highlight {
-    background-color: yellow;
+.key.correct {
+    background-color: green;
 }
-
 
 /* Style for all checkboxes in the option sections */
 input[type="checkbox"] {

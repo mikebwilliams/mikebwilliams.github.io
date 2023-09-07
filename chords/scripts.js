@@ -96,6 +96,8 @@ let lastChord = '';
 let currentChordNotes = [];
 let activeNotes = [];
 const chordDisplay = document.getElementById("chordDisplay");
+const chordCount = document.getElementById("chordCount");
+let highlightTimer; 
 
 
 function generateNotesFromChordName(chordName) {
@@ -191,15 +193,18 @@ function checkChord(midiMessage) {
 }
 
 
-let highlightTimer;  // Store the current timer reference
-
 function highlightCorrectKeys() {
 	// Clear previous highlights
 	document.querySelectorAll('.key.highlight').forEach(key => key.classList.remove('highlight'));
 
 	highlightTimer = setTimeout(() => {
+		// Highlight the keys in the current chord if box is checked
+		if ( !document.getElementById('highlightCorrectKeys').checked ) {
+			return;
+		}
+
 		currentChordNotes.forEach(note => {
-			let keyElement = document.querySelector(`.key[data-note="${note}"]`);
+			let keyElement = document.querySelector(`.key[data-note="${note+48}"]`);
 			keyElement.classList.add('highlight');
 		});
 	}, 3000);  // 3 seconds
@@ -234,6 +239,7 @@ function nextRandomChord() {
 	text = text.replace(/#/g, '♯');
 	text = text.replace(/b/g, '♭');
 	chordDisplay.textContent = text;
+	chordCount.textContent = parseInt(chordCount.textContent) + 1;
 }
 
 // Initialize MIDI access
