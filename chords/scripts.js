@@ -124,8 +124,8 @@ function getRandomChord() {
 	let selectedChordTypes = [];
 	if (document.getElementById('majorChord').checked) selectedChordTypes.push('');
 	if (document.getElementById('minorChord').checked) selectedChordTypes.push('m');
-	if (document.getElementById('augmentedChord').checked) selectedChordTypes.push('dim');
-	if (document.getElementById('diminishedChord').checked) selectedChordTypes.push('aug');
+	if (document.getElementById('augmentedChord').checked) selectedChordTypes.push('aug');
+	if (document.getElementById('diminishedChord').checked) selectedChordTypes.push('dim');
 
 	if (document.getElementById('sixthChord').checked) selectedChordTypes.push('6');
 	if (document.getElementById('minorSixthChord').checked) selectedChordTypes.push('m6');
@@ -169,21 +169,21 @@ function checkChord(midiMessage) {
 	let keyElement = document.querySelector(`.key[data-note="${pressedNotes[1]}"]`);
 
 	// Check for MIDI message type to determine if the key is pressed or released.
-		if (pressedNotes[0] === 144 && velocity > 0) {
-			if (currentChordNotes.includes(note)) {
-				keyElement.classList.remove('highlight');
-				keyElement.classList.add('correct');
-				activeNotes.push(note);  // Add note to active list
-			} else {
-				keyElement.classList.add('incorrect');
-			}
-		} else if (pressedNotes[0] === 128 || (pressedNotes[0] === 144 && velocity === 0)) {
-			keyElement.classList.remove('active', 'correct', 'incorrect');
-			let index = activeNotes.indexOf(note);
-			if (index > -1) {
-				activeNotes.splice(index, 1);  // Remove note from active list
-			}
+	if (pressedNotes[0] === 144 && velocity > 0) {
+		if (currentChordNotes.includes(note)) {
+			keyElement.classList.remove('highlight');
+			keyElement.classList.add('correct');
+			activeNotes.push(note);  // Add note to active list
+		} else {
+			keyElement.classList.add('incorrect');
 		}
+	} else if (pressedNotes[0] === 128 || (pressedNotes[0] === 144 && velocity === 0)) {
+		keyElement.classList.remove('correct', 'incorrect');
+		let index = activeNotes.indexOf(note);
+		if (index > -1) {
+			activeNotes.splice(index, 1);  // Remove note from active list
+		}
+	}
 
 	if (currentChordNotes.every(chordNote => activeNotes.includes(chordNote))) {
 		nextRandomChord();
@@ -296,5 +296,73 @@ document.getElementById('allKeys').addEventListener('click', () => {
     ['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B'].forEach(key => {
         document.getElementById(key).checked = true;
     });
+});
+document.addEventListener("DOMContentLoaded", function() {
+
+    // Handler functions for preset buttons
+
+    const toggleAllChords = (state) => {
+        const checkboxes = document.querySelectorAll("#chordOptions input[type='checkbox']");
+        checkboxes.forEach(chk => chk.checked = state);
+    };
+
+    const toggleTriadChords = (state) => {
+        const triads = ["majorChord", "minorChord", "augmentedChord", "diminishedChord"];
+        triads.forEach(id => document.getElementById(id).checked = state);
+    };
+
+    const toggleSixthChords = (state) => {
+        const sixths = ["sixthChord", "minorSixthChord"];
+        sixths.forEach(id => document.getElementById(id).checked = state);
+    };
+
+    const toggleSeventhChords = (state) => {
+        const sevenths = [
+            "seventhChord", "minorSeventhChord", "majorSeventhChord", 
+            "minorMajorSeventhChord", "halfDiminishedSeventhChord", 
+            "diminishedSeventhChord", "augmentedSeventhChord", 
+            "augmentedMajorSeventhChord"
+        ];
+        sevenths.forEach(id => document.getElementById(id).checked = state);
+    };
+
+    const toggleMajorChords = (state) => {
+        const majors = [
+            "majorChord", "augmentedChord", "sixthChord", 
+            "seventhChord", "majorSeventhChord", "augmentedSeventhChord", 
+            "augmentedMajorSeventhChord"
+        ];
+        majors.forEach(id => document.getElementById(id).checked = state);
+    };
+
+    const toggleMinorChords = (state) => {
+        const minors = [
+            "minorChord", "diminishedChord", "minorSixthChord", 
+            "minorSeventhChord", "minorMajorSeventhChord", 
+            "halfDiminishedSeventhChord", "diminishedSeventhChord"
+        ];
+        minors.forEach(id => document.getElementById(id).checked = state);
+    };
+
+    // Attach the handlers
+
+    document.getElementById("chordsOn").addEventListener("click", () => toggleAllChords(true));
+    document.getElementById("chordsOff").addEventListener("click", () => toggleAllChords(false));
+
+    document.getElementById("triadChordsOn").addEventListener("click", () => toggleTriadChords(true));
+    document.getElementById("triadChordsOff").addEventListener("click", () => toggleTriadChords(false));
+
+    document.getElementById("sixthChordsOn").addEventListener("click", () => toggleSixthChords(true));
+    document.getElementById("sixthChordsOff").addEventListener("click", () => toggleSixthChords(false));
+
+    document.getElementById("seventhChordsOn").addEventListener("click", () => toggleSeventhChords(true));
+    document.getElementById("seventhChordsOff").addEventListener("click", () => toggleSeventhChords(false));
+
+    document.getElementById("majorChordsOn").addEventListener("click", () => toggleMajorChords(true));
+    document.getElementById("majorChordsOff").addEventListener("click", () => toggleMajorChords(false));
+
+    document.getElementById("minorChordsOn").addEventListener("click", () => toggleMinorChords(true));
+    document.getElementById("minorChordsOff").addEventListener("click", () => toggleMinorChords(false));
+
 });
 

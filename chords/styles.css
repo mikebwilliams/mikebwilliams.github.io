@@ -124,7 +124,7 @@ button:active {
 #chordOptions {
     display: flex;
     flex-wrap: wrap;
-    max-width: 800px; /* Adjust this as per your needs */
+    max-width: 900px; /* Adjust this as per your needs */
 }
 
 #chordOptions > div {

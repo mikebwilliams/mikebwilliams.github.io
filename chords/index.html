@@ -46,23 +46,35 @@
 
 		<h3>Select Chords</h3>
 		<div id="chordOptions">
-			<div>
-				<label><input type="checkbox" id="majorChord" checked> Major ( C )</label>
-				<label><input type="checkbox" id="augmentedChord" checked> Diminished ( Cdim )</label>
-				<label><input type="checkbox" id="sixthChord" checked> 6th ( C6 )</label>
-				<label><input type="checkbox" id="seventhChord" checked> 7th ( C7 )</label>
-				<label><input type="checkbox" id="majorSeventhChord" checked> Major 7th ( Cmaj7)</label>
-				<label><input type="checkbox" id="diminishedSeventhChord" checked> Diminished 7th ( Cdim7 )</label>
-				<label><input type="checkbox" id="augmentedSeventhChord" checked> Augmented 7th ( Caug7 )</label>
+			<div id="presetButtons">
+				<div><button id="chordsOn">All</button><button id="chordsOff">None</button></div>
+				<div><button id="triadChordsOn">Triads On</button><button id="triadChordsOff">Triads Off</button></div>
+				<div></div>
+				<div><button id="sixthChordsOn">Sixths On</button><button id="sixthChordsOff">Sixths Off</button></div>
+				<div></div>
+				<div><button id="seventhChordsOn">Sevenths On</button><button id="seventhChordsOff">Sevenths Off</button></div>
+				<div></div>
+				<div></div>
 			</div>
 			<div>
-				<label><input type="checkbox" id="minorChord" checked> Minor ( Cm )</label>
-				<label><input type="checkbox" id="diminishedChord" checked> Augmented ( Caug )</label>
-				<label><input type="checkbox" id="minorSixthChord" checked> Minor 6th ( Cm6 )</label>
-				<label><input type="checkbox" id="minorSeventhChord" checked> Minor 7th ( Cm7 )</label>
-				<label><input type="checkbox" id="minorMajorSeventhChord" checked> Minor Major 7th ( CmM7 )</label>
-				<label><input type="checkbox" id="halfDiminishedSeventhChord" checked> Half-Diminished 7th ( Cm7♭5 )</label>
-				<label><input type="checkbox" id="augmentedMajorSeventhChord" checked> Augmented Major 7th ( CaugM7 )</label>
+				<div><button id="majorChordsOn">Majors On</button><button id="majorChordsOff">Majors Off</button></div>
+				<label><input type="checkbox" id="majorChord" checked>Major</label>
+				<label><input type="checkbox" id="augmentedChord" checked>Augmented</label>
+				<label><input type="checkbox" id="sixthChord" checked>6th</label>
+				<label><input type="checkbox" id="seventhChord" checked>7th</label>
+				<label><input type="checkbox" id="majorSeventhChord" checked>Major 7th</label>
+				<label><input type="checkbox" id="augmentedSeventhChord" checked>Augmented 7th</label>
+				<label><input type="checkbox" id="augmentedMajorSeventhChord" checked>Augmented Major 7th</label>
+			</div>
+			<div>
+				<div><button id="minorChordsOn">Minors On</button><button id="minorChordsOff">Minors Off</button></div>
+				<label><input type="checkbox" id="minorChord" checked>Minor</label>
+				<label><input type="checkbox" id="diminishedChord" checked>Diminished</label>
+				<label><input type="checkbox" id="minorSixthChord" checked>Minor 6th</label>
+				<label><input type="checkbox" id="minorSeventhChord" checked>Minor 7th</label>
+				<label><input type="checkbox" id="minorMajorSeventhChord" checked>Minor Major 7th</label>
+				<label><input type="checkbox" id="halfDiminishedSeventhChord" checked>Half-Diminished 7th</label>
+				<label><input type="checkbox" id="diminishedSeventhChord" checked>Diminished 7th</label>
 			</div>
 		</div>
 		<br>
