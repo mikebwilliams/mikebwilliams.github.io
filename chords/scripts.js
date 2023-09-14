@@ -13,6 +13,55 @@ const noteValues = {
 	'B': 11
 };
 
+const valuesToNotesSharp = {
+	0: 'C',
+	1: 'C#',
+	2: 'D',
+	3: 'D#',
+	4: 'E',
+	5: 'F',
+	6: 'F#',
+	7: 'G',
+	8: 'G#',
+	9: 'A',
+	10: 'A#',
+	11: 'B'
+};
+
+const valuesToNotesFlat = {
+	0: 'C',
+	1: 'Db',
+	2: 'D',
+	3: 'Eb',
+	4: 'E',
+	5: 'F',
+	6: 'Gb',
+	7: 'G',
+	8: 'Ab',
+	9: 'A',
+	10: 'Bb',
+	11: 'B'
+};
+
+const romanNumerals = {
+	'I': 0,
+	'II': 2,
+	'III': 4,
+	'IV': 5,
+	'V': 7,
+	'VI': 9,
+	'VII': 11
+};
+
+
+// These are separated so we can so one way gives us more flats and the other more sharps,
+// e.g. F# in the fifths vs Gb in the fourths.
+const circleOfFourths = ["C", "F", "Bb", "Eb", "Ab", "Db", "Gb", "B", "E", "A", "D", "G"];
+const circleOfFifths = ["C", "G", "D", "A", "E", "B", "F#", "C#", "G#", "D#", "A#", "F"];
+
+const majorScaleIntervals = [0, 2, 4, 5, 7, 9, 11];
+const minorScaleIntervals = [0, 2, 3, 5, 7, 8, 10];
+
 
 const chords = [
 	'C', 'Cm', 'C#', 'C#m', 'Db', 'Dbm', 'D', 'Dm', 'D#', 'D#m', 'Eb', 'Ebm', 
@@ -92,11 +141,18 @@ const chordStructureNames = {
 };
 
 
-let lastChord = '';
+let currentChordName = '';
 let currentChordNotes = [];
 let activeNotes = [];
+
+let currentProgression = [];
+let currentIndex = 0;
+let keyIndex = 0;
+let keys = [];
+
 const chordDisplay = document.getElementById("chordDisplay");
 const chordCount = document.getElementById("chordCount");
+const progCount = document.getElementById("progCount");
 let highlightTimer; 
 
 
@@ -116,8 +172,20 @@ function generateNotesFromChordName(chordName) {
 	return chordStructures[chordType].map(interval => (rootValue + interval) % 12);
 }
 
+function setChordName(root, chordType)
+{
+	if (document.getElementById('randomizeSpellings').checked) {
+		if( chordStructureNames.hasOwnProperty(chordType) ) {
+			chordType = chordStructureNames[chordType][Math.floor(Math.random() * chordStructureNames[chordType].length)];
+		}
 
-function getRandomChord() {
+	}
+
+	currentChordName = root + chordType;
+}
+
+function setRandomChord()
+{
 	let selectedRoots = Object.keys(noteValues).filter(root => document.getElementById(root).checked);
 
 	// Grab the selected chord types
@@ -149,15 +217,7 @@ function getRandomChord() {
 	let randomChordType = selectedChordTypes[Math.floor(Math.random() * selectedChordTypes.length)];
 
 	currentChordNotes = generateNotesFromChordName(randomRoot + randomChordType);
-
-	if (document.getElementById('randomizeSpellings').checked) {
-		if( chordStructureNames.hasOwnProperty(randomChordType) ) {
-			randomChordType = chordStructureNames[randomChordType][Math.floor(Math.random() * chordStructureNames[randomChordType].length)];
-		}
-
-	}
-
-	return randomRoot + randomChordType;
+	setChordName(randomRoot, randomChordType);
 }
 
 
@@ -186,7 +246,8 @@ function checkChord(midiMessage) {
 	}
 
 	if (currentChordNotes.every(chordNote => activeNotes.includes(chordNote))) {
-		nextRandomChord();
+		chordCount.textContent = parseInt(chordCount.textContent) + 1;
+		nextChord();
 		clearTimeout(highlightTimer);
 		highlightCorrectKeys();
 	}
@@ -232,137 +293,164 @@ function onMIDIFailure(error) {
 	// You could also notify the user with a user-friendly message here.
 }
 
-function nextRandomChord() {
-	text = getRandomChord();
+function updateAvailableKeys()
+{
+	const flow = flowSelect.value;
+
+	if (flow === "circleOfFourths") {
+		keys = circleOfFourths;
+	} else if (flow === "circleOfFifths") {
+		keys = circleOfFifths;
+	} else {
+		keys = Object.keys(noteValues).filter(root => document.getElementById(root).checked);
+	}
+}
+
+
+function nextKey()
+{
+	updateAvailableKeys();
+	const flow = flowSelect.value;
+
+	if (flow === "circleOfFourths" || flow === "circleOfFifths") {
+		keyIndex++;
+	} else {
+		keyIndex = Math.floor(Math.random() * keys.length);
+	}
+
+	keyIndex %= keys.length;
+}
+
+function nextChord()
+{
+	let progression = enableChordProgressionsCheckbox.checked;
+
+	if (progression) {
+		currentIndex++;
+
+		if (currentIndex >= currentProgression.length) {
+			progCount.textContent = parseInt(progCount.textContent) + 1;
+			nextKey();
+			generateProgression();
+			currentIndex = 0;
+		}
+
+		setIntervalChord();
+		displayProgression();
+	} else {
+		nextKey();
+		setRandomChord();
+	}
+
+	displayChord();
+}
+
+function displayChord()
+{
+	text = currentChordName;
 
 	// Turn # and b into sharp and flat symbols
 	text = text.replace(/#/g, '♯');
 	text = text.replace(/b/g, '♭');
-	chordDisplay.textContent = text;
-	chordCount.textContent = parseInt(chordCount.textContent) + 1;
+
+	let progression = enableChordProgressionsCheckbox.checked;
+	let hideChords = progression && hideProgressionChordNamesCheckbox.checked;
+
+	// If the progression chord is hidden, hide the chord name
+	// and give it a tooltip with the chord name
+	if (hideChords) {
+		chordDisplay.textContent = "Hidden"
+		chordDisplay.title = text;
+	}
+	else {
+		chordDisplay.textContent = text;
+		chordDisplay.title = '';
+	}
+}
+
+
+function setIntervalChord()
+{
+	let keyValue = noteValues[keys[keyIndex]];
+	// Degree will get us something like 'I', 'II', 'III', etc.
+	let degree = currentProgression[currentIndex];
+	// isMinor will figure out if its a minor chord from the case of the degree
+	const isMinor = degree === degree.toLowerCase();
+	// Convert the degree to a number using romanNumerals
+	let degreeValue = romanNumerals[degree.toUpperCase()];
+	// Then add the interval to get the new degree
+	let noteValue = (keyValue + degreeValue) % 12;
+
+	// Later fix this to handle key signatures with flats
+	const degreeChordRoot = valuesToNotesSharp[noteValue];
+
+	currentChordNotes = generateNotesFromChordName(degreeChordRoot + (isMinor ? 'm' : ''));
+	setChordName(degreeChordRoot, isMinor ? 'm' : '');
+
+}
+
+
+function generateProgression()
+{
+	currentKeySpan.textContent = keys[keyIndex];
+
+	currentIndex = -1;
+	currentProgression = progressionSelect.value.split('-');
+
+	displayProgression();
+}
+
+function displayProgression() {
+	currentKeySpan.textContent = keys[keyIndex];
+	progressionDisplay.innerHTML = currentProgression.map(chord => `<span class="chord">${chord}</span>`).join(' - ');
+
+	// Add event listeners to chords to track user input
+	document.querySelectorAll('.chord').forEach((chordSpan, index) => {
+		if (currentIndex == index) {
+			chordSpan.style.color = "blue";
+		} else if (currentIndex > index) {
+			chordSpan.style.color = "green";
+		}
+	});
 }
 
 // Initialize MIDI access
 navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
 
+const enableChordProgressionsCheckbox = document.getElementById('enableChordProgressions');
+const hideProgressionChordNamesCheckbox = document.getElementById('hideProgressionChordNames');
+const progressionOptionsDiv = document.getElementById('progressionOptions');
+const progressionSelect = document.getElementById('progressionSelect');
+const flowSelect = document.getElementById('flowSelect');
+const currentKeySpan = document.getElementById('currentKey').querySelector('span');
+const progressionDisplay = document.getElementById('progressionDisplay');
+
+
+enableChordProgressionsCheckbox.addEventListener('change', function() {
+	progressionOptionsDiv.style.display = this.checked ? 'block' : 'none';
+	if (this.checked) {
+		nextKey();
+		generateProgression();
+		nextChord();
+	}
+});
+
+hideProgressionChordNamesCheckbox.addEventListener('change', function() {
+	displayChord();
+});
+
+progressionSelect.addEventListener('change', function() {
+	nextKey();
+	generateProgression();
+	nextChord();
+});
+
+flowSelect.addEventListener('change', generateProgression);
+
 // Set initial chord
-nextRandomChord();
+updateAvailableKeys();
+nextKey();
+setRandomChord();
 highlightCorrectKeys();
-
-
-document.getElementById('whiteKeys').addEventListener('click', () => {
-    ['C', 'D', 'E', 'F', 'G', 'A', 'B'].forEach(key => {
-        document.getElementById(key).checked = true;
-    });
-    ['C#', 'Db', 'D#', 'Eb', 'F#', 'Gb', 'G#', 'Ab', 'A#', 'Bb'].forEach(key => {
-        document.getElementById(key).checked = false;
-    });
-});
-
-document.getElementById('blackKeys').addEventListener('click', () => {
-    ['C#', 'Db', 'D#', 'Eb', 'F#', 'Gb', 'G#', 'Ab', 'A#', 'Bb'].forEach(key => {
-        document.getElementById(key).checked = true;
-    });
-    ['C', 'D', 'E', 'F', 'G', 'A', 'B'].forEach(key => {
-        document.getElementById(key).checked = false;
-    });
-});
-
-document.getElementById('sharpKeys').addEventListener('click', () => {
-    ['C#', 'D#', 'F#', 'G#', 'A#'].forEach(key => {
-        document.getElementById(key).checked = true;
-    });
-    ['Db', 'Eb', 'Gb', 'Ab', 'Bb'].forEach(key => {
-        document.getElementById(key).checked = false;
-    });
-});
-
-document.getElementById('flatKeys').addEventListener('click', () => {
-    ['Db', 'Eb', 'Gb', 'Ab', 'Bb'].forEach(key => {
-        document.getElementById(key).checked = true;
-    });
-    ['C#', 'D#', 'F#', 'G#', 'A#'].forEach(key => {
-        document.getElementById(key).checked = false;
-    });
-});
-
-document.getElementById('noKeys').addEventListener('click', () => {
-    ['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B'].forEach(key => {
-        document.getElementById(key).checked = false;
-    });
-});
-
-document.getElementById('allKeys').addEventListener('click', () => {
-    ['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B'].forEach(key => {
-        document.getElementById(key).checked = true;
-    });
-});
-document.addEventListener("DOMContentLoaded", function() {
-
-    // Handler functions for preset buttons
-
-    const toggleAllChords = (state) => {
-        const checkboxes = document.querySelectorAll("#chordOptions input[type='checkbox']");
-        checkboxes.forEach(chk => chk.checked = state);
-    };
-
-    const toggleTriadChords = (state) => {
-        const triads = ["majorChord", "minorChord", "augmentedChord", "diminishedChord"];
-        triads.forEach(id => document.getElementById(id).checked = state);
-    };
-
-    const toggleSixthChords = (state) => {
-        const sixths = ["sixthChord", "minorSixthChord"];
-        sixths.forEach(id => document.getElementById(id).checked = state);
-    };
-
-    const toggleSeventhChords = (state) => {
-        const sevenths = [
-            "seventhChord", "minorSeventhChord", "majorSeventhChord", 
-            "minorMajorSeventhChord", "halfDiminishedSeventhChord", 
-            "diminishedSeventhChord", "augmentedSeventhChord", 
-            "augmentedMajorSeventhChord"
-        ];
-        sevenths.forEach(id => document.getElementById(id).checked = state);
-    };
-
-    const toggleMajorChords = (state) => {
-        const majors = [
-            "majorChord", "augmentedChord", "sixthChord", 
-            "seventhChord", "majorSeventhChord", "augmentedSeventhChord", 
-            "augmentedMajorSeventhChord"
-        ];
-        majors.forEach(id => document.getElementById(id).checked = state);
-    };
-
-    const toggleMinorChords = (state) => {
-        const minors = [
-            "minorChord", "diminishedChord", "minorSixthChord", 
-            "minorSeventhChord", "minorMajorSeventhChord", 
-            "halfDiminishedSeventhChord", "diminishedSeventhChord"
-        ];
-        minors.forEach(id => document.getElementById(id).checked = state);
-    };
-
-    // Attach the handlers
-
-    document.getElementById("chordsOn").addEventListener("click", () => toggleAllChords(true));
-    document.getElementById("chordsOff").addEventListener("click", () => toggleAllChords(false));
-
-    document.getElementById("triadChordsOn").addEventListener("click", () => toggleTriadChords(true));
-    document.getElementById("triadChordsOff").addEventListener("click", () => toggleTriadChords(false));
-
-    document.getElementById("sixthChordsOn").addEventListener("click", () => toggleSixthChords(true));
-    document.getElementById("sixthChordsOff").addEventListener("click", () => toggleSixthChords(false));
-
-    document.getElementById("seventhChordsOn").addEventListener("click", () => toggleSeventhChords(true));
-    document.getElementById("seventhChordsOff").addEventListener("click", () => toggleSeventhChords(false));
-
-    document.getElementById("majorChordsOn").addEventListener("click", () => toggleMajorChords(true));
-    document.getElementById("majorChordsOff").addEventListener("click", () => toggleMajorChords(false));
-
-    document.getElementById("minorChordsOn").addEventListener("click", () => toggleMinorChords(true));
-    document.getElementById("minorChordsOff").addEventListener("click", () => toggleMinorChords(false));
-
-});
+displayChord();
 

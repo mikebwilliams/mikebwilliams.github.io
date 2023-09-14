@@ -10,7 +10,9 @@
 		<div class="container">
 			<h1>Chord Challenge</h1>
 			<h2 id="chordDisplay">Chord</h2>
-			<h3 id="chordCount">-1</h3>
+			<h3>Progressions: <span id="progCount">0</span> Chords: <span id="chordCount">0</span></h3>
+			<h3 id="currentKey">Progression: <span id="currentKey"></span> <span id="progressionDisplay"></span></h3>
+			<h3 ></h3>
 		</div>
 
 		<div id="piano">
@@ -43,6 +45,31 @@
 			<div class="key black" data-note="68" ></div>
 			<div class="key black" data-note="70" ></div>
 		</div>
+
+		<h3>Chord Progressions</h3>
+		<div id="chordProgressions">
+			<label>
+				<label><input type="checkbox" id="enableChordProgressions">Enable Chord Progressions</label>
+				<br>
+				<label><input type="checkbox" id="hideProgressionChordNames">Hide Progression Chord Names</label>
+			</label>
+			<div id="progressionOptions" style="display: none;">
+				<label>Progression:
+					<select id="progressionSelect">
+						<option value="I-IV-V">I-IV-V</option>
+						<option value="ii-V-I">ii-V-I</option>
+						<option value="I-vi-ii-V">I-vi-ii-V</option>
+						<option value="vi-IV-I-V">vi-IV-I-V</option>
+						<option value="I-V-vi-iii-IV-I-IV-V">I-V-vi-iii-IV-I-IV-V (Pachabel)</option>
+						<option value="I-vi-IV-V">I-vi-IV-V (Doo-Wop)</option>
+						<option value="I-III-IV-vi">I-III-IV-vi (Lawsuits)</option>
+					</select>
+				</label>
+				<br>
+			</div>
+		</div>
+		<br>
+
 
 		<h3>Select Chords</h3>
 		<div id="chordOptions">
@@ -77,9 +104,17 @@
 				<label><input type="checkbox" id="diminishedSeventhChord" checked>Diminished 7th</label>
 			</div>
 		</div>
-		<br>
 
-		<h3>Select Keys</h3>
+		<h3>Keys</h3>
+		<div id="flowOptions">Flow:
+			<select id="flowSelect">
+				<option value="random">Random</option>
+				<option value="circleOfFourths">Circle of Fourths</option>
+				<option value="circleOfFifths">Circle of Fifths</option>
+			</select>
+			<br>
+			<br>
+		</div>
 		<div id="presetButtons">
 			<button id="whiteKeys">White</button>
 			<button id="blackKeys">Black</button>
@@ -119,5 +154,6 @@
 
 
 		<script src="scripts.js"></script>
+		<script src="ui.js"></script>
 	</body>
 </html>
