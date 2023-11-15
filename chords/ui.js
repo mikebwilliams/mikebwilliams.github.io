@@ -95,6 +95,8 @@ document.addEventListener("DOMContentLoaded", function() {
     };
 
     // Attach the handlers
+    document.getElementById("progressionNext").addEventListener("click", () => nextProgression());
+    document.getElementById("progressionSelect").addEventListener('change', () => nextProgression());
 
     document.getElementById("chordsOn").addEventListener("click", () => toggleAllChords(true));
     document.getElementById("chordsOff").addEventListener("click", () => toggleAllChords(false));

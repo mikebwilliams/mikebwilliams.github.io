@@ -141,6 +141,16 @@ const chordStructureNames = {
 };
 
 
+function isIntervalChord(chord) {
+	return chord.match(/^(#|b)?[iIvV]{1,3}(o|\+)?(7|9|11|13)?$/);
+}
+
+
+function isNamedChord(chord) {
+	return chord.match(/^[A-G](#|b)?/);
+}
+
+
 let currentChordName = '';
 let currentChordNotes = [];
 let activeNotes = [];
@@ -164,12 +174,15 @@ function generateNotesFromChordName(chordName) {
 
 	let chordType = chordName.replace(rootNotePattern, ''); // Get everything after the root note
 
-	if (!chordStructures[chordType]) {
-		console.error("Unknown chord type:", chordType);
-		return [];
+	// Search all chord structure names for a matching type
+	for (let key in chordStructureNames) {
+		if (chordStructureNames[key].includes(chordType)) {
+			return chordStructures[key].map(interval => (rootValue + interval) % 12);
+		}
 	}
 
-	return chordStructures[chordType].map(interval => (rootValue + interval) % 12);
+	console.error("Unknown chord type:", chordType);
+	return [];
 }
 
 function setChordName(root, chordType)
@@ -334,8 +347,14 @@ function nextChord()
 			generateProgression();
 			currentIndex = 0;
 		}
-
-		setIntervalChord();
+		if (isIntervalChord(currentProgression[currentIndex]) ) {
+			setIntervalChord();
+		} else if (isNamedChord(currentProgression[currentIndex]) ) {
+			setChordName(currentProgression[currentIndex], '');
+			currentChordNotes = generateNotesFromChordName(currentProgression[currentIndex]);
+		} else {
+			setRandomChord();
+		}
 		displayProgression();
 	} else {
 		nextKey();
@@ -372,21 +391,58 @@ function displayChord()
 function setIntervalChord()
 {
 	let keyValue = noteValues[keys[keyIndex]];
+
 	// Degree will get us something like 'I', 'II', 'III', etc.
 	let degree = currentProgression[currentIndex];
-	// isMinor will figure out if its a minor chord from the case of the degree
-	const isMinor = degree === degree.toLowerCase();
+
+	// We need to split the interval into three parts
+	// the degree, which is all letters that are either I or V
+	// the augmented or diminished, which is all letters that are + or o
+	// and the 7th, 9th, etc. which is all arabic numerals at the end
+	
+	// Get the degree
+	let bareDegree = degree.match(/[iIvV]{1,3}/)[0];
+
+	// Get the extension (7th, 9th, etc.)
+	let extension = currentProgression[currentIndex].match(/(7,9,11,13)/);
+
+	// Get the augmented
+	let augmented = currentProgression[currentIndex].match(/\+/);
+
+	// Get the diminished
+	let diminished = currentProgression[currentIndex].match(/o/);
+
+	// Get minor status, by checking for lower case
+	let minor = bareDegree === bareDegree.toLowerCase();
+
 	// Convert the degree to a number using romanNumerals
-	let degreeValue = romanNumerals[degree.toUpperCase()];
+	let degreeValue = romanNumerals[bareDegree.toUpperCase()];
+
 	// Then add the interval to get the new degree
 	let noteValue = (keyValue + degreeValue) % 12;
 
 	// Later fix this to handle key signatures with flats
-	const degreeChordRoot = valuesToNotesSharp[noteValue];
+	if( keys[keyIndex] === 'F' || keys[keyIndex] === 'Bb' || keys[keyIndex] === 'Eb' || keys[keyIndex] === 'Ab' || keys[keyIndex] === 'Db' || keys[keyIndex] === 'Gb' ) {
+		var valuesToNotes = valuesToNotesFlat;
+	} else {
+		var valuesToNotes = valuesToNotesSharp;
+	}
 
-	currentChordNotes = generateNotesFromChordName(degreeChordRoot + (isMinor ? 'm' : ''));
-	setChordName(degreeChordRoot, isMinor ? 'm' : '');
+	const degreeChordRoot = valuesToNotes[noteValue];
 
+	if (diminished) {
+		currentChordNotes = generateNotesFromChordName(degreeChordRoot + 'dim');
+		setChordName(degreeChordRoot, 'dim');
+	} else if (augmented) {
+		currentChordNotes = generateNotesFromChordName(degreeChordRoot + 'aug');
+		setChordName(degreeChordRoot, 'aug');
+	} else if (minor) {
+		currentChordNotes = generateNotesFromChordName(degreeChordRoot + 'm');
+		setChordName(degreeChordRoot, 'm');
+	} else {
+		currentChordNotes = generateNotesFromChordName(degreeChordRoot);
+		setChordName(degreeChordRoot, '');
+	}
 }
 
 
@@ -395,7 +451,11 @@ function generateProgression()
 	currentKeySpan.textContent = keys[keyIndex];
 
 	currentIndex = -1;
-	currentProgression = progressionSelect.value.split('-');
+	if (progressionSelect.value === "custom") {
+		currentProgression = document.getElementById('customProgression').value.split('-');
+	} else {
+		currentProgression = progressionSelect.value.split('-');
+	}
 
 	displayProgression();
 }
@@ -429,9 +489,7 @@ const progressionDisplay = document.getElementById('progressionDisplay');
 enableChordProgressionsCheckbox.addEventListener('change', function() {
 	progressionOptionsDiv.style.display = this.checked ? 'block' : 'none';
 	if (this.checked) {
-		nextKey();
-		generateProgression();
-		nextChord();
+		nextProgression();
 	}
 });
 
@@ -439,11 +497,12 @@ hideProgressionChordNamesCheckbox.addEventListener('change', function() {
 	displayChord();
 });
 
-progressionSelect.addEventListener('change', function() {
+function nextProgression()
+{
 	nextKey();
 	generateProgression();
 	nextChord();
-});
+}
 
 flowSelect.addEventListener('change', generateProgression);
 
