@@ -1,52 +1,66 @@
+function noKeys() {
+	allNotes.forEach(key => {
+		document.getElementById(key).checked = false;
+	});
+}
+
+function allKeys() {
+	allNotes.forEach(key => {
+		document.getElementById(key).checked = true;
+	});
+}
+
+function normalKeys() {
+	noKeys();
+
+	normalNotes.forEach(key => {
+		document.getElementById(key).checked = true;
+	});
+}
+
+function flatKeys() {
+	noKeys();
+
+	allNotes.filter(key => key.endsWith('b')).forEach(key => {
+		document.getElementById(key).checked = true;
+	});
+}
+
+function sharpKeys() {
+	noKeys();
+
+	allNotes.filter(key => key.endsWith('#')).forEach(key => {
+		document.getElementById(key).checked = true;
+	});
+}
+
+function blackKeys() {
+	noKeys();
+
+	normalNotes.filter(key => key.endsWith('#') || key.endsWith('b')).forEach(key => {
+		document.getElementById(key).checked = true;
+	});
+}
+
+function whiteKeys() {
+	noKeys();
+
+	allNotes.filter(key => !key.endsWith('#') && !key.endsWith('b')).forEach(key => {
+		document.getElementById(key).checked = true;
+	});
+}
 
 
-document.getElementById('whiteKeys').addEventListener('click', () => {
-    ['C', 'D', 'E', 'F', 'G', 'A', 'B'].forEach(key => {
-        document.getElementById(key).checked = true;
-    });
-    ['C#', 'Db', 'D#', 'Eb', 'F#', 'Gb', 'G#', 'Ab', 'A#', 'Bb'].forEach(key => {
-        document.getElementById(key).checked = false;
-    });
-});
 
-document.getElementById('blackKeys').addEventListener('click', () => {
-    ['C#', 'Db', 'D#', 'Eb', 'F#', 'Gb', 'G#', 'Ab', 'A#', 'Bb'].forEach(key => {
-        document.getElementById(key).checked = true;
-    });
-    ['C', 'D', 'E', 'F', 'G', 'A', 'B'].forEach(key => {
-        document.getElementById(key).checked = false;
-    });
-});
 
-document.getElementById('sharpKeys').addEventListener('click', () => {
-    ['C#', 'D#', 'F#', 'G#', 'A#'].forEach(key => {
-        document.getElementById(key).checked = true;
-    });
-    ['Db', 'Eb', 'Gb', 'Ab', 'Bb'].forEach(key => {
-        document.getElementById(key).checked = false;
-    });
-});
+document.getElementById('noKeys').addEventListener('click', noKeys);
+document.getElementById('allKeys').addEventListener('click', allKeys);
+document.getElementById('normalKeys').addEventListener('click', normalKeys);
+document.getElementById('flatKeys').addEventListener('click', flatKeys);
+document.getElementById('sharpKeys').addEventListener('click', sharpKeys);
+document.getElementById('blackKeys').addEventListener('click', blackKeys);
+document.getElementById('whiteKeys').addEventListener('click', whiteKeys);
 
-document.getElementById('flatKeys').addEventListener('click', () => {
-    ['Db', 'Eb', 'Gb', 'Ab', 'Bb'].forEach(key => {
-        document.getElementById(key).checked = true;
-    });
-    ['C#', 'D#', 'F#', 'G#', 'A#'].forEach(key => {
-        document.getElementById(key).checked = false;
-    });
-});
-
-document.getElementById('noKeys').addEventListener('click', () => {
-    ['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B'].forEach(key => {
-        document.getElementById(key).checked = false;
-    });
-});
-
-document.getElementById('allKeys').addEventListener('click', () => {
-    ['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B'].forEach(key => {
-        document.getElementById(key).checked = true;
-    });
-});
 document.addEventListener("DOMContentLoaded", function() {
 
     // Handler functions for preset buttons
