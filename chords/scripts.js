@@ -57,6 +57,16 @@ const romanNumerals = {
 	'VII': 11
 };
 
+const romanNumeralNames = {
+	'I': 'Tonic',
+	'II': 'Supertonic',
+	'III': 'Mediant',
+	'IV': 'Subdominant',
+	'V': 'Dominant',
+	'VI': 'Submediant',
+	'VII': 'Leading Tone'
+};
+
 
 // These are separated so we can so one way gives us more flats and the other more sharps,
 // e.g. F# in the fifths vs Gb in the fourths.
@@ -167,6 +177,7 @@ let keys = [];
 const chordDisplay = document.getElementById("chordDisplay");
 const chordCount = document.getElementById("chordCount");
 const progCount = document.getElementById("progCount");
+const degreeCount = document.getElementById("degreeCount");
 let highlightTimer; 
 
 
@@ -263,7 +274,12 @@ function checkChord(midiMessage) {
 	}
 
 	if (currentChordNotes.every(chordNote => activeNotes.includes(chordNote))) {
-		chordCount.textContent = parseInt(chordCount.textContent) + 1;
+		if (modeIsChords()) {
+			chordCount.textContent = parseInt(chordCount.textContent) + 1;
+		} else if (modeIsDegrees()) {
+			degreeCount.textContent = parseInt(degreeCount.textContent) + 1;
+		}
+
 		nextChord();
 		clearTimeout(highlightTimer);
 		highlightCorrectKeys();
@@ -340,9 +356,7 @@ function nextKey()
 
 function nextChord()
 {
-	let progression = enableChordProgressionsCheckbox.checked;
-
-	if (progression) {
+	if (modeIsProgressions() || modeIsDegrees()) {
 		currentIndex++;
 
 		if (currentIndex >= currentProgression.length) {
@@ -351,6 +365,7 @@ function nextChord()
 			generateProgression();
 			currentIndex = 0;
 		}
+
 		if (isIntervalChord(currentProgression[currentIndex]) ) {
 			setIntervalChord();
 		} else if (isNamedChord(currentProgression[currentIndex]) ) {
@@ -359,6 +374,7 @@ function nextChord()
 		} else {
 			setRandomChord();
 		}
+
 		displayProgression();
 	} else {
 		nextKey();
@@ -376,21 +392,9 @@ function displayChord()
 	text = text.replace(/#/g, '♯');
 	text = text.replace(/b/g, '♭');
 
-	let progression = enableChordProgressionsCheckbox.checked;
-	let hideChords = progression && hideProgressionChordNamesCheckbox.checked;
-
-	// If the progression chord is hidden, hide the chord name
-	// and give it a tooltip with the chord name
-	if (hideChords) {
-		chordDisplay.textContent = "Hidden"
-		chordDisplay.title = text;
-	}
-	else {
-		chordDisplay.textContent = text;
-		chordDisplay.title = '';
-	}
+	chordDisplay.textContent = text;
+	chordDisplay.title = '';
 }
-
 
 function setIntervalChord()
 {
@@ -406,6 +410,14 @@ function setIntervalChord()
 	
 	// Get the degree
 	let bareDegree = degree.match(/[iIvV]{1,3}/)[0];
+
+	// We only need the degree if we're in scale degree mode since
+	// we only need the first note of the chord
+	if( modeIsDegrees() ) {
+		currentChordNotes = [(keyValue + romanNumerals[bareDegree.toUpperCase()]) % 12];
+		setChordName(bareDegree, '');
+		return;
+	}
 
 	// Get the extension (7th, 9th, etc.)
 	let extension = currentProgression[currentIndex].match(/(7,9,11,13)/);
@@ -457,6 +469,15 @@ function generateProgression()
 	currentIndex = -1;
 	if (progressionSelect.value === "custom") {
 		currentProgression = document.getElementById('customProgression').value.split('-');
+	} else if (progressionSelect.value === "random") {
+		// Get count from randomProgression input
+		let count = document.getElementById('randomProgression').value;
+
+		// Select that many scale degrees from the roman numeral list
+		currentProgression = [];
+		for (let i = 0; i < count; i++) {
+			currentProgression.push(Object.keys(romanNumerals)[Math.floor(Math.random() * Object.keys(romanNumerals).length)]);
+		}
 	} else {
 		currentProgression = progressionSelect.value.split('-');
 	}
@@ -471,7 +492,7 @@ function displayProgression() {
 	// Add event listeners to chords to track user input
 	document.querySelectorAll('.chord').forEach((chordSpan, index) => {
 		if (currentIndex == index) {
-			chordSpan.style.color = "blue";
+			chordSpan.style.color = "#0077ff";
 		} else if (currentIndex > index) {
 			chordSpan.style.color = "green";
 		}
@@ -481,24 +502,19 @@ function displayProgression() {
 // Initialize MIDI access
 navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
 
-const enableChordProgressionsCheckbox = document.getElementById('enableChordProgressions');
 const hideProgressionChordNamesCheckbox = document.getElementById('hideProgressionChordNames');
 const progressionOptionsDiv = document.getElementById('progressionOptions');
 const progressionSelect = document.getElementById('progressionSelect');
 const flowSelect = document.getElementById('flowSelect');
-const currentKeySpan = document.getElementById('currentKey').querySelector('span');
+const currentKeySpan = document.getElementById('currentKey');
 const progressionDisplay = document.getElementById('progressionDisplay');
 
 
-enableChordProgressionsCheckbox.addEventListener('change', function() {
-	progressionOptionsDiv.style.display = this.checked ? 'block' : 'none';
-	if (this.checked) {
-		nextProgression();
-	}
-});
-
 hideProgressionChordNamesCheckbox.addEventListener('change', function() {
-	displayChord();
+	if ( !document.getElementById("hideProgressionChordNames").checked )
+		document.getElementById("chordDisplay").style.display = "block";
+	else
+		document.getElementById("chordDisplay").style.display = "none";
 });
 
 function nextProgression()
@@ -516,4 +532,5 @@ nextKey();
 setRandomChord();
 highlightCorrectKeys();
 displayChord();
+modeChange();
 
