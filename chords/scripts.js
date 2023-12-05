@@ -362,12 +362,15 @@ function highlightCorrectKeys() {
 }
 
 
-function onMIDISuccess(midiAccess) {
+function onMIDISuccess(midiAccess)
+{
 	// If there are no inputs, notify the user.
-		if (!midiAccess.inputs.size) {
-			console.error("No MIDI inputs detected. Please connect a MIDI device.");
-			return;
-		}
+	if (!midiAccess.inputs.size) {
+		document.getElementById("midiStatusText").textContent = "No MIDI inputs detected. Please connect a MIDI device.";
+		return;
+	}
+
+	document.getElementById("midiStatusText").textContent = "MIDI inputs connected.";
 
 	// Attach a listener for 'midimessage' events to all input devices
 	const inputs = Array.from(midiAccess.inputs.values());
@@ -378,10 +381,11 @@ function onMIDISuccess(midiAccess) {
 }
 
 
-function onMIDIFailure(error) {
-	console.error("Failed to get MIDI access:", error);
-	// You could also notify the user with a user-friendly message here.
+function onMIDIFailure(error)
+{
+	document.getElementById("midiStatusText").textContent = "Failed to get MIDI access. Error: " + error;
 }
+
 
 function updateAvailableKeys()
 {
@@ -557,7 +561,10 @@ function displayProgression() {
 }
 
 // Initialize MIDI access
-navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
+if( navigator.requestMIDIAccess )
+	navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
+else
+	document.getElementById("midiStatusText").textContent = "Your browser does not support MIDI access. Please ensure you are using a browser that supports WebMIDI, and that you are accessing this site from HTTPS, as some browsers require secure connections for WebMIDI."
 
 const hideProgressionChordNamesCheckbox = document.getElementById('hideProgressionChordNames');
 const progressionOptionsDiv = document.getElementById('progressionOptions');
