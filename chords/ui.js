@@ -177,3 +177,11 @@ document.getElementById("minorChordsOff").addEventListener("click", () => toggle
 document.querySelectorAll("input[name='mode']").forEach((input) => {
 	input.addEventListener('change', modeChange);
 });
+
+// Get every div that has a data-note element form 48 to 70 and add a click handler
+document.querySelectorAll("div[data-note]").forEach((div) => {
+	div.addEventListener('click', () => {
+		// Send the key from the data-note to the handleKeyClick function
+		handleKeyClick(div.dataset.note);
+	});
+});

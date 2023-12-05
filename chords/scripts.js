@@ -168,6 +168,7 @@ function isNamedChord(chord) {
 let currentChordName = '';
 let currentChordNotes = [];
 let activeNotes = [];
+let activeKeys = [];
 
 let currentProgression = [];
 let currentIndex = 0;
@@ -249,31 +250,80 @@ function setRandomChord()
 }
 
 
-function checkChord(midiMessage) {
-	let pressedNotes = midiMessage.data;
-	let note = pressedNotes[1] % 12; // Normalize note to range 0-11
-	let velocity = pressedNotes[2];
+function handleKeyClick(key)
+{
+	let note = key % 12; // Normalize note to range 0-11
+	let keyElement = document.querySelector(`.key[data-note="${key}"]`);
 
-	let keyElement = document.querySelector(`.key[data-note="${pressedNotes[1]}"]`);
+	if (activeKeys.includes(key)) {
+		handleKeyReleased(key);
+	} else {
+		handleKeyPressed(key);
+	}
+
+	checkChord();
+}
+
+
+function handleKeyPressed(key)
+{
+	let note = key % 12; // Normalize note to range 0-11
+	let keyElement = document.querySelector(`.key[data-note="${key}"]`);
+
+	activeKeys.push(key);
+	activeNotes.push(note);
+
+	if (currentChordNotes.includes(note)) {
+		keyElement.classList.add('correct');
+	} else {
+		keyElement.classList.add('incorrect');
+	}
+}
+
+
+function handleKeyReleased(key)
+{
+	let note = key % 12; // Normalize note to range 0-11
+	let keyElement = document.querySelector(`.key[data-note="${key}"]`);
+
+	activeKeys.splice(activeKeys.indexOf(key), 1);
+
+	let index = activeNotes.indexOf(note);
+
+	if (index > -1) {
+		activeNotes.splice(index, 1);  // Remove note from active list
+	}
+
+	keyElement.classList.remove('correct', 'incorrect');
+}
+
+
+function handleMidiMessage(midiMessage)
+{
+	let pressedNotes = midiMessage.data;
+	let velocity = pressedNotes[2];
 
 	// Check for MIDI message type to determine if the key is pressed or released.
 	if (pressedNotes[0] === 144 && velocity > 0) {
-		if (currentChordNotes.includes(note)) {
-			keyElement.classList.remove('highlight');
-			keyElement.classList.add('correct');
-			activeNotes.push(note);  // Add note to active list
-		} else {
-			keyElement.classList.add('incorrect');
-		}
+		handleKeyPressed(pressedNotes[1]);
 	} else if (pressedNotes[0] === 128 || (pressedNotes[0] === 144 && velocity === 0)) {
-		keyElement.classList.remove('correct', 'incorrect');
-		let index = activeNotes.indexOf(note);
-		if (index > -1) {
-			activeNotes.splice(index, 1);  // Remove note from active list
-		}
+		handleKeyReleased(pressedNotes[1]);
 	}
 
-	if (currentChordNotes.every(chordNote => activeNotes.includes(chordNote))) {
+	checkChord();
+}
+
+
+function checkChord() {
+	// Sort both arrays to ensure they are in the same order
+	let sortedCurrentChordNotes = [...currentChordNotes].sort();
+	let sortedActiveNotes = [...activeNotes].sort();
+
+	// Check if every element in sortedCurrentChordNotes is in sortedActiveNotes and both arrays have the same length
+	// This makes sure we disallow extra notes in the chord
+	if (sortedCurrentChordNotes.length === sortedActiveNotes.length &&
+		sortedCurrentChordNotes.every((chordNote, index) => chordNote === sortedActiveNotes[index])) {
+
 		if (modeIsChords()) {
 			chordCount.textContent = parseInt(chordCount.textContent) + 1;
 		} else if (modeIsDegrees()) {
@@ -282,6 +332,13 @@ function checkChord(midiMessage) {
 
 		nextChord();
 		clearTimeout(highlightTimer);
+
+		// Make the user re-press the keys
+		keysToRelease = activeKeys.slice();
+		for (let key of keysToRelease) {
+			handleKeyReleased(key);
+		}
+
 		highlightCorrectKeys();
 	}
 }
@@ -316,7 +373,7 @@ function onMIDISuccess(midiAccess) {
 	const inputs = Array.from(midiAccess.inputs.values());
 	inputs.forEach(input => {
 		console.log(`Listening to MIDI input: ${input.name}`);
-		input.onmidimessage = checkChord;
+		input.onmidimessage = handleMidiMessage;
 	});
 }
 
