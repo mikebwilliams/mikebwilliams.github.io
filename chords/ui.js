@@ -185,3 +185,11 @@ document.querySelectorAll("div[data-note]").forEach((div) => {
 		handleKeyClick(div.dataset.note);
 	});
 });
+
+document.getElementById("showKeyboard").addEventListener('click', () => {
+	// Show the keyboard if checked, otherwise hide
+	if (document.getElementById("showKeyboard").checked)
+		document.getElementById("piano").style.display = "block";
+	else
+		document.getElementById("piano").style.display = "none";
+});
