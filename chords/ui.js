@@ -124,7 +124,7 @@ function modeChange()
 		// Show the scale degree options
 		document.getElementById("degreesOptions").style.display = "block";
 		document.getElementById("chordOptions").style.display = "none";
-		document.getElementById("progressionOptions").style.display = "none";
+		document.getElementById("progressionOptions").style.display = "block";
 
 		document.getElementById("chordDisplay").style.display = "none";
 		document.getElementById("progDisplay").style.display = "block";

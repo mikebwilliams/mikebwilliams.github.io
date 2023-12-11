@@ -54,7 +54,16 @@ const romanNumerals = {
 	'IV': 5,
 	'V': 7,
 	'VI': 9,
-	'VII': 11
+	'VII': 11,
+	// These are upper case since we check by uppercase to ignore
+	// major/minor chord quality when getting the scale degree
+	'BI': -1,
+	'BII': 1,
+	'BIII': 3,
+	'BIV': 4,
+	'BV': 6,
+	'BVI': 8,
+	'BVII': 10
 };
 
 const romanNumeralNames = {
@@ -470,7 +479,7 @@ function setIntervalChord()
 	// and the 7th, 9th, etc. which is all arabic numerals at the end
 	
 	// Get the degree
-	let bareDegree = degree.match(/[iIvV]{1,3}/)[0];
+	let bareDegree = degree.match(/[biIvV]{1,4}/)[0];
 
 	// We only need the degree if we're in scale degree mode since
 	// we only need the first note of the chord
