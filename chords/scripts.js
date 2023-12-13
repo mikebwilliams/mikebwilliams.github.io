@@ -178,6 +178,7 @@ let currentChordName = '';
 let currentChordNotes = [];
 let activeNotes = [];
 let activeKeys = [];
+let isIncorrect = false;
 
 let currentProgression = [];
 let currentIndex = 0;
@@ -185,9 +186,12 @@ let keyIndex = 0;
 let keys = [];
 
 const chordDisplay = document.getElementById("chordDisplay");
-const chordCount = document.getElementById("chordCount");
-const progCount = document.getElementById("progCount");
-const degreeCount = document.getElementById("degreeCount");
+const chordCountCorrect = document.getElementById("chordCountCorrect");
+const progCountCorrect = document.getElementById("progCountCorrect");
+const degreeCountCorrect = document.getElementById("degreeCountCorrect");
+const chordCountIncorrect = document.getElementById("chordCountIncorrect");
+const progCountIncorrect = document.getElementById("progCountIncorrect");
+const degreeCountIncorrect = document.getElementById("degreeCountIncorrect");
 let highlightTimer; 
 
 
@@ -286,6 +290,8 @@ function handleKeyPressed(key)
 		keyElement.classList.add('correct');
 	} else {
 		keyElement.classList.add('incorrect');
+		isIncorrect = true;
+		displayChord();
 	}
 }
 
@@ -334,9 +340,21 @@ function checkChord() {
 		sortedCurrentChordNotes.every((chordNote, index) => chordNote === sortedActiveNotes[index])) {
 
 		if (modeIsChords()) {
-			chordCount.textContent = parseInt(chordCount.textContent) + 1;
+			if (isIncorrect) {
+				chordCountIncorrect.textContent = parseInt(chordCountIncorrect.textContent) + 1;
+			} else {
+				chordCountCorrect.textContent = parseInt(chordCountCorrect.textContent) + 1;
+			}
+
+			isIncorrect = false;
 		} else if (modeIsDegrees()) {
-			degreeCount.textContent = parseInt(degreeCount.textContent) + 1;
+			if (isIncorrect) {
+				degreeCountIncorrect.textContent = parseInt(degreeCountIncorrect.textContent) + 1;
+			} else {
+				degreeCountCorrect.textContent = parseInt(degreeCountCorrect.textContent) + 1;
+			}
+
+			isIncorrect = false;
 		}
 
 		nextChord();
@@ -430,7 +448,15 @@ function nextChord()
 		currentIndex++;
 
 		if (currentIndex >= currentProgression.length) {
-			progCount.textContent = parseInt(progCount.textContent) + 1;
+			if (modeIsProgressions()) {
+				if (isIncorrect) {
+					progCountIncorrect.textContent = parseInt(progCountIncorrect.textContent) + 1;
+				} else {
+					progCountCorrect.textContent = parseInt(progCountCorrect.textContent) + 1;
+				}
+
+				isIncorrect = false;
+			}
 			nextKey();
 			generateProgression();
 			currentIndex = 0;
@@ -464,6 +490,12 @@ function displayChord()
 
 	chordDisplay.textContent = text;
 	chordDisplay.title = '';
+
+	if (isIncorrect) {
+		chordDisplay.classList.add('incorrect');
+	} else {
+		chordDisplay.classList.remove('incorrect');
+	}
 }
 
 function setIntervalChord()
