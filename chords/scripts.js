@@ -228,8 +228,6 @@ function setChordName(root, chordType)
 
 function setRandomChord()
 {
-	let selectedRoots = Object.keys(noteValues).filter(root => document.getElementById(root).checked);
-
 	// Grab the selected chord types
 	let selectedChordTypes = [];
 	if (document.getElementById('majorChord').checked) selectedChordTypes.push('');
@@ -250,12 +248,13 @@ function setRandomChord()
 	if (document.getElementById('augmentedSeventhChord').checked) selectedChordTypes.push('aug7');
 	if (document.getElementById('augmentedMajorSeventhChord').checked) selectedChordTypes.push('augM7');
 
-	if (selectedRoots.length === 0 || selectedChordTypes.length === 0) {
-		alert("Please select at least one root key and one chord type!");
+	if (selectedChordTypes.length === 0) {
+		alert("Please select at least one chord type!");
 		return null;
 	}
 
-	let randomRoot = selectedRoots[Math.floor(Math.random() * selectedRoots.length)];
+	// 'Random' root may actually be circle of fourths/fifths, and is generated in the nextKey function
+	let randomRoot = keys[keyIndex];
 	let randomChordType = selectedChordTypes[Math.floor(Math.random() * selectedChordTypes.length)];
 
 	currentChordNotes = generateNotesFromChordName(randomRoot + randomChordType);
@@ -424,6 +423,10 @@ function updateAvailableKeys()
 		keys = circleOfFifths;
 	} else {
 		keys = Object.keys(noteValues).filter(root => document.getElementById(root).checked);
+		if (keys.length === 0) {
+			alert("Please select at least one root key!");
+			return null;
+		}
 	}
 }
 
@@ -459,7 +462,6 @@ function nextChord()
 			}
 			nextKey();
 			generateProgression();
-			currentIndex = 0;
 		}
 
 		if (isIntervalChord(currentProgression[currentIndex]) ) {
@@ -568,7 +570,8 @@ function generateProgression()
 {
 	currentKeySpan.textContent = keys[keyIndex];
 
-	currentIndex = -1;
+	currentIndex = 0;
+
 	if (progressionSelect.value === "custom") {
 		currentProgression = document.getElementById('customProgression').value.split('-');
 	} else if (progressionSelect.value === "random") {
@@ -624,9 +627,11 @@ hideProgressionChordNamesCheckbox.addEventListener('change', function() {
 
 function nextProgression()
 {
-	nextKey();
-	generateProgression();
+	// This will cause the progression to start at the beginning of the
+	// next one
+	currentIndex = currentProgression.length;
 	nextChord();
+	generateProgression();
 }
 
 flowSelect.addEventListener('change', generateProgression);
