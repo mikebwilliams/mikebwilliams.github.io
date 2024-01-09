@@ -2,7 +2,7 @@
 body {
     background-color: #333; /* Dark gray background */
     color: #f0f0f0;        /* Light gray font color */
-    font-family: Helvetica, Arial, sans-serif; /* Optional: sets the font to Arial */
+    font-family: Noto Sans, Calibri, Arial, sans-serif; /* Optional: sets the font to Arial */
 }
 
 
