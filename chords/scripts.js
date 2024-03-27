@@ -578,10 +578,22 @@ function generateProgression()
 		// Get count from randomProgression input
 		let count = document.getElementById('randomProgression').value;
 
+		enabledNumerals = {};
+		if (modeIsDegrees()) {
+			Object.keys(romanNumerals).forEach(numeral => {
+				const checkbox = document.getElementById(numeral); // Adjust the ID retrieval method if necessary
+				if (checkbox && checkbox.checked) {
+					enabledNumerals[numeral] = romanNumerals[numeral];
+				}
+			});
+		} else {
+			enabledNumerals = romanNumerals;
+		}
+
 		// Select that many scale degrees from the roman numeral list
 		currentProgression = [];
 		for (let i = 0; i < count; i++) {
-			currentProgression.push(Object.keys(romanNumerals)[Math.floor(Math.random() * Object.keys(romanNumerals).length)]);
+			currentProgression.push(Object.keys(enabledNumerals)[Math.floor(Math.random() * Object.keys(enabledNumerals).length)]);
 		}
 	} else {
 		currentProgression = progressionSelect.value.split('-');
