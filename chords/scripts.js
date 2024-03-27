@@ -98,6 +98,9 @@ const chordStructures = {
 	'dim': [0, 3, 6],
 	'aug': [0, 4, 8],
 
+	'sus2': [0, 2, 7],
+	'sus4': [0, 5, 7],
+
 	'6': [0, 4, 7, 9],
 	'm6': [0, 3, 7, 9],
 
@@ -133,6 +136,9 @@ const chordStructureNames = {
 	'm': ['m', 'mi', 'min', '-'],
 	'dim': ['dim', 'o', 'º'],
 	'aug': ['aug', '+'],
+
+	'sus2': ['sus2'],
+	'sus4': ['sus4'],
 
 	'6': ['6'],
 	'm6': ['m6', 'mi6', 'min6', '-6'],
@@ -234,6 +240,8 @@ function setRandomChord()
 	if (document.getElementById('minorChord').checked) selectedChordTypes.push('m');
 	if (document.getElementById('augmentedChord').checked) selectedChordTypes.push('aug');
 	if (document.getElementById('diminishedChord').checked) selectedChordTypes.push('dim');
+	if (document.getElementById('suspendedSecondChord').checked) selectedChordTypes.push('sus2');
+	if (document.getElementById('suspendedFourthChord').checked) selectedChordTypes.push('sus4');
 
 	if (document.getElementById('sixthChord').checked) selectedChordTypes.push('6');
 	if (document.getElementById('minorSixthChord').checked) selectedChordTypes.push('m6');

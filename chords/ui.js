@@ -80,7 +80,7 @@ const toggleAllChords = (state) => {
 };
 
 const toggleTriadChords = (state) => {
-	const triads = ["majorChord", "minorChord", "augmentedChord", "diminishedChord"];
+	const triads = ["majorChord", "minorChord", "augmentedChord", "diminishedChord", "suspendedSecondChord", "suspendedFourthChord"];
 	triads.forEach(id => document.getElementById(id).checked = state);
 };
 
@@ -101,7 +101,7 @@ const toggleSeventhChords = (state) => {
 
 const toggleMajorChords = (state) => {
 	const majors = [
-		"majorChord", "augmentedChord", "sixthChord", 
+		"majorChord", "augmentedChord", "suspendedFourthChord", "sixthChord",
 		"seventhChord", "majorSeventhChord", "augmentedSeventhChord", 
 		"augmentedMajorSeventhChord"
 	];
@@ -110,7 +110,7 @@ const toggleMajorChords = (state) => {
 
 const toggleMinorChords = (state) => {
 	const minors = [
-		"minorChord", "diminishedChord", "minorSixthChord", 
+		"minorChord", "diminishedChord", "suspendedSecondChord", "minorSixthChord",
 		"minorSeventhChord", "minorMajorSeventhChord", 
 		"halfDiminishedSeventhChord", "diminishedSeventhChord"
 	];
