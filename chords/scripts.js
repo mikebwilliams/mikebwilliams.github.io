@@ -138,7 +138,7 @@ const chordStructureNames = {
 	'aug': ['aug', '+'],
 
 	'sus2': ['sus2'],
-	'sus4': ['sus4'],
+	'sus4': ['sus', 'sus4'],
 
 	'6': ['6'],
 	'm6': ['m6', 'mi6', 'min6', '-6'],
