@@ -234,6 +234,8 @@ function setChordName(root, chordType)
 
 function setRandomChord()
 {
+	let lastChordName = currentChordName;
+
 	// Grab the selected chord types
 	let selectedChordTypes = [];
 	if (document.getElementById('majorChord').checked) selectedChordTypes.push('');
@@ -261,12 +263,15 @@ function setRandomChord()
 		return null;
 	}
 
-	// 'Random' root may actually be circle of fourths/fifths, and is generated in the nextKey function
-	let randomRoot = keys[keyIndex];
-	let randomChordType = selectedChordTypes[Math.floor(Math.random() * selectedChordTypes.length)];
+	do {
+		// 'Random' root may actually be circle of fourths/fifths, and is generated in the nextKey function
+		let randomRoot = keys[keyIndex];
+		let randomChordType = selectedChordTypes[Math.floor(Math.random() * selectedChordTypes.length)];
 
-	currentChordNotes = generateNotesFromChordName(randomRoot + randomChordType);
-	setChordName(randomRoot, randomChordType);
+		currentChordNotes = generateNotesFromChordName(randomRoot + randomChordType);
+		setChordName(randomRoot, randomChordType);
+	// Loop until we get a new chord, or the user has only selected one chord type
+	} while (currentChordName === lastChordName && selectedChordTypes.length > 1 && keys.length > 1);
 }
 
 
