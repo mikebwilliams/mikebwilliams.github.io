@@ -63,7 +63,15 @@ const romanNumerals = {
 	'BIV': 4,
 	'BV': 6,
 	'BVI': 8,
-	'BVII': 10
+	'BVII': 10,
+	// Same as flats, but with sharps '#'
+	'I#': 1,
+	'II#': 3,
+	'III#': 5,
+	'IV#': 6,
+	'V#': 8,
+	'VI#': 10,
+	'VII#': 0
 };
 
 const romanNumeralNames = {
@@ -171,7 +179,7 @@ const chordStructureNames = {
 
 
 function isIntervalChord(chord) {
-	return chord.match(/^(#|b)?[iIvV]{1,3}(o|\+)?(7|9|11|13)?$/);
+	return chord.match(/^(#|b)?[iIvV]{1,3}.*/);
 }
 
 
@@ -187,6 +195,7 @@ let activeKeys = [];
 let isIncorrect = false;
 
 let currentProgression = [];
+let currentProgressionName = "";
 let currentIndex = 0;
 let keyIndex = 0;
 let keys = [];
@@ -460,7 +469,7 @@ function nextKey()
 
 function nextChord()
 {
-	if (modeIsProgressions() || modeIsDegrees()) {
+	if (modeIsProgressions() || modeIsDegrees() || modeIsJazz()) {
 		currentIndex++;
 
 		if (currentIndex >= currentProgression.length) {
@@ -472,7 +481,10 @@ function nextChord()
 				}
 
 				isIncorrect = false;
+			} else if (modeIsJazz()) {
+
 			}
+
 			nextKey();
 			generateProgression();
 		}
@@ -526,7 +538,7 @@ function setIntervalChord()
 	// and the 7th, 9th, etc. which is all arabic numerals at the end
 	
 	// Get the degree
-	let bareDegree = degree.match(/[biIvV]{1,4}/)[0];
+	let bareDegree = degree.match(/[b#iIvV]{1,4}/)[0];
 
 	// We only need the degree if we're in scale degree mode since
 	// we only need the first note of the chord
@@ -545,14 +557,23 @@ function setIntervalChord()
 	// Get the diminished
 	let diminished = currentProgression[currentIndex].match(/o/);
 
-	// Get minor status, by checking for lower case
-	let minor = bareDegree === bareDegree.toLowerCase();
+	// Get half-diminished
+	let halfDiminished = currentProgression[currentIndex].match(/ø/);
+
+	// Get minor status, by checking for lower case or a dash
+	let minor = bareDegree === bareDegree.toLowerCase() || currentProgression[currentIndex].match(/-/);
 
 	// Convert the degree to a number using romanNumerals
 	let degreeValue = romanNumerals[bareDegree.toUpperCase()];
 
 	// Then add the interval to get the new degree
 	let noteValue = (keyValue + degreeValue) % 12;
+
+	// Get sevenths
+	let majorSeventh = currentProgression[currentIndex].match(/M7/) || currentProgression[currentIndex].match(/Δ/) ||
+		        (diminished && currentProgression[currentIndex].match(/7/));
+
+	let domSeventh = !majorSeventh && (halfDiminished || currentProgression[currentIndex].match(/7/));
 
 	// Later fix this to handle key signatures with flats
 	if( keys[keyIndex] === 'F' || keys[keyIndex] === 'Bb' || keys[keyIndex] === 'Eb' || keys[keyIndex] === 'Ab' || keys[keyIndex] === 'Db' || keys[keyIndex] === 'Gb' ) {
@@ -562,20 +583,30 @@ function setIntervalChord()
 	}
 
 	const degreeChordRoot = valuesToNotes[noteValue];
+	let   chordQuality = '';
+	let   chord7th = '';
 
-	if (diminished) {
-		currentChordNotes = generateNotesFromChordName(degreeChordRoot + 'dim');
-		setChordName(degreeChordRoot, 'dim');
+	if (diminished || halfDiminished) {
+		chordQuality = 'dim';
 	} else if (augmented) {
-		currentChordNotes = generateNotesFromChordName(degreeChordRoot + 'aug');
-		setChordName(degreeChordRoot, 'aug');
+		chordQuality = 'aug';
 	} else if (minor) {
-		currentChordNotes = generateNotesFromChordName(degreeChordRoot + 'm');
-		setChordName(degreeChordRoot, 'm');
+		chordQuality = 'm';
 	} else {
-		currentChordNotes = generateNotesFromChordName(degreeChordRoot);
-		setChordName(degreeChordRoot, '');
+		chordQuality = '';
 	}
+
+	if (domSeventh) {
+		chord7th = '7';
+	} else if (majorSeventh) {
+		chord7th = 'M7';
+	} else {
+		chord7th = '';
+	}
+
+
+	currentChordNotes = generateNotesFromChordName(degreeChordRoot + chordQuality + chord7th);
+	setChordName(degreeChordRoot, chordQuality + chord7th);
 }
 
 
@@ -585,39 +616,73 @@ function generateProgression()
 
 	currentIndex = 0;
 
-	if (progressionSelect.value === "custom") {
-		currentProgression = document.getElementById('customProgression').value.split('-');
-	} else if (progressionSelect.value === "random") {
-		// Get count from randomProgression input
-		let count = document.getElementById('randomProgression').value;
+	if (modeIsProgressions() ) {
 
-		enabledNumerals = {};
-		if (modeIsDegrees()) {
-			Object.keys(romanNumerals).forEach(numeral => {
-				const checkbox = document.getElementById(numeral); // Adjust the ID retrieval method if necessary
-				if (checkbox && checkbox.checked) {
-					enabledNumerals[numeral] = romanNumerals[numeral];
-				}
-			});
+		if (progressionSelect.value === "custom") {
+			currentProgression = document.getElementById('customProgression').value.split('-');
+		} else if (progressionSelect.value === "random") {
+			// Get count from randomProgression input
+			let count = document.getElementById('randomProgression').value;
+
+			enabledNumerals = {};
+			if (modeIsDegrees()) {
+				Object.keys(romanNumerals).forEach(numeral => {
+					const checkbox = document.getElementById(numeral); // Adjust the ID retrieval method if necessary
+					if (checkbox && checkbox.checked) {
+						enabledNumerals[numeral] = romanNumerals[numeral];
+					}
+				});
+			} else {
+				enabledNumerals = romanNumerals;
+			}
+
+			// Select that many scale degrees from the roman numeral list
+			currentProgression = [];
+			for (let i = 0; i < count; i++) {
+				currentProgression.push(Object.keys(enabledNumerals)[Math.floor(Math.random() * Object.keys(enabledNumerals).length)]);
+			}
 		} else {
-			enabledNumerals = romanNumerals;
+			currentProgression = progressionSelect.value.split('-');
 		}
 
-		// Select that many scale degrees from the roman numeral list
-		currentProgression = [];
-		for (let i = 0; i < count; i++) {
-			currentProgression.push(Object.keys(enabledNumerals)[Math.floor(Math.random() * Object.keys(enabledNumerals).length)]);
+		currentProgressionName = progressionSelect.value;
+	} else if (modeIsJazz()) {
+
+		// Get list of all enabled Jazz cadences
+		enabledCadences = {};
+		enabledNames = {};
+		Object.keys(jazzCadences).forEach(cadence => {
+			if (jazzCadences[cadence].enabled) {
+				enabledCadences[cadence] = jazzCadences[cadence].chords;
+				enabledNames[cadence] = jazzCadences[cadence].name;
+			}
+		} );
+
+		// Select a random cadence from the enabled list
+		if (Object.keys(enabledCadences).length === 0) {
+			enabledCadences['Regular'] =['ii', 'V7', 'IΔ'];
+			enabledNames['Regular'] = 'Regular';
 		}
-	} else {
-		currentProgression = progressionSelect.value.split('-');
+
+		selectedProgression = Object.keys(enabledCadences)[Math.floor(Math.random() * Object.keys(enabledCadences).length)];
+		currentProgression = enabledCadences[selectedProgression];
+		currentProgressionName = enabledNames[selectedProgression];
 	}
 
 	displayProgression();
 }
 
 function displayProgression() {
+	let hideNumerals = document.getElementById('hideProgressionChordNumerals').checked;
 	currentKeySpan.textContent = keys[keyIndex];
-	progressionDisplay.innerHTML = currentProgression.map(chord => `<span class="chord">${chord}</span>`).join(' - ');
+
+	if (modeIsJazz() && hideNumerals) {
+		progressionDisplay.innerHTML = currentProgression.map(chord => `<span class="chord">?</span>`).join(' - ');
+	} else {
+		progressionDisplay.innerHTML = currentProgression.map(chord => `<span class="chord">${chord}</span>`).join(' - ');
+	}
+
+	cadenceDisplay.innerHTML = " " + currentProgressionName;
 
 	// Add event listeners to chords to track user input
 	document.querySelectorAll('.chord').forEach((chordSpan, index) => {
@@ -641,6 +706,7 @@ const progressionSelect = document.getElementById('progressionSelect');
 const flowSelect = document.getElementById('flowSelect');
 const currentKeySpan = document.getElementById('currentKey');
 const progressionDisplay = document.getElementById('progressionDisplay');
+const cadenceDisplay = document.getElementById('cadenceDisplay');
 
 
 hideProgressionChordNamesCheckbox.addEventListener('change', function() {

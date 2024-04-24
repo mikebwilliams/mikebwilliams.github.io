@@ -62,6 +62,10 @@ function modeIsDegrees() {
 	return document.querySelector('input[name="mode"]:checked').value === "tabDegrees";
 }
 
+function modeIsJazz() {
+	return document.querySelector('input[name="mode"]:checked').value === "tabJazz";
+}
+
 
 
 document.getElementById('noKeys').addEventListener('click', noKeys);
@@ -125,6 +129,7 @@ function modeChange()
 		document.getElementById("degreesOptions").style.display = "block";
 		document.getElementById("chordOptions").style.display = "none";
 		document.getElementById("progressionOptions").style.display = "block";
+		document.getElementById("jazzOptions").style.display = "none";
 
 		document.getElementById("chordDisplay").style.display = "none";
 		document.getElementById("progDisplay").style.display = "block";
@@ -133,6 +138,7 @@ function modeChange()
 		document.getElementById("degreesOptions").style.display = "none";
 		document.getElementById("chordOptions").style.display = "block";
 		document.getElementById("progressionOptions").style.display = "none";
+		document.getElementById("jazzOptions").style.display = "none";
 
 		document.getElementById("chordDisplay").style.display = "block";
 		document.getElementById("progDisplay").style.display = "none";
@@ -141,12 +147,22 @@ function modeChange()
 		document.getElementById("degreesOptions").style.display = "none";
 		document.getElementById("chordOptions").style.display = "none";
 		document.getElementById("progressionOptions").style.display = "block";
+		document.getElementById("jazzOptions").style.display = "none";
 
 		document.getElementById("progDisplay").style.display = "block";
 		if ( !document.getElementById("hideProgressionChordNames").checked )
 			document.getElementById("chordDisplay").style.display = "block";
 		else
 			document.getElementById("chordDisplay").style.display = "none";
+
+	} else if (modeIsJazz()) {
+		document.getElementById("degreesOptions").style.display = "none";
+		document.getElementById("chordOptions").style.display = "none";
+		document.getElementById("progressionOptions").style.display = "none";
+		document.getElementById("jazzOptions").style.display = "block";
+
+		document.getElementById("chordDisplay").style.display = "none";
+		document.getElementById("progDisplay").style.display = "block";
 	}
 
 	nextProgression();
@@ -192,4 +208,34 @@ document.getElementById("showKeyboard").addEventListener('click', () => {
 		document.getElementById("piano").style.display = "block";
 	else
 		document.getElementById("piano").style.display = "none";
+});
+
+function initJazzBricks() {
+	const tbody = document.querySelector('#jazzBricks tbody');
+
+	// Enable every jazzCadence in jazzCadencesCommon by default
+	jazzCadencesCommon.forEach(cadence => { 
+		const jazzCadence = jazzCadences.find(c => c.name === cadence);
+		if (jazzCadence) jazzCadence.enabled = true;
+	} );
+
+	jazzCadences.forEach(cadence => {
+		const tr = document.createElement('tr');
+		tr.innerHTML = `
+			<td>${cadence.name}</td>
+			<td>${cadence.chords.join(' ')}</td>
+			<td><input type="checkbox" ${cadence.enabled ? 'checked' : ''}></td>
+			`;
+		tbody.appendChild(tr);
+
+		// Event listener to handle changes in checkbox
+		tr.querySelector('input[type="checkbox"]').addEventListener('change', function() {
+			cadence.enabled = this.checked;
+			console.log(`${cadence.name} enabled state is now ${cadence.enabled}`);
+		});
+	});
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+	initJazzBricks();
 });

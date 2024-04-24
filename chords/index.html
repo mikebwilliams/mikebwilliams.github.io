@@ -8,7 +8,7 @@
 	</head>
 	<body>
 		<div class="container">
-			<h2 id="progDisplay"><span id="currentKey"></span> <span id="progressionDisplay"></span></h2>
+			<h2 id="progDisplay"><span id="currentKey"></span><span id="cadenceDisplay"></span><br><span id="progressionDisplay"></span></h2>
 			<h2 id="chordDisplay">Chord</h2>
 		</div>
 
@@ -78,6 +78,9 @@
 
 			<input type="radio" id="tabDegrees" name="mode" value="tabDegrees">
 			<label for="tabDegrees">Scale Degrees</label>
+
+			<input type="radio" id="tabJazz" name="mode" value="tabJazz">
+			<label for="tabJazz">Jazz Bricks</label>
 		</div>
 
 		<div class="tabContent" id="chordOptions">
@@ -193,6 +196,20 @@
 			</div>
 		</div>
 
+		<div class="tabContent" id="jazzOptions">
+			<label><input type="checkbox" id="hideProgressionChordNumerals">Hide Progression Chord Numerals</label>
+			<table id="jazzBricks">
+				<thead>
+					<tr>
+						<th>Chord</th>
+						<th>Chord Name</th>
+						<th>Enabled</th>
+					</tr>
+				</thead>
+				<tbody></tbody>
+			</table>
+		</div>
+
 		<h3>Options</h3>
 
 		<details>
@@ -272,6 +289,7 @@
 			<label id="midiStatus">MIDI Status: <span id="midiStatusText">Not Connected</span></label>
 		</details>
 
+		<script src="data.js"></script>
 		<script src="ui.js"></script>
 		<script src="scripts.js"></script>
 		<script data-goatcounter="https://mikebwilliams.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
