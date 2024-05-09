@@ -10,13 +10,23 @@ let currentIndex = 0;
 let keyIndex = 0;
 let keys = [];
 
+const hideProgressionChordNamesCheckbox = document.getElementById('hideProgressionChordNames');
+const progressionOptionsDiv = document.getElementById('progressionOptions');
+const progressionSelect = document.getElementById('progressionSelect');
+const flowSelect = document.getElementById('flowSelect');
+const currentKeySpan = document.getElementById('currentKey');
+
+const progressionDisplay = document.getElementById('progressionDisplay');
+const cadenceDisplay = document.getElementById('cadenceDisplay');
 const chordDisplay = document.getElementById("chordDisplay");
+
 const chordCountCorrect = document.getElementById("chordCountCorrect");
 const progCountCorrect = document.getElementById("progCountCorrect");
 const degreeCountCorrect = document.getElementById("degreeCountCorrect");
 const chordCountIncorrect = document.getElementById("chordCountIncorrect");
 const progCountIncorrect = document.getElementById("progCountIncorrect");
 const degreeCountIncorrect = document.getElementById("degreeCountIncorrect");
+
 let highlightTimer; 
 
 
@@ -525,13 +535,6 @@ function displayProgression() {
 	});
 }
 
-const hideProgressionChordNamesCheckbox = document.getElementById('hideProgressionChordNames');
-const progressionOptionsDiv = document.getElementById('progressionOptions');
-const progressionSelect = document.getElementById('progressionSelect');
-const flowSelect = document.getElementById('flowSelect');
-const currentKeySpan = document.getElementById('currentKey');
-const progressionDisplay = document.getElementById('progressionDisplay');
-const cadenceDisplay = document.getElementById('cadenceDisplay');
 
 
 hideProgressionChordNamesCheckbox.addEventListener('change', function() {
@@ -540,6 +543,7 @@ hideProgressionChordNamesCheckbox.addEventListener('change', function() {
 	else
 		document.getElementById("chordDisplay").style.display = "none";
 });
+
 
 function nextProgression()
 {
@@ -557,4 +561,3 @@ setRandomChord();
 highlightCorrectKeys();
 displayChord();
 modeChange();
-
