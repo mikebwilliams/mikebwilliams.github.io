@@ -161,8 +161,11 @@ function modeChange()
 		document.getElementById("progressionOptions").style.display = "none";
 		document.getElementById("jazzOptions").style.display = "block";
 
-		document.getElementById("chordDisplay").style.display = "none";
 		document.getElementById("progDisplay").style.display = "block";
+		if ( !document.getElementById("hideProgressionChordNames").checked )
+			document.getElementById("chordDisplay").style.display = "block";
+		else
+			document.getElementById("chordDisplay").style.display = "none";
 	}
 
 	nextProgression();
