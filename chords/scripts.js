@@ -437,12 +437,13 @@ function setIntervalChord()
 	const degreeChordRoot = valuesToNotes[noteValue];
 	let   chordQuality = '';
 	let   chord7th = '';
+	let   ext = '';
 
-	if (diminished || halfDiminished) {
+	if (diminished) {
 		chordQuality = 'dim';
 	} else if (augmented) {
 		chordQuality = 'aug';
-	} else if (minor) {
+	} else if (minor || halfDiminished) {
 		chordQuality = 'm';
 	} else {
 		chordQuality = '';
@@ -456,9 +457,12 @@ function setIntervalChord()
 		chord7th = '';
 	}
 
+	if (halfDiminished) {
+		ext += 'b5';
+	}
 
-	currentChordNotes = generateNotesFromChordName(degreeChordRoot + chordQuality + chord7th);
-	setChordName(degreeChordRoot, chordQuality + chord7th);
+	currentChordNotes = generateNotesFromChordName(degreeChordRoot + chordQuality + chord7th + ext);
+	setChordName(degreeChordRoot, chordQuality + chord7th + ext);
 }
 
 
