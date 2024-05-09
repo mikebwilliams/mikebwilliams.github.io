@@ -254,6 +254,17 @@ function onMIDIFailure(error)
 	document.getElementById("midiStatusText").textContent = "Failed to get MIDI access. Error: " + error;
 }
 
+	
+function initMIDI()
+{
+	// Initialize MIDI access
+	if( navigator.requestMIDIAccess )
+		navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
+	else
+		document.getElementById("midiStatusText").textContent = "Your browser does not support MIDI access. Please ensure you are using a browser that supports WebMIDI, and that you are accessing this site from HTTPS, as some browsers require secure connections for WebMIDI."
+
+}
+
 
 function updateAvailableKeys()
 {
@@ -514,12 +525,6 @@ function displayProgression() {
 	});
 }
 
-// Initialize MIDI access
-if( navigator.requestMIDIAccess )
-	navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
-else
-	document.getElementById("midiStatusText").textContent = "Your browser does not support MIDI access. Please ensure you are using a browser that supports WebMIDI, and that you are accessing this site from HTTPS, as some browsers require secure connections for WebMIDI."
-
 const hideProgressionChordNamesCheckbox = document.getElementById('hideProgressionChordNames');
 const progressionOptionsDiv = document.getElementById('progressionOptions');
 const progressionSelect = document.getElementById('progressionSelect');
@@ -547,8 +552,6 @@ function nextProgression()
 
 flowSelect.addEventListener('change', generateProgression);
 
-// Set initial chord
-updateAvailableKeys();
 nextKey();
 setRandomChord();
 highlightCorrectKeys();

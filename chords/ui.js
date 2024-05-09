@@ -238,4 +238,5 @@ function initJazzBricks() {
 
 document.addEventListener('DOMContentLoaded', () => {
 	initJazzBricks();
+	initMIDI();
 });
