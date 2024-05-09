@@ -65,13 +65,13 @@ const romanNumerals = {
 	'BVI': 8,
 	'BVII': 10,
 	// Same as flats, but with sharps '#'
-	'I#': 1,
-	'II#': 3,
-	'III#': 5,
-	'IV#': 6,
-	'V#': 8,
-	'VI#': 10,
-	'VII#': 0
+	'#I': 1,
+	'#II': 3,
+	'#III': 5,
+	'#IV': 6,
+	'#V': 8,
+	'#VI': 10,
+	'#VII': 0
 };
 
 const romanNumeralNames = {
