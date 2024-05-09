@@ -325,11 +325,11 @@ function nextChord()
 				} else {
 					progCountCorrect.textContent = parseInt(progCountCorrect.textContent) + 1;
 				}
-
-				isIncorrect = false;
 			} else if (modeIsJazz()) {
 
 			}
+
+			isIncorrect = false;
 
 			nextKey();
 			generateProgression();
@@ -552,11 +552,10 @@ hideProgressionChordNamesCheckbox.addEventListener('change', function() {
 
 function nextProgression()
 {
-	// This will cause the progression to start at the beginning of the
-	// next one
+	isIncorrect = false;
+	// This will cause the progression to start at the beginning of the next one
 	currentIndex = currentProgression.length;
 	nextChord();
-	generateProgression();
 }
 
 flowSelect.addEventListener('change', generateProgression);
