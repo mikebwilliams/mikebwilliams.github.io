@@ -23,9 +23,11 @@ const chordDisplay = document.getElementById("chordDisplay");
 const chordCountCorrect = document.getElementById("chordCountCorrect");
 const progCountCorrect = document.getElementById("progCountCorrect");
 const degreeCountCorrect = document.getElementById("degreeCountCorrect");
+const brickCountCorrect = document.getElementById("brickCountCorrect");
 const chordCountIncorrect = document.getElementById("chordCountIncorrect");
 const progCountIncorrect = document.getElementById("progCountIncorrect");
 const degreeCountIncorrect = document.getElementById("degreeCountIncorrect");
+const brickCountIncorrect = document.getElementById("brickCountIncorrect");
 
 let highlightTimer; 
 
@@ -326,7 +328,11 @@ function nextChord()
 					progCountCorrect.textContent = parseInt(progCountCorrect.textContent) + 1;
 				}
 			} else if (modeIsJazz()) {
-
+				if (isIncorrect) {
+					brickCountIncorrect.textContent = parseInt(progCountIncorrect.textContent) + 1;
+				} else {
+					brickCountCorrect.textContent = parseInt(progCountCorrect.textContent) + 1;
+				}
 			}
 
 			isIncorrect = false;
