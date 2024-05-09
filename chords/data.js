@@ -1,3 +1,183 @@
+const allNotes = ['Cb', 'C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'E#', 'Fb', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B', 'B#'];
+
+const normalNotes = allNotes.filter(item => ['Cb', 'E#', 'Fb', 'B#'].indexOf(item) === -1);
+
+const noteValues = {
+	'B#': 0, 'C': 0,
+	'C#': 1, 'Db': 1,
+	'D': 2,
+	'D#': 3, 'Eb': 3,
+	'E': 4, 'Fb': 4,
+	'E#': 5, 'F': 5,
+	'F#': 6, 'Gb': 6,
+	'G': 7,
+	'G#': 8, 'Ab': 8,
+	'A': 9,
+	'A#': 10, 'Bb': 10,
+	'B': 11, 'Cb': 11
+};
+
+const valuesToNotesSharp = {
+	0: 'C',
+	1: 'C#',
+	2: 'D',
+	3: 'D#',
+	4: 'E',
+	5: 'F',
+	6: 'F#',
+	7: 'G',
+	8: 'G#',
+	9: 'A',
+	10: 'A#',
+	11: 'B'
+};
+
+const valuesToNotesFlat = {
+	0: 'C',
+	1: 'Db',
+	2: 'D',
+	3: 'Eb',
+	4: 'E',
+	5: 'F',
+	6: 'Gb',
+	7: 'G',
+	8: 'Ab',
+	9: 'A',
+	10: 'Bb',
+	11: 'B'
+};
+
+const romanNumerals = {
+	'I': 0,
+	'II': 2,
+	'III': 4,
+	'IV': 5,
+	'V': 7,
+	'VI': 9,
+	'VII': 11,
+	// These are upper case since we check by uppercase to ignore
+	// major/minor chord quality when getting the scale degree
+	'BI': -1,
+	'BII': 1,
+	'BIII': 3,
+	'BIV': 4,
+	'BV': 6,
+	'BVI': 8,
+	'BVII': 10,
+	// Same as flats, but with sharps '#'
+	'I#': 1,
+	'II#': 3,
+	'III#': 5,
+	'IV#': 6,
+	'V#': 8,
+	'VI#': 10,
+	'VII#': 0
+};
+
+const romanNumeralNames = {
+	'I': 'Tonic',
+	'II': 'Supertonic',
+	'III': 'Mediant',
+	'IV': 'Subdominant',
+	'V': 'Dominant',
+	'VI': 'Submediant',
+	'VII': 'Leading Tone'
+};
+
+
+// These are separated so we can so one way gives us more flats and the other more sharps,
+// e.g. F# in the fifths vs Gb in the fourths.
+const circleOfFourths = ["C", "F", "Bb", "Eb", "Ab", "Db", "Gb", "B", "E", "A", "D", "G"];
+const circleOfFifths = ["C", "G", "D", "A", "E", "B", "F#", "C#", "G#", "D#", "A#", "F"];
+
+const majorScaleIntervals = [0, 2, 4, 5, 7, 9, 11];
+const minorScaleIntervals = [0, 2, 3, 5, 7, 8, 10];
+
+
+const chords = [
+	'C', 'Cm', 'C#', 'C#m', 'Db', 'Dbm', 'D', 'Dm', 'D#', 'D#m', 'Eb', 'Ebm', 
+	'E', 'Em', 'F', 'Fm', 'F#', 'F#m', 'Gb', 'Gbm', 'G', 'Gm', 'G#', 'G#m', 
+	'Ab', 'Abm', 'A', 'Am', 'A#', 'A#m', 'Bb', 'Bbm', 'B', 'Bm'
+];
+
+const chordStructures = {
+	'': [0, 4, 7],       // Major
+	'm': [0, 3, 7],     // Minor
+	'dim': [0, 3, 6],
+	'aug': [0, 4, 8],
+
+	'sus2': [0, 2, 7],
+	'sus4': [0, 5, 7],
+
+	'6': [0, 4, 7, 9],
+	'm6': [0, 3, 7, 9],
+
+	'7': [0, 4, 7, 10],
+	'm7': [0, 3, 7, 10],
+	'M7': [0, 4, 7, 11],
+	'mM7': [0, 3, 7, 11],
+	'dim7': [0, 3, 6, 9],
+	'm7b5': [0, 3, 6, 10],  
+	'aug7': [0, 4, 8, 10],
+	'augM7': [0, 4, 8, 11],
+
+	'9': [0, 4, 7, 10, 14],
+	'm9': [0, 3, 7, 10, 14],
+	'M9': [0, 4, 7, 11, 14],
+
+	'11': [0, 4, 7, 10, 14],
+	'm11': [0, 3, 7, 10, 14, 17],
+	'M11': [0, 4, 7, 11, 14],
+
+	'13': [0, 4, 7, 10, 14, 21],
+	'm13': [0, 3, 7, 10, 14, 17, 21],
+	'M13': [0, 4, 7, 11, 14, 21],
+
+	'7b9': [0, 4, 7, 10, 13],
+	'7#9': [0, 4, 7, 10, 15],
+	'7#11': [0, 4, 7, 10, 18],
+};
+
+
+const chordStructureNames = {
+	'': [''],
+	'm': ['m', 'mi', 'min', '-'],
+	'dim': ['dim', 'o', 'º'],
+	'aug': ['aug', '+'],
+
+	'sus2': ['sus2'],
+	'sus4': ['sus', 'sus4'],
+
+	'6': ['6'],
+	'm6': ['m6', 'mi6', 'min6', '-6'],
+
+	'7': ['7'],
+	'm7': ['m7', 'mi7', 'min7', '-7'],
+	'M7': [ 'M7', 'ma7', 'maj7', '△7', '△'],
+	'mM7': ['mM7', 'm maj7', '-△7', '-△'],
+	'dim7': ['dim7', 'o7', 'º7'],
+	'm7b5': ['m7b5', '-7b5', 'ø', 'ø7'],
+	'aug7': ['7#5', '+7', 'aug7', ],
+	'augM7': ['M7#5', '+M7', 'augM7', ],
+
+	'9': ['9'],
+	'm9': ['m9', 'min9', '-9'],
+	'M9': ['M9', 'maj9', '△9'],
+
+	'11': ['11'],
+	'm11': ['m11', 'min11', '-11'],
+	'M11': ['M11', 'maj11', '△11'],
+
+	'13': ['13'],
+	'm13': ['m13', 'min13', '-13'],
+	'M13': ['M13', 'maj13', '△13'],
+
+	'7b9': ['7b9'],
+	'7#9': ['7#9'],
+	'7#11': ['7#11'],
+};
+
+
 const jazzCadences = [
 { name: "Amen", chords: ['IVΔ', 'IΔ'], enabled: false },
 { name: "Autumnal", chords: ['ii', 'V7', 'viiø', 'III7', 'viΔ'], enabled: false },
