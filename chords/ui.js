@@ -213,11 +213,12 @@ document.getElementById("showKeyboard").addEventListener('click', () => {
 		document.getElementById("piano").style.display = "none";
 });
 
+
 function initJazzBricks() {
 	const tbody = document.querySelector('#jazzBricks tbody');
 
-	// Enable every jazzCadence in jazzCadencesCommon by default
-	jazzCadencesCommon.forEach(cadence => { 
+	// Enable every jazzCadence in jazzCadencesBasic by default
+	jazzCadencesBasic.forEach(cadence => { 
 		const jazzCadence = jazzCadences.find(c => c.name === cadence);
 		if (jazzCadence) jazzCadence.enabled = true;
 	} );
@@ -231,13 +232,54 @@ function initJazzBricks() {
 			`;
 		tbody.appendChild(tr);
 
+		cadence.element = tr.querySelector('input[type="checkbox"]');
+
 		// Event listener to handle changes in checkbox
-		tr.querySelector('input[type="checkbox"]').addEventListener('change', function() {
+		cadence.element.addEventListener('change', function() {
 			cadence.enabled = this.checked;
+			cadence.element = tr.querySelector('input[type="checkbox"]');
 			console.log(`${cadence.name} enabled state is now ${cadence.enabled}`);
 		});
 	});
 }
+
+document.getElementById("btnJazzBricksNone").addEventListener('click', () => {
+	jazzCadences.forEach(cadence => {
+		cadence.enabled = false;
+		cadence.element.checked = false;
+	});
+} );
+
+document.getElementById("btnJazzBricksAll").addEventListener('click', () => {
+	jazzCadences.forEach(cadence => {
+		cadence.enabled = true;
+		cadence.element.checked = true;
+	});
+} );
+
+document.getElementById("btnJazzBricksBasic").addEventListener('click', () => {
+	jazzCadences.forEach(cadence => {
+		if (jazzCadencesBasic.includes(cadence.name)) {
+			cadence.enabled = true;
+			cadence.element.checked = true;
+		} else {
+			cadence.enabled = false;
+			cadence.element.checked = false;
+		}
+	});
+} );
+
+document.getElementById("btnJazzBricksIntermediate").addEventListener('click', () => {
+	jazzCadences.forEach(cadence => {
+		if (jazzCadencesIntermediate.includes(cadence.name)) {
+			cadence.enabled = true;
+			cadence.element.checked = true;
+		} else {
+			cadence.enabled = false;
+			cadence.element.checked = false;
+		}
+	});
+} );
 
 document.addEventListener('DOMContentLoaded', () => {
 	initJazzBricks();

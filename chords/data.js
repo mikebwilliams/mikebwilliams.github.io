@@ -244,7 +244,13 @@ const jazzCadences = [
 { name: "TTFA Dropback", chords: ['IΔ', 'IV7', 'iii', 'VI7', 'ii'], enabled: false }
 ];
 
-const jazzCadencesCommon = [
+const jazzCadencesBasic = [
+	"POT",
+	"Dropback", "Pullback",
+	"Regular", "Two-Goes", "Long", "Overrun",
+];
+
+const jazzCadencesIntermediate = [
 	"POT", "SPOT",
 	"Nowhere (turnaround)",
 	"Dropback", "Pullback", "TTFA Dropback",
