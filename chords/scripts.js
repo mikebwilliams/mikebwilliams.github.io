@@ -315,22 +315,22 @@ function nextKey()
 	keyIndex %= keys.length;
 }
 
-function nextChord()
+function nextChord(skip = false)
 {
-	if (modeIsProgressions() || modeIsDegrees() || modeIsJazz()) {
+	if (skip || modeIsProgressions() || modeIsDegrees() || modeIsJazz()) {
 		currentIndex++;
 
-		if (currentIndex >= currentProgression.length) {
+		if (skip || currentIndex >= currentProgression.length) {
 			if (modeIsProgressions()) {
 				if (isIncorrect) {
 					progCountIncorrect.textContent = parseInt(progCountIncorrect.textContent) + 1;
-				} else {
+				} else if (!skip) {
 					progCountCorrect.textContent = parseInt(progCountCorrect.textContent) + 1;
 				}
 			} else if (modeIsJazz()) {
 				if (isIncorrect) {
 					brickCountIncorrect.textContent = parseInt(brickCountIncorrect.textContent) + 1;
-				} else {
+				} else if (!skip) {
 					brickCountCorrect.textContent = parseInt(brickCountCorrect.textContent) + 1;
 				}
 			}
@@ -562,10 +562,7 @@ hideProgressionChordNamesCheckbox.addEventListener('change', function() {
 
 function nextProgression()
 {
-	isIncorrect = false;
-	// This will cause the progression to start at the beginning of the next one
-	currentIndex = currentProgression.length;
-	nextChord();
+	nextChord(true);
 }
 
 flowSelect.addEventListener('change', generateProgression);
