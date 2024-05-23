@@ -329,9 +329,9 @@ function nextChord()
 				}
 			} else if (modeIsJazz()) {
 				if (isIncorrect) {
-					brickCountIncorrect.textContent = parseInt(progCountIncorrect.textContent) + 1;
+					brickCountIncorrect.textContent = parseInt(brickCountIncorrect.textContent) + 1;
 				} else {
-					brickCountCorrect.textContent = parseInt(progCountCorrect.textContent) + 1;
+					brickCountCorrect.textContent = parseInt(brickCountCorrect.textContent) + 1;
 				}
 			}
 
