@@ -187,6 +187,30 @@ function handleMidiMessage(midiMessage)
 }
 
 
+function sendMidiNote(note, velocity, time)
+{
+	// Send a MIDI message to the first available MIDI output
+	if (navigator.requestMIDIAccess) {
+		navigator.requestMIDIAccess().then(function(midiAccess) {
+			const outputs = Array.from(midiAccess.outputs.values());
+			if (outputs.length > 0) {
+				outputs[0].send([0x90, note, velocity]);
+
+				setTimeout(() => {
+					outputs[0].send([0x80, note, 0]);
+				} , time);
+			}
+		});
+	}
+}
+
+function playChordNotes(chordNotes)
+{
+	chordNotes.forEach(note => {
+		sendMidiNote(note + 48, 100, 1000);
+	});
+}
+
 function checkChord() {
 	// Sort both arrays to ensure they are in the same order
 	let sortedCurrentChordNotes = [...currentChordNotes].sort();
