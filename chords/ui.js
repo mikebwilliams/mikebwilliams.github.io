@@ -58,6 +58,10 @@ function modeIsProgressions() {
 	return document.querySelector('input[name="mode"]:checked').value === "tabProgressions";
 }
 
+function modeIsScales() {
+	return document.querySelector('input[name="mode"]:checked').value === "tabScales";
+}
+
 function modeIsDegrees() {
 	return document.querySelector('input[name="mode"]:checked').value === "tabDegrees";
 }
@@ -124,29 +128,22 @@ const toggleMinorChords = (state) => {
 function modeChange()
 {
 	// Three options: chords, progressions, and scale degrees
-	if (modeIsDegrees()) {
-		// Show the scale degree options
-		document.getElementById("degreesOptions").style.display = "block";
-		document.getElementById("chordOptions").style.display = "none";
-		document.getElementById("progressionOptions").style.display = "block";
-		document.getElementById("jazzOptions").style.display = "none";
-
-		document.getElementById("chordDisplay").style.display = "none";
-		document.getElementById("progDisplay").style.display = "block";
-	} else if (modeIsChords()) {
+	if (modeIsChords()) {
 		// Show the chord options
-		document.getElementById("degreesOptions").style.display = "none";
 		document.getElementById("chordOptions").style.display = "block";
 		document.getElementById("progressionOptions").style.display = "none";
+		document.getElementById("degreesOptions").style.display = "none";
+		document.getElementById("scalesOptions").style.display = "none";
 		document.getElementById("jazzOptions").style.display = "none";
 
 		document.getElementById("chordDisplay").style.display = "block";
 		document.getElementById("progDisplay").style.display = "none";
 	} else if (modeIsProgressions()) {
 		// Show the progression options
-		document.getElementById("degreesOptions").style.display = "none";
 		document.getElementById("chordOptions").style.display = "none";
 		document.getElementById("progressionOptions").style.display = "block";
+		document.getElementById("degreesOptions").style.display = "none";
+		document.getElementById("scalesOptions").style.display = "none";
 		document.getElementById("jazzOptions").style.display = "none";
 
 		document.getElementById("progDisplay").style.display = "block";
@@ -154,11 +151,30 @@ function modeChange()
 			document.getElementById("chordDisplay").style.display = "block";
 		else
 			document.getElementById("chordDisplay").style.display = "none";
+	} else if (modeIsDegrees()) {
+		// Show the scale degree options
+		document.getElementById("chordOptions").style.display = "none";
+		document.getElementById("progressionOptions").style.display = "block";
+		document.getElementById("degreesOptions").style.display = "block";
+		document.getElementById("scalesOptions").style.display = "none";
+		document.getElementById("jazzOptions").style.display = "none";
 
-	} else if (modeIsJazz()) {
-		document.getElementById("degreesOptions").style.display = "none";
+		document.getElementById("chordDisplay").style.display = "none";
+		document.getElementById("progDisplay").style.display = "block";
+	} else if (modeIsScales()) {
 		document.getElementById("chordOptions").style.display = "none";
 		document.getElementById("progressionOptions").style.display = "none";
+		document.getElementById("degreesOptions").style.display = "none";
+		document.getElementById("scalesOptions").style.display = "block";
+		document.getElementById("jazzOptions").style.display = "none";
+
+		document.getElementById("progDisplay").style.display = "block";
+		document.getElementById("chordDisplay").style.display = "none";
+	} else if (modeIsJazz()) {
+		document.getElementById("chordOptions").style.display = "none";
+		document.getElementById("progressionOptions").style.display = "none";
+		document.getElementById("degreesOptions").style.display = "none";
+		document.getElementById("scalesOptions").style.display = "none";
 		document.getElementById("jazzOptions").style.display = "block";
 
 		document.getElementById("progDisplay").style.display = "block";
@@ -212,6 +228,89 @@ document.getElementById("showKeyboard").addEventListener('click', () => {
 	else
 		document.getElementById("piano").style.display = "none";
 });
+
+
+function generateScalesTable() {
+    const container = document.getElementById("scalesSelected");
+
+    let tableHtml = '<table><tr><td><label>Scales</label></td></tr>';
+
+    for (let key in scales) {
+        if (scales.hasOwnProperty(key)) {
+            const isChecked = scales[key].enabled ? 'checked' : '';
+            tableHtml += `<tr><td><label><input type="checkbox" id="${key}" ${isChecked}> ${scales[key].label}</label></td></tr>`;
+        }
+    }
+
+    tableHtml += '</table>';
+    container.innerHTML += tableHtml;
+}
+
+
+function toggleScales(category) {
+    const selectedScales = scaleGroups[category];
+
+    for (let key in scales) {
+        if (scales.hasOwnProperty(key)) {
+            const checkbox = document.getElementById(key);
+            checkbox.checked = selectedScales.includes(key);
+        }
+    }
+}
+
+
+function generateScalesButtons() {
+    const buttonContainer = document.getElementById("scalesButtons");
+
+    const buttonsHtml = `
+        <button onclick="toggleScales('basic')">Basic</button>
+        <button onclick="toggleScales('greekModes')">Greek Modes</button>
+        <button onclick="toggleScales('classicalMusic')">Classical Music</button>
+        <button onclick="toggleScales('jazzBlues')">Jazz/Blues</button>
+        <button onclick="toggleScales('all')">All</button>
+    `;
+
+    buttonContainer.innerHTML = buttonsHtml;
+}
+
+
+function getEnabledScales() {
+    const enabledScales = [];
+    
+    for (let key in scales) {
+        if (scales.hasOwnProperty(key)) {
+            const checkbox = document.getElementById(key);
+            if (checkbox && checkbox.checked) {
+                enabledScales.push(key);
+            }
+        }
+    }
+    
+    return enabledScales;
+}
+
+
+function getEnabledScaleDetails() {
+    const enabledScaleDetails = [];
+    
+    for (let key in scales) {
+        if (scales.hasOwnProperty(key)) {
+            const checkbox = document.getElementById(key);
+            if (checkbox && checkbox.checked) {
+                enabledScaleDetails.push(scales[key]);
+            }
+        }
+    }
+    
+    return enabledScaleDetails;
+}
+
+
+function initScales()
+{
+	generateScalesTable();
+	generateScalesButtons();
+}
 
 
 function initJazzBricks() {
@@ -282,6 +381,7 @@ document.getElementById("btnJazzBricksIntermediate").addEventListener('click', (
 } );
 
 document.addEventListener('DOMContentLoaded', () => {
+	initScales();
 	initJazzBricks();
 	initMIDI();
 });

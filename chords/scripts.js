@@ -317,7 +317,7 @@ function nextKey()
 
 function nextChord(skip = false)
 {
-	if (skip || modeIsProgressions() || modeIsDegrees() || modeIsJazz()) {
+	if (skip || modeIsProgressions() || modeIsScales() || modeIsDegrees() || modeIsJazz()) {
 		currentIndex++;
 
 		if (skip || currentIndex >= currentProgression.length) {
@@ -472,7 +472,7 @@ function generateProgression()
 
 	currentIndex = 0;
 
-	if (modeIsProgressions() ) {
+	if (modeIsProgressions() || modeIsDegrees() ) {
 
 		if (progressionSelect.value === "custom") {
 			currentProgression = document.getElementById('customProgression').value.split('-');
@@ -502,6 +502,26 @@ function generateProgression()
 		}
 
 		currentProgressionName = progressionSelect.value;
+	} else if (modeIsScales()) {
+		// Get list of all enabled scales
+		enabledScales = {};
+		enabledNames = {};
+		Object.keys(jazzCadences).forEach(cadence => {
+			if (jazzCadences[cadence].enabled) {
+				enabledCadences[cadence] = jazzCadences[cadence].chords;
+				enabledNames[cadence] = jazzCadences[cadence].name;
+			}
+		} );
+
+		// Select a random cadence from the enabled list
+		if (Object.keys(enabledCadences).length === 0) {
+			enabledCadences['Regular'] =['ii', 'V7', 'IΔ'];
+			enabledNames['Regular'] = 'Regular';
+		}
+
+		selectedProgression = Object.keys(enabledCadences)[Math.floor(Math.random() * Object.keys(enabledCadences).length)];
+		currentProgression = enabledCadences[selectedProgression];
+		currentProgressionName = enabledNames[selectedProgression];
 	} else if (modeIsJazz()) {
 
 		// Get list of all enabled Jazz cadences

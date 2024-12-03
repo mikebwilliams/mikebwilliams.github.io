@@ -52,6 +52,7 @@
 					<td>Chords</td>
 					<td>Progressions</td>
 					<td>Degrees</td>
+					<td>Scales</td>
 					<td>Bricks</td>
 				</th>
 				<tr>
@@ -59,6 +60,7 @@
 					<td id="chordCountCorrect">0</td>
 					<td id="progCountCorrect">0</td>
 					<td id="degreeCountCorrect">0</td>
+					<td id="scalesCountCorrect">0</td>
 					<td id="brickCountCorrect">0</td>
 				</tr>
 				<tr>
@@ -66,6 +68,7 @@
 					<td id="chordCountIncorrect">0</td>
 					<td id="progCountIncorrect">0</td>
 					<td id="degreeCountIncorrect">0</td>
+					<td id="scalesCountIncorrect">0</td>
 					<td id="brickCountIncorrect">0</td>
 				</tr>
 			</table>
@@ -79,8 +82,11 @@
 			<input type="radio" id="tabProgressions" name="mode" value="tabProgressions">
 			<label for="tabProgressions">Progressions</label>
 
+			<input type="radio" id="tabScales" name="mode" value="tabScales">
+			<label for="tabScales">Scales</label>
+
 			<input type="radio" id="tabDegrees" name="mode" value="tabDegrees">
-			<label for="tabDegrees">Scale Degrees</label>
+			<label for="tabDegrees">Degrees</label>
 
 			<input type="radio" id="tabJazz" name="mode" value="tabJazz">
 			<label for="tabJazz">Jazz Bricks</label>
@@ -157,6 +163,7 @@
 				<select id="progressionSelect">
 					<option value="I-IV-V">I-IV-V</option>
 					<option value="ii-V-I">ii-V-I</option>
+					<option value="ii7-V7-IM7">ii7-V7-IM7</option>
 					<option value="I-V-vi-IV">I-V-vi-IV</option>
 					<option value="I-vi-ii-V">I-vi-ii-V</option>
 					<option value="vi-IV-I-V">vi-IV-I-V</option>
@@ -195,6 +202,13 @@
 						<td><label><input type="checkbox" id="VII" checked> VII</label></td>
 					</tr>
 				</table>
+			</div>
+		</div>
+
+		<div class="tabContent" id="scalesOptions">
+			<br>
+			<div id="scalesButtons"></div>
+			<div id="scalesSelected"></div>
 			</div>
 		</div>
 

@@ -177,6 +177,118 @@ const chordStructureNames = {
 	'7#11': ['7#11'],
 };
 
+const scales = {
+    scaleIonian: { 
+        label: "Ionian Mode (Major Scale)", 
+        steps: [2, 2, 1, 2, 2, 2, 1], 
+        enabled: true 
+    },
+    scaleDorian: { 
+        label: "Dorian Mode", 
+        steps: [2, 1, 2, 2, 2, 1, 2], 
+        enabled: false 
+    },
+    scalePhrygian: { 
+        label: "Phrygian Mode", 
+        steps: [1, 2, 2, 2, 1, 2, 2], 
+        enabled: false 
+    },
+    scaleLydian: { 
+        label: "Lydian Mode", 
+        steps: [2, 2, 2, 1, 2, 2, 1], 
+        enabled: false 
+    },
+    scaleMixolydian: { 
+        label: "Mixolydian Mode", 
+        steps: [2, 2, 1, 2, 2, 1, 2], 
+        enabled: false 
+    },
+    scaleAeolian: { 
+        label: "Aeolian Mode (Natural Minor Scale)", 
+        steps: [2, 1, 2, 2, 1, 2, 2], 
+        enabled: true 
+    },
+    scaleLocrian: { 
+        label: "Locrian Mode", 
+        steps: [1, 2, 2, 1, 2, 2, 2], 
+        enabled: false 
+    },
+    scaleHarmonicMinor: { 
+        label: "Harmonic Minor Scale", 
+        steps: [2, 1, 2, 2, 1, 3, 1], 
+        enabled: false 
+    },
+    scaleMelodicMinor: { 
+        label: "Melodic Minor Scale (Ascending)", 
+        steps: [2, 1, 2, 2, 2, 2, 1], 
+        enabled: false 
+    },
+    scalePentatonicMajor: { 
+        label: "Pentatonic Scale (Major)", 
+        steps: [2, 2, 3, 2, 3], 
+        enabled: false 
+    },
+    scalePentatonicMinor: { 
+        label: "Pentatonic Scale (Minor)", 
+        steps: [3, 2, 2, 3, 2], 
+        enabled: false 
+    },
+    scaleBlues: { 
+        label: "Blues Scale", 
+        steps: [3, 2, 1, 1, 3, 2], 
+        enabled: false 
+    },
+    scaleWholeTone: { 
+        label: "Whole Tone Scale", 
+        steps: [2, 2, 2, 2, 2, 2], 
+        enabled: false 
+    },
+    scaleChromatic: { 
+        label: "Chromatic Scale", 
+        steps: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
+        enabled: false 
+    },
+    scaleDiminishedWholeHalf: { 
+        label: "Diminished Scale (Whole-Half)", 
+        steps: [2, 1, 2, 1, 2, 1, 2, 1], 
+        enabled: false 
+    },
+    scaleDiminishedHalfWhole: { 
+        label: "Diminished Scale (Half-Whole)", 
+        steps: [1, 2, 1, 2, 1, 2, 1, 2], 
+        enabled: false 
+    },
+    scaleAugmented: { 
+        label: "Augmented Scale", 
+        steps: [3, 1, 3, 1, 3, 1], 
+        enabled: false 
+    },
+    scaleHungarianMinor: { 
+        label: "Hungarian Minor Scale", 
+        steps: [2, 1, 3, 1, 1, 3, 1], 
+        enabled: false 
+    },
+    scaleNeapolitanMajor: { 
+        label: "Neapolitan Major Scale", 
+        steps: [1, 2, 2, 2, 2, 2, 1], 
+        enabled: false 
+    },
+    scaleNeapolitanMinor: { 
+        label: "Neapolitan Minor Scale", 
+        steps: [1, 2, 2, 2, 1, 3, 1], 
+        enabled: false 
+    }
+};
+
+
+const scaleGroups = {
+    basic: ["scaleIonian", "scaleAeolian"],
+    greekModes: ["scaleIonian", "scaleDorian", "scalePhrygian", "scaleLydian", "scaleMixolydian", "scaleAeolian", "scaleLocrian"],
+    classicalMusic: ["scaleIonian", "scaleAeolian", "scaleHarmonicMinor", "scaleMelodicMinor", "scaleNeapolitanMajor", "scaleNeapolitanMinor"],
+    jazzBlues: ["scalePentatonicMajor", "scalePentatonicMinor", "scaleBlues", "scaleWholeTone", "scaleChromatic", "scaleDiminishedWholeHalf", "scaleDiminishedHalfWhole"],
+    all: Object.keys(scales)
+};
+
 
 const jazzCadences = [
 { name: "Amen", chords: ['IVΔ', 'IΔ'], enabled: false },
