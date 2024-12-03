@@ -188,7 +188,8 @@ function modeChange()
 }
 
 // Attach the handlers
-document.getElementById("progressionNext").addEventListener("click", () => nextProgression());
+document.getElementById("skip").addEventListener("click", () => nextProgression());
+
 document.getElementById("progressionSelect").addEventListener('change', () => nextProgression());
 
 document.getElementById("chordsOn").addEventListener("click", () => toggleAllChords(true));
