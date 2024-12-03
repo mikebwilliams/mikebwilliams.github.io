@@ -260,6 +260,11 @@ function onMIDISuccess(midiAccess)
 	// Attach a listener for 'midimessage' events to all input devices
 	const inputs = Array.from(midiAccess.inputs.values());
 	inputs.forEach(input => {
+		if (input.name.includes("Output connection") ||
+		    input.name.includes("Midi Through") ) {
+			console.log(`Skipping MIDI loopback input: ${input.name}`);
+			return;
+		}
 		console.log(`Listening to MIDI input: ${input.name}`);
 		input.onmidimessage = handleMidiMessage;
 	});
