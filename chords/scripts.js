@@ -144,7 +144,7 @@ function handleKeyPressed(key)
 	} else {
 		keyElement.classList.add('incorrect');
 		isIncorrect = true;
-		displayChord();
+		updateDisplay();
 	}
 }
 
@@ -354,17 +354,16 @@ function nextChord(skip = false)
 		} else {
 			setRandomChord();
 		}
-
-		displayProgression();
 	} else {
 		nextKey();
 		setRandomChord();
 	}
 
-	displayChord();
+	playChordNotes(currentChordNotes);
+	updateDisplay();
 }
 
-function displayChord()
+function updateDisplay()
 {
 	text = currentChordName;
 
@@ -380,6 +379,26 @@ function displayChord()
 	} else {
 		chordDisplay.classList.remove('incorrect');
 	}
+
+	let hideNumerals = document.getElementById('hideProgressionChordNumerals').checked;
+	currentKeySpan.textContent = keys[keyIndex];
+
+	if (modeIsJazz() && hideNumerals) {
+		progressionDisplay.innerHTML = currentProgression.map(chord => `<span class="chord">?</span>`).join(' - ');
+	} else {
+		progressionDisplay.innerHTML = currentProgression.map(chord => `<span class="chord">${chord}</span>`).join(' - ');
+	}
+
+	cadenceDisplay.innerHTML = " " + currentProgressionName;
+
+	// Add event listeners to chords to track user input
+	document.querySelectorAll('.chord').forEach((chordSpan, index) => {
+		if (currentIndex == index) {
+			chordSpan.style.color = "#0077ff";
+		} else if (currentIndex > index) {
+			chordSpan.style.color = "green";
+		}
+	});
 }
 
 function setIntervalChord()
@@ -549,32 +568,7 @@ function generateProgression()
 		currentProgression = enabledCadences[selectedProgression];
 		currentProgressionName = enabledNames[selectedProgression];
 	}
-
-	displayProgression();
 }
-
-function displayProgression() {
-	let hideNumerals = document.getElementById('hideProgressionChordNumerals').checked;
-	currentKeySpan.textContent = keys[keyIndex];
-
-	if (modeIsJazz() && hideNumerals) {
-		progressionDisplay.innerHTML = currentProgression.map(chord => `<span class="chord">?</span>`).join(' - ');
-	} else {
-		progressionDisplay.innerHTML = currentProgression.map(chord => `<span class="chord">${chord}</span>`).join(' - ');
-	}
-
-	cadenceDisplay.innerHTML = " " + currentProgressionName;
-
-	// Add event listeners to chords to track user input
-	document.querySelectorAll('.chord').forEach((chordSpan, index) => {
-		if (currentIndex == index) {
-			chordSpan.style.color = "#0077ff";
-		} else if (currentIndex > index) {
-			chordSpan.style.color = "green";
-		}
-	});
-}
-
 
 
 hideProgressionChordNamesCheckbox.addEventListener('change', function() {
@@ -595,5 +589,5 @@ flowSelect.addEventListener('change', generateProgression);
 nextKey();
 setRandomChord();
 highlightCorrectKeys();
-displayChord();
+updateDisplay();
 modeChange();
