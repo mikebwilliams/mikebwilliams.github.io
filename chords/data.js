@@ -47,6 +47,62 @@ const valuesToNotesFlat = {
 	11: 'B'
 };
 
+const stepsToNames = {
+	0: {
+	interval: 'Unison',
+	numeral: 'I'
+	},
+	1: {
+	interval: 'Minor 2nd',
+	numeral: 'bII'
+	},
+	2: {
+	interval: 'Major 2nd',
+	numeral: 'II'
+	},
+	3: {
+	interval: 'Minor 3rd',
+	numeral: 'bIII'
+	},
+	4: {
+	interval: 'Major 3rd',
+	numeral: 'III'
+	},
+	5: {
+	interval: 'Perfect 4th',
+	numeral: 'IV'
+	},
+	6: {
+	interval: 'Tritone',
+	numeral: 'bV'
+	},
+	7: {
+	interval: 'Perfect 5th',
+	numeral: 'V'
+	},
+	8: {
+	interval: 'Minor 6th',
+	numeral: 'bVI'
+	},
+	9: {
+	interval: 'Major 6th',
+	numeral: 'VI'
+	},
+	10: {
+	interval: 'Minor 7th',
+	numeral: 'bVII'
+	},
+	11: {
+	interval: 'Major 7th',
+	numeral: 'VII'
+	},
+	12: {
+	interval: 'Octave',
+	numeral: 'I'
+	}
+};
+
+
 const romanNumerals = {
 	'I': 0,
 	'II': 2,

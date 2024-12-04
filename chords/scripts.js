@@ -22,10 +22,12 @@ const chordDisplay = document.getElementById("chordDisplay");
 
 const chordCountCorrect = document.getElementById("chordCountCorrect");
 const progCountCorrect = document.getElementById("progCountCorrect");
+const scalesCountCorrect = document.getElementById("scalesCountCorrect");
 const degreeCountCorrect = document.getElementById("degreeCountCorrect");
 const brickCountCorrect = document.getElementById("brickCountCorrect");
 const chordCountIncorrect = document.getElementById("chordCountIncorrect");
 const progCountIncorrect = document.getElementById("progCountIncorrect");
+const scalesCountIncorrect = document.getElementById("scalesCountIncorrect");
 const degreeCountIncorrect = document.getElementById("degreeCountIncorrect");
 const brickCountIncorrect = document.getElementById("brickCountIncorrect");
 
@@ -362,7 +364,14 @@ function nextChord(skip = false)
 				} else if (!skip) {
 					brickCountCorrect.textContent = parseInt(brickCountCorrect.textContent) + 1;
 				}
+			} else if (modeIsScales()) {
+				if (isIncorrect) {
+					scalesCountIncorrect.textContent = parseInt(scalesCountIncorrect.textContent) + 1;
+				} else if (!skip) {
+					scalesCountCorrect.textContent = parseInt(scalesCountCorrect.textContent) + 1;
+				}
 			}
+
 
 			isIncorrect = false;
 
@@ -442,7 +451,7 @@ function setIntervalChord()
 
 	// We only need the degree if we're in scale degree mode since
 	// we only need the first note of the chord
-	if( modeIsDegrees() ) {
+	if(modeIsDegrees() || modeIsScales()) {
 		currentChordNotes = [(keyValue + romanNumerals[bareDegree.toUpperCase()]) % 12];
 		setChordName(bareDegree, '');
 		return;
@@ -554,22 +563,36 @@ function generateProgression()
 		// Get list of all enabled scales
 		enabledScales = {};
 		enabledNames = {};
-		Object.keys(jazzCadences).forEach(cadence => {
-			if (jazzCadences[cadence].enabled) {
-				enabledCadences[cadence] = jazzCadences[cadence].chords;
-				enabledNames[cadence] = jazzCadences[cadence].name;
+		Object.keys(scales).forEach(s => {
+			if (scales[s].enabled) {
+				enabledScales[s] = scales[s].steps;
+				enabledNames[s] = scales[s].label;
 			}
 		} );
 
-		// Select a random cadence from the enabled list
-		if (Object.keys(enabledCadences).length === 0) {
-			enabledCadences['Regular'] =['ii', 'V7', 'IΔ'];
-			enabledNames['Regular'] = 'Regular';
+		// If no scales are enabled, default to major
+		if (Object.keys(enabledScales).length === 0) {
+			let major = Scales[0];
+			enabledScales[major.name] = major.steps;
+			enabledNames[major.name] = major.label;
 		}
 
-		selectedProgression = Object.keys(enabledCadences)[Math.floor(Math.random() * Object.keys(enabledCadences).length)];
-		currentProgression = enabledCadences[selectedProgression];
-		currentProgressionName = enabledNames[selectedProgression];
+		// Select a random cadence from the enabled list
+		selectedScale = Object.keys(enabledScales)[Math.floor(Math.random() * Object.keys(enabledScales).length)];
+		let currentScale = enabledScales[selectedScale];
+		let currentScaleName = enabledNames[selectedScale];
+
+		// We use roman numerals for the scale notes so generate one for each note of the scale
+		let totalSteps = 0;
+		currentProgression = currentScale.map((stepSize) => {
+			let note = stepsToNames[totalSteps].numeral;
+			totalSteps += stepSize;
+			return note;
+		});
+
+		// Always add the octave, scale practice always ends on the octave
+		currentProgression.push('I');
+		currentProgressionName = currentScaleName;
 	} else if (modeIsJazz()) {
 
 		// Get list of all enabled Jazz cadences
