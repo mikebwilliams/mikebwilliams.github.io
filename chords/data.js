@@ -111,6 +111,7 @@ const romanNumerals = {
 	'V': 7,
 	'VI': 9,
 	'VII': 11,
+	'VIII': 12,
 	// These are upper case since we check by uppercase to ignore
 	// major/minor chord quality when getting the scale degree
 	'BI': -1,

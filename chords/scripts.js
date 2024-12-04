@@ -3,6 +3,7 @@ let currentChordNotes = [];
 let activeNotes = [];
 let activeKeys = [];
 let isIncorrect = false;
+let awaitingKeyRelease = false;
 
 let currentProgression = [];
 let currentProgressionName = "";
@@ -210,7 +211,7 @@ function playAnswerNotes()
 {
 	if (modeIsChords()) {
 		currentChordNotes.forEach(note => {
-			sendMidiNote(note + 48, 100, 1000);
+			sendMidiNote(note + 48, 70, 1000);
 		});
 	} else if (modeIsScales() || modeIsJazz() || modeIsProgressions() || modeIsDegrees()) {
 		let offset = 0;
@@ -220,17 +221,17 @@ function playAnswerNotes()
 			offset = 1;
 
 			// Play the tonic of the key first
-			let [name, notes] = getIntervalChordNotesAndName(keys[keyIndex], 'I');
-			sendMidiNote(notes[0] + 48, 100, 500);
+			let [name, notes] = getIntervalChordNotesAndName(keys[keyIndex], 'I', false);
+			sendMidiNote(notes[0] + 48, 70, 500);
 		}
 
 		// Play each chord in the progression with 500ms spacing
 		currentProgression.forEach((chord, index) => {
 			setTimeout(() => {
-				let [name, notes] = getIntervalChordNotesAndName(keys[keyIndex], chord);
+				let [name, notes] = getIntervalChordNotesAndName(keys[keyIndex], chord, false);
 
 				notes.forEach(note => {
-					sendMidiNote(note + 48, 100, 500);
+					sendMidiNote(note + 48, 70, 500);
 				});
 			}, (index + offset) * 600);
 		});
@@ -238,6 +239,18 @@ function playAnswerNotes()
 }
 
 function checkChord() {
+	
+	if (awaitingKeyRelease) {
+		if (activeKeys.length > 0) {
+			return;
+		}
+
+		awaitingKeyRelease = false;
+		document.getElementById('chordDisplay').classList.remove('correct');
+		document.getElementById('chordDisplay').classList.remove('incorrect');
+		nextChord();
+	}
+
 	// Sort both arrays to ensure they are in the same order
 	let sortedCurrentChordNotes = [...currentChordNotes].sort();
 	let sortedActiveNotes = [...activeNotes].sort();
@@ -246,6 +259,10 @@ function checkChord() {
 	// This makes sure we disallow extra notes in the chord
 	if (sortedCurrentChordNotes.length === sortedActiveNotes.length &&
 		sortedCurrentChordNotes.every((chordNote, index) => chordNote === sortedActiveNotes[index])) {
+
+		awaitingKeyRelease = true;
+		document.getElementById('chordDisplay').classList.remove('incorrect');
+		document.getElementById('chordDisplay').classList.add('correct');
 
 		if (modeIsChords()) {
 			if (isIncorrect) {
@@ -265,14 +282,7 @@ function checkChord() {
 			isIncorrect = false;
 		}
 
-		nextChord();
 		clearTimeout(highlightTimer);
-
-		// Make the user re-press the keys
-		keysToRelease = activeKeys.slice();
-		for (let key of keysToRelease) {
-			handleKeyReleased(key);
-		}
 
 		highlightCorrectKeys();
 	}
@@ -417,7 +427,7 @@ function nextChord(skip = false)
 	}
 
 	if (document.getElementById('sendMidiNotes').checked) {
-		playAnswerNotes();
+		setTimeout(playAnswerNotes, 200);
 	}
 	updateDisplay();
 }
@@ -466,7 +476,7 @@ function updateDisplay()
 	});
 }
 
-function getIntervalChordNotesAndName(key, degree)
+function getIntervalChordNotesAndName(key, degree, wrap = true)
 {
 	let keyValue = noteValues[key];
 
@@ -485,7 +495,7 @@ function getIntervalChordNotesAndName(key, degree)
 	if (modeIsDegrees() || modeIsScales()) {
 		return [
 			generateChordName(bareDegree, ''),	
-			[(keyValue + romanNumerals[bareDegree.toUpperCase()]) % 12]
+			[(keyValue + romanNumerals[bareDegree.toUpperCase()]) % (wrap ? 12 : 127)]
 		];
 	}
 
@@ -508,7 +518,7 @@ function getIntervalChordNotesAndName(key, degree)
 	let degreeValue = romanNumerals[bareDegree.toUpperCase()];
 
 	// Then add the interval to get the new degree
-	let noteValue = (keyValue + degreeValue) % 12;
+	let noteValue = (keyValue + degreeValue) % (wrap ? 12 : 127);
 
 	// Get sevenths
 	let majorSeventh = currentProgression[currentIndex].match(/M7/) || currentProgression[currentIndex].match(/Δ/) ||
@@ -625,7 +635,7 @@ function generateProgression()
 		});
 
 		// Always add the octave, scale practice always ends on the octave
-		currentProgression.push('I');
+		currentProgression.push('VIII');
 		currentProgressionName = currentScaleName;
 	} else if (modeIsJazz()) {
 

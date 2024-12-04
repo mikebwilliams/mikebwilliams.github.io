@@ -84,6 +84,10 @@ p {
     color: red;
 }
 
+.correct {
+    color: green;
+}
+
 /* Style for all checkboxes in the option sections */
 input[type="checkbox"] {
     font-size: 1.2em;
