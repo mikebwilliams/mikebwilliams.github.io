@@ -189,6 +189,7 @@ function modeChange()
 
 // Attach the handlers
 document.getElementById("skip").addEventListener("click", () => nextProgression());
+document.getElementById("playAnswer").addEventListener("click", () => playAnswerNotes());
 
 document.getElementById("progressionSelect").addEventListener('change', () => nextProgression());
 

@@ -63,7 +63,7 @@ function generateNotesFromChordName(chordName) {
 	return [];
 }
 
-function setChordName(root, chordType)
+function generateChordName(root, chordType)
 {
 	if (document.getElementById('randomizeSpellings').checked) {
 		if( chordStructureNames.hasOwnProperty(chordType) ) {
@@ -72,7 +72,7 @@ function setChordName(root, chordType)
 
 	}
 
-	currentChordName = root + chordType;
+	return root + chordType;
 }
 
 function setRandomChord()
@@ -112,7 +112,7 @@ function setRandomChord()
 		let randomChordType = selectedChordTypes[Math.floor(Math.random() * selectedChordTypes.length)];
 
 		currentChordNotes = generateNotesFromChordName(randomRoot + randomChordType);
-		setChordName(randomRoot, randomChordType);
+		currentChordName = generateChordName(randomRoot, randomChordType);
 	// Loop until we get a new chord, or the user has only selected one chord type
 	} while (currentChordName === lastChordName && selectedChordTypes.length > 1 && keys.length > 1);
 }
@@ -206,11 +206,35 @@ function sendMidiNote(note, velocity, time)
 	}
 }
 
-function playChordNotes(chordNotes)
+function playAnswerNotes()
 {
-	chordNotes.forEach(note => {
-		sendMidiNote(note + 48, 100, 1000);
-	});
+	if (modeIsChords()) {
+		currentChordNotes.forEach(note => {
+			sendMidiNote(note + 48, 100, 1000);
+		});
+	} else if (modeIsScales() || modeIsJazz() || modeIsProgressions() || modeIsDegrees()) {
+		let offset = 0;
+
+		// TODO: Make this smarter based on mode later
+		if (!modeIsScales()) {
+			offset = 1;
+
+			// Play the tonic of the key first
+			let [name, notes] = getIntervalChordNotesAndName(keys[keyIndex], 'I');
+			sendMidiNote(notes[0] + 48, 100, 500);
+		}
+
+		// Play each chord in the progression with 500ms spacing
+		currentProgression.forEach((chord, index) => {
+			setTimeout(() => {
+				let [name, notes] = getIntervalChordNotesAndName(keys[keyIndex], chord);
+
+				notes.forEach(note => {
+					sendMidiNote(note + 48, 100, 500);
+				});
+			}, (index + offset) * 600);
+		});
+	}
 }
 
 function checkChord() {
@@ -348,7 +372,7 @@ function nextKey()
 
 function nextChord(skip = false)
 {
-	if (skip || modeIsProgressions() || modeIsScales() || modeIsDegrees() || modeIsJazz()) {
+	if (modeIsProgressions() || modeIsScales() || modeIsDegrees() || modeIsJazz()) {
 		currentIndex++;
 
 		if (skip || currentIndex >= currentProgression.length) {
@@ -380,9 +404,9 @@ function nextChord(skip = false)
 		}
 
 		if (isIntervalChord(currentProgression[currentIndex]) ) {
-			setIntervalChord();
+			[currentChordName, currentChordNotes] = getIntervalChordNotesAndName(keys[keyIndex], currentProgression[currentIndex]);
 		} else if (isNamedChord(currentProgression[currentIndex]) ) {
-			setChordName(currentProgression[currentIndex], '');
+			currentChordName = generateChordName(currentProgression[currentIndex], '');
 			currentChordNotes = generateNotesFromChordName(currentProgression[currentIndex]);
 		} else {
 			setRandomChord();
@@ -392,12 +416,17 @@ function nextChord(skip = false)
 		setRandomChord();
 	}
 
-	playChordNotes(currentChordNotes);
+	if (document.getElementById('sendMidiNotes').checked) {
+		playAnswerNotes();
+	}
 	updateDisplay();
 }
 
 function updateDisplay()
 {
+	let hideChordName = document.getElementById('hideProgressionChordNames').checked;
+	let hideNumerals = document.getElementById('hideProgressionChordNumerals').checked;
+
 	text = currentChordName;
 
 	// Turn # and b into sharp and flat symbols
@@ -413,16 +442,19 @@ function updateDisplay()
 		chordDisplay.classList.remove('incorrect');
 	}
 
-	let hideNumerals = document.getElementById('hideProgressionChordNumerals').checked;
 	currentKeySpan.textContent = keys[keyIndex];
 
-	if (modeIsJazz() && hideNumerals) {
+	if (hideNumerals) {
 		progressionDisplay.innerHTML = currentProgression.map(chord => `<span class="chord">?</span>`).join(' - ');
 	} else {
 		progressionDisplay.innerHTML = currentProgression.map(chord => `<span class="chord">${chord}</span>`).join(' - ');
 	}
 
-	cadenceDisplay.innerHTML = " " + currentProgressionName;
+	if (hideChordName) {
+		cadenceDisplay.innerHTML = " ?";
+	} else {
+		cadenceDisplay.innerHTML = " " + currentProgressionName;
+	}
 
 	// Add event listeners to chords to track user input
 	document.querySelectorAll('.chord').forEach((chordSpan, index) => {
@@ -434,12 +466,11 @@ function updateDisplay()
 	});
 }
 
-function setIntervalChord()
+function getIntervalChordNotesAndName(key, degree)
 {
-	let keyValue = noteValues[keys[keyIndex]];
+	let keyValue = noteValues[key];
 
-	// Degree will get us something like 'I', 'II', 'III', etc.
-	let degree = currentProgression[currentIndex];
+	// Degree must be something like 'I', 'II', 'III', etc.
 
 	// We need to split the interval into three parts
 	// the degree, which is all letters that are either I or V
@@ -451,10 +482,11 @@ function setIntervalChord()
 
 	// We only need the degree if we're in scale degree mode since
 	// we only need the first note of the chord
-	if(modeIsDegrees() || modeIsScales()) {
-		currentChordNotes = [(keyValue + romanNumerals[bareDegree.toUpperCase()]) % 12];
-		setChordName(bareDegree, '');
-		return;
+	if (modeIsDegrees() || modeIsScales()) {
+		return [
+			generateChordName(bareDegree, ''),	
+			[(keyValue + romanNumerals[bareDegree.toUpperCase()]) % 12]
+		];
 	}
 
 	// Get the extension (7th, 9th, etc.)
@@ -518,8 +550,10 @@ function setIntervalChord()
 		ext += 'b5';
 	}
 
-	currentChordNotes = generateNotesFromChordName(degreeChordRoot + chordQuality + chord7th + ext);
-	setChordName(degreeChordRoot, chordQuality + chord7th + ext);
+	return [
+		generateChordName(degreeChordRoot, chordQuality + chord7th + ext),
+		generateNotesFromChordName(degreeChordRoot + chordQuality + chord7th + ext)
+	];
 }
 
 
