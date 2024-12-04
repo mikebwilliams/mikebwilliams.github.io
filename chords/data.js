@@ -235,37 +235,37 @@ const chordStructureNames = {
 
 const scales = {
     scaleIonian: { 
-        label: "Ionian Mode (Major Scale)", 
+        label: "Ionian", 
         steps: [2, 2, 1, 2, 2, 2, 1], 
         enabled: true 
     },
     scaleDorian: { 
-        label: "Dorian Mode", 
+        label: "Dorian", 
         steps: [2, 1, 2, 2, 2, 1, 2], 
         enabled: false 
     },
     scalePhrygian: { 
-        label: "Phrygian Mode", 
+        label: "Phrygian", 
         steps: [1, 2, 2, 2, 1, 2, 2], 
         enabled: false 
     },
     scaleLydian: { 
-        label: "Lydian Mode", 
+        label: "Lydian", 
         steps: [2, 2, 2, 1, 2, 2, 1], 
         enabled: false 
     },
     scaleMixolydian: { 
-        label: "Mixolydian Mode", 
+        label: "Mixolydian", 
         steps: [2, 2, 1, 2, 2, 1, 2], 
         enabled: false 
     },
     scaleAeolian: { 
-        label: "Aeolian Mode (Natural Minor Scale)", 
+        label: "Aeolian", 
         steps: [2, 1, 2, 2, 1, 2, 2], 
         enabled: true 
     },
     scaleLocrian: { 
-        label: "Locrian Mode", 
+        label: "Locrian", 
         steps: [1, 2, 2, 1, 2, 2, 2], 
         enabled: false 
     },
