@@ -1,3 +1,25 @@
+const hideProgressionChordNamesCheckbox = document.getElementById('hideProgressionChordNames');
+const hideProgressionChordNumeralsCheckbox = document.getElementById('hideProgressionChordNumerals');
+const progressionOptionsDiv = document.getElementById('progressionOptions');
+const progressionSelect = document.getElementById('progressionSelect');
+const flowSelect = document.getElementById('flowSelect');
+const currentKeySpan = document.getElementById('currentKey');
+
+const progressionDisplay = document.getElementById('progressionDisplay');
+const cadenceDisplay = document.getElementById('cadenceDisplay');
+const chordDisplay = document.getElementById("chordDisplay");
+
+const chordCountCorrect = document.getElementById("chordCountCorrect");
+const progCountCorrect = document.getElementById("progCountCorrect");
+const scalesCountCorrect = document.getElementById("scalesCountCorrect");
+const degreeCountCorrect = document.getElementById("degreeCountCorrect");
+const brickCountCorrect = document.getElementById("brickCountCorrect");
+const chordCountIncorrect = document.getElementById("chordCountIncorrect");
+const progCountIncorrect = document.getElementById("progCountIncorrect");
+const scalesCountIncorrect = document.getElementById("scalesCountIncorrect");
+const degreeCountIncorrect = document.getElementById("degreeCountIncorrect");
+const brickCountIncorrect = document.getElementById("brickCountIncorrect");
+
 function noKeys() {
 	allNotes.forEach(key => {
 		document.getElementById(key).checked = false;
@@ -135,9 +157,6 @@ function modeChange()
 		document.getElementById("degreesOptions").style.display = "none";
 		document.getElementById("scalesOptions").style.display = "none";
 		document.getElementById("jazzOptions").style.display = "none";
-
-		document.getElementById("chordDisplay").style.display = "block";
-		document.getElementById("progDisplay").style.display = "none";
 	} else if (modeIsProgressions()) {
 		// Show the progression options
 		document.getElementById("chordOptions").style.display = "none";
@@ -145,12 +164,6 @@ function modeChange()
 		document.getElementById("degreesOptions").style.display = "none";
 		document.getElementById("scalesOptions").style.display = "none";
 		document.getElementById("jazzOptions").style.display = "none";
-
-		document.getElementById("progDisplay").style.display = "block";
-		if ( !document.getElementById("hideProgressionChordNames").checked )
-			document.getElementById("chordDisplay").style.display = "block";
-		else
-			document.getElementById("chordDisplay").style.display = "none";
 	} else if (modeIsDegrees()) {
 		// Show the scale degree options
 		document.getElementById("chordOptions").style.display = "none";
@@ -158,30 +171,18 @@ function modeChange()
 		document.getElementById("degreesOptions").style.display = "block";
 		document.getElementById("scalesOptions").style.display = "none";
 		document.getElementById("jazzOptions").style.display = "none";
-
-		document.getElementById("chordDisplay").style.display = "none";
-		document.getElementById("progDisplay").style.display = "block";
 	} else if (modeIsScales()) {
 		document.getElementById("chordOptions").style.display = "none";
 		document.getElementById("progressionOptions").style.display = "none";
 		document.getElementById("degreesOptions").style.display = "none";
 		document.getElementById("scalesOptions").style.display = "block";
 		document.getElementById("jazzOptions").style.display = "none";
-
-		document.getElementById("progDisplay").style.display = "block";
-		document.getElementById("chordDisplay").style.display = "none";
 	} else if (modeIsJazz()) {
 		document.getElementById("chordOptions").style.display = "none";
 		document.getElementById("progressionOptions").style.display = "none";
 		document.getElementById("degreesOptions").style.display = "none";
 		document.getElementById("scalesOptions").style.display = "none";
 		document.getElementById("jazzOptions").style.display = "block";
-
-		document.getElementById("progDisplay").style.display = "block";
-		if ( !document.getElementById("hideProgressionChordNames").checked )
-			document.getElementById("chordDisplay").style.display = "block";
-		else
-			document.getElementById("chordDisplay").style.display = "none";
 	}
 
 	nextProgression();

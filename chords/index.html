@@ -73,7 +73,22 @@
 					<td id="brickCountIncorrect">0</td>
 				</tr>
 			</table>
-		</Details>
+		</details>
+
+		<details class="optionsCollapsible">
+			<summary>Display Options</summary>
+			<label><input type="checkbox" id="hideProgressionChordNames">Hide Progression Chord Names</label><br>
+			<label><input type="checkbox" id="hideProgressionChordNumerals">Hide Progression Chord Numerals</label><br>
+			<label><input type="checkbox" id="showKeyboard" checked>Show Keyboard</label><br>
+			<label><input type="checkbox" id="highlightCorrectKeys">Show Correct Keys After 3s</label><br>
+			<label><input type="checkbox" id="sendMidiNotes">Play Correct Notes over MIDI (for guessing from sound)</label><br>
+		</details>
+
+		<details class="midiCollapsible">
+			<summary>MIDI Options</summary>
+			<label id="midiStatus">MIDI Status: <span id="midiStatusText">Not Connected</span></label>
+		</details>
+
 
 		<h3>Mode</h3>
 		<div class="tabs">
@@ -296,20 +311,6 @@
 					</tr>
 				</table>
 			</div>
-		</details>
-
-		<details class="optionsCollapsible">
-			<summary>Display Options</summary>
-			<label><input type="checkbox" id="hideProgressionChordNames">Hide Progression Chord Names</label><br>
-			<label><input type="checkbox" id="hideProgressionChordNumerals">Hide Progression Chord Numerals</label><br>
-			<label><input type="checkbox" id="showKeyboard" checked>Show Keyboard</label><br>
-			<label><input type="checkbox" id="highlightCorrectKeys">Show Correct Keys After 3s</label><br>
-			<label><input type="checkbox" id="sendMidiNotes">Play Correct Notes over MIDI (for guessing from sound)</label><br>
-		</details>
-
-		<details class="midiCollapsible">
-			<summary>MIDI Options</summary>
-			<label id="midiStatus">MIDI Status: <span id="midiStatusText">Not Connected</span></label>
 		</details>
 
 		<script src="data.js"></script>

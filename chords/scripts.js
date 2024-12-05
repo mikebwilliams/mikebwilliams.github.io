@@ -11,26 +11,6 @@ let currentIndex = 0;
 let keyIndex = 0;
 let keys = [];
 
-const hideProgressionChordNamesCheckbox = document.getElementById('hideProgressionChordNames');
-const progressionOptionsDiv = document.getElementById('progressionOptions');
-const progressionSelect = document.getElementById('progressionSelect');
-const flowSelect = document.getElementById('flowSelect');
-const currentKeySpan = document.getElementById('currentKey');
-
-const progressionDisplay = document.getElementById('progressionDisplay');
-const cadenceDisplay = document.getElementById('cadenceDisplay');
-const chordDisplay = document.getElementById("chordDisplay");
-
-const chordCountCorrect = document.getElementById("chordCountCorrect");
-const progCountCorrect = document.getElementById("progCountCorrect");
-const scalesCountCorrect = document.getElementById("scalesCountCorrect");
-const degreeCountCorrect = document.getElementById("degreeCountCorrect");
-const brickCountCorrect = document.getElementById("brickCountCorrect");
-const chordCountIncorrect = document.getElementById("chordCountIncorrect");
-const progCountIncorrect = document.getElementById("progCountIncorrect");
-const scalesCountIncorrect = document.getElementById("scalesCountIncorrect");
-const degreeCountIncorrect = document.getElementById("degreeCountIncorrect");
-const brickCountIncorrect = document.getElementById("brickCountIncorrect");
 
 let highlightTimer; 
 
@@ -434,10 +414,28 @@ function nextChord(skip = false)
 
 function updateDisplay()
 {
-	let hideChordName = document.getElementById('hideProgressionChordNames').checked;
-	let hideNumerals = document.getElementById('hideProgressionChordNumerals').checked;
+	let hideChordName = hideProgressionChordNamesCheckbox.checked;
+	let hideNumerals = hideProgressionChordNumeralsCheckbox.checked;
 
-	text = currentChordName;
+	if (modeIsChords()) {
+		// When we are in chord mode with hidden chords we are probably doing ear training
+		// for chord quality so at least show the key
+		if (hideChordName) {
+			document.getElementById('currentKey').style.display = 'block';
+			document.getElementById('chordDisplay').style.display = 'none';
+		} else {
+			document.getElementById('currentKey').style.display = 'none';
+			document.getElementById('chordDisplay').style.display = 'block';
+		}
+		document.getElementById('progressionDisplay').style.display = 'none';
+		document.getElementById('cadenceDisplay').style.display = 'none';
+	} else {
+		document.getElementById('chordDisplay').style.display = 'none';
+		document.getElementById('progressionDisplay').style.display = 'block';
+		document.getElementById('cadenceDisplay').style.display = 'block';
+	}
+
+	let text = currentChordName;
 
 	// Turn # and b into sharp and flat symbols
 	text = text.replace(/#/g, '♯');
@@ -662,12 +660,8 @@ function generateProgression()
 }
 
 
-hideProgressionChordNamesCheckbox.addEventListener('change', function() {
-	if ( !document.getElementById("hideProgressionChordNames").checked )
-		document.getElementById("chordDisplay").style.display = "block";
-	else
-		document.getElementById("chordDisplay").style.display = "none";
-});
+hideProgressionChordNamesCheckbox.addEventListener('change', updateDisplay);
+hideProgressionChordNumerals.addEventListener('change', updateDisplay);
 
 
 function nextProgression()
