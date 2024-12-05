@@ -1,6 +1,5 @@
 let currentChordName = '';
 let currentChordNotes = [];
-let activeNotes = [];
 let activeKeys = [];
 let isIncorrect = false;
 let awaitingKeyRelease = false;
@@ -36,7 +35,7 @@ function generateNotesFromChordName(chordName) {
 	// Search all chord structure names for a matching type
 	for (let key in chordStructureNames) {
 		if (chordStructureNames[key].includes(chordType)) {
-			return chordStructures[key].map(interval => (rootValue + interval) % 12);
+			return chordStructures[key].map(interval => (rootValue + interval));
 		}
 	}
 
@@ -101,9 +100,6 @@ function setRandomChord()
 
 function handleKeyClick(key)
 {
-	let note = key % 12; // Normalize note to range 0-11
-	let keyElement = document.querySelector(`.key[data-note="${key}"]`);
-
 	if (activeKeys.includes(key)) {
 		handleKeyReleased(key);
 	} else {
@@ -116,13 +112,11 @@ function handleKeyClick(key)
 
 function handleKeyPressed(key)
 {
-	let note = key % 12; // Normalize note to range 0-11
 	let keyElement = document.querySelector(`.key[data-note="${key}"]`);
 
 	activeKeys.push(key);
-	activeNotes.push(note);
 
-	if (currentChordNotes.includes(note)) {
+	if (getSortedAnswerNotes().includes(key % 12)) {
 		keyElement.classList.add('correct');
 	} else {
 		keyElement.classList.add('incorrect');
@@ -134,16 +128,9 @@ function handleKeyPressed(key)
 
 function handleKeyReleased(key)
 {
-	let note = key % 12; // Normalize note to range 0-11
 	let keyElement = document.querySelector(`.key[data-note="${key}"]`);
 
 	activeKeys.splice(activeKeys.indexOf(key), 1);
-
-	let index = activeNotes.indexOf(note);
-
-	if (index > -1) {
-		activeNotes.splice(index, 1);  // Remove note from active list
-	}
 
 	keyElement.classList.remove('correct', 'incorrect');
 }
@@ -185,6 +172,12 @@ function sendMidiNote(note, velocity, time)
 			}
 		});
 	}
+}
+
+// Returns the current chord notes wrapped around the octave and sorted
+function getSortedAnswerNotes()
+{
+	return [...new Set(currentChordNotes.map(key => key % 12))].sort((a, b) => a - b);
 }
 
 function playAnswerNotes()
@@ -231,9 +224,10 @@ function checkChord() {
 		nextChord();
 	}
 
-	// Sort both arrays to ensure they are in the same order
-	let sortedCurrentChordNotes = [...currentChordNotes].sort();
-	let sortedActiveNotes = [...activeNotes].sort();
+	let sortedCurrentChordNotes = getSortedAnswerNotes();
+	// Turn keys into notes 0-11, remove duplicates, sort for matching 
+	let sortedActiveNotes = [...new Set(activeKeys.map(key => key % 12))].sort((a, b) => a - b);
+
 
 	// Check if every element in sortedCurrentChordNotes is in sortedActiveNotes and both arrays have the same length
 	// This makes sure we disallow extra notes in the chord
