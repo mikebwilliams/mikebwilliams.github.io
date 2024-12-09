@@ -242,7 +242,7 @@ function checkChord() {
 			if (isIncorrect) {
 				chordCountIncorrect.textContent = parseInt(chordCountIncorrect.textContent) + 1;
 			} else {
-				chordCountCorrect.textContent = parseInt(chordCountCorrect.textContent) + 1;
+				cntChordsCorrect.textContent = parseInt(cntChordsCorrect.textContent) + 1;
 			}
 
 			isIncorrect = false;
@@ -250,7 +250,7 @@ function checkChord() {
 			if (isIncorrect) {
 				degreeCountIncorrect.textContent = parseInt(degreeCountIncorrect.textContent) + 1;
 			} else {
-				degreeCountCorrect.textContent = parseInt(degreeCountCorrect.textContent) + 1;
+				cntDegreesCorrect.textContent = parseInt(cntDegreesCorrect.textContent) + 1;
 			}
 
 			isIncorrect = false;
@@ -364,19 +364,19 @@ function nextChord(skip = false)
 				if (isIncorrect) {
 					progCountIncorrect.textContent = parseInt(progCountIncorrect.textContent) + 1;
 				} else if (!skip) {
-					progCountCorrect.textContent = parseInt(progCountCorrect.textContent) + 1;
+					cntProgsCorrect.textContent = parseInt(cntProgsCorrect.textContent) + 1;
 				}
 			} else if (modeIsJazz()) {
 				if (isIncorrect) {
 					brickCountIncorrect.textContent = parseInt(brickCountIncorrect.textContent) + 1;
 				} else if (!skip) {
-					brickCountCorrect.textContent = parseInt(brickCountCorrect.textContent) + 1;
+					cntBricksCorrect.textContent = parseInt(cntBricksCorrect.textContent) + 1;
 				}
 			} else if (modeIsScales()) {
 				if (isIncorrect) {
 					scalesCountIncorrect.textContent = parseInt(scalesCountIncorrect.textContent) + 1;
 				} else if (!skip) {
-					scalesCountCorrect.textContent = parseInt(scalesCountCorrect.textContent) + 1;
+					cntScalesCorrect.textContent = parseInt(cntScalesCorrect.textContent) + 1;
 				}
 			}
 

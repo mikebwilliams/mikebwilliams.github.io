@@ -3,22 +3,22 @@ const hideProgressionChordNumeralsCheckbox = document.getElementById('hideProgre
 const progressionOptionsDiv = document.getElementById('progressionOptions');
 const progressionSelect = document.getElementById('progressionSelect');
 const flowSelect = document.getElementById('flowSelect');
-const currentKeySpan = document.getElementById('currentKey');
 
+const currentKeySpan = document.getElementById('currentKey');
 const progressionDisplay = document.getElementById('progressionDisplay');
 const cadenceDisplay = document.getElementById('cadenceDisplay');
 const chordDisplay = document.getElementById("chordDisplay");
 
-const chordCountCorrect = document.getElementById("chordCountCorrect");
-const progCountCorrect = document.getElementById("progCountCorrect");
-const scalesCountCorrect = document.getElementById("scalesCountCorrect");
-const degreeCountCorrect = document.getElementById("degreeCountCorrect");
-const brickCountCorrect = document.getElementById("brickCountCorrect");
-const chordCountIncorrect = document.getElementById("chordCountIncorrect");
-const progCountIncorrect = document.getElementById("progCountIncorrect");
-const scalesCountIncorrect = document.getElementById("scalesCountIncorrect");
-const degreeCountIncorrect = document.getElementById("degreeCountIncorrect");
-const brickCountIncorrect = document.getElementById("brickCountIncorrect");
+const cntChordsCorrect = document.getElementById("cntChordsCorrect");
+const cntProgsCorrect = document.getElementById("cntProgsCorrect");
+const cntScalesCorrect = document.getElementById("cntScalesCorrect");
+const cntDegreesCorrect = document.getElementById("cntDegreesCorrect");
+const cntBricksCorrect = document.getElementById("cntBricksCorrect");
+const cntChordsIncorrect = document.getElementById("cntChordsIncorrect");
+const cntProgsIncorrect = document.getElementById("cntProgsIncorrect");
+const cntScalesIncorrect = document.getElementById("cntScalesIncorrect");
+const cntDegreesIncorrect = document.getElementById("cntDegreesIncorrect");
+const cntBricksIncorrect = document.getElementById("cntBricksIncorrect");
 
 function noKeys() {
 	allNotes.forEach(key => {
@@ -390,14 +390,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.getElementById('btnResetStats').addEventListener('click', () => {
-	chordCountCorrect.textContent = "0";
-	progCountCorrect.textContent = "0";
-	scalesCountCorrect.textContent = "0";
-	degreeCountCorrect.textContent = "0";
-	brickCountCorrect.textContent = "0";
-	chordCountIncorrect.textContent = "0";
-	progCountIncorrect.textContent = "0";
-	scalesCountIncorrect.textContent = "0";
-	degreeCountIncorrect.textContent = "0";
-	brickCountIncorrect.textContent = "0";
+	cntChordsCorrect.textContent = "0";
+	cntProgsCorrect.textContent = "0";
+	cntScalesCorrect.textContent = "0";
+	cntDegreesCorrect.textContent = "0";
+	cntBricksCorrect.textContent = "0";
+	cntChordsIncorrect.textContent = "0";
+	cntProgsIncorrect.textContent = "0";
+	cntScalesIncorrect.textContent = "0";
+	cntDegreesIncorrect.textContent = "0";
+	cntBricksIncorrect.textContent = "0";
 });
