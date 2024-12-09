@@ -15,7 +15,7 @@ let highlightTimer;
 
 
 function isIntervalChord(chord) {
-	return chord.match(/^(#|b)?[iIvV]{1,3}.*/);
+	return chord.match(/^(#|b|B)?[iIvV]{1,3}.*/);
 }
 
 
@@ -191,11 +191,11 @@ function playAnswerNotes()
 
 		// TODO: Make this smarter based on mode later
 		if (!modeIsScales()) {
-			offset = 1.3;
+			offset = 2;
 
 			// Play the tonic of the key first
 			let [name, notes] = getIntervalChordNotesAndName(keys[keyIndex], 'I', false);
-			sendMidiNote(notes[0] + 48, 70, 500);
+			sendMidiNote(notes[0] + 48, 70, 1000);
 		}
 
 		// Play each chord in the progression with 500ms spacing
@@ -486,7 +486,7 @@ function getIntervalChordNotesAndName(key, degree, wrap = true)
 	// and the 7th, 9th, etc. which is all arabic numerals at the end
 	
 	// Get the degree
-	let bareDegree = degree.match(/[b#iIvV]{1,4}/)[0];
+	let bareDegree = degree.match(/[bB#iIvV]{1,4}/)[0];
 
 	// We only need the degree if we're in scale degree mode since
 	// we only need the first note of the chord
