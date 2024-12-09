@@ -191,7 +191,7 @@ function playAnswerNotes()
 
 		// TODO: Make this smarter based on mode later
 		if (!modeIsScales()) {
-			offset = 1;
+			offset = 1.3;
 
 			// Play the tonic of the key first
 			let [name, notes] = getIntervalChordNotesAndName(keys[keyIndex], 'I', false);
@@ -385,6 +385,10 @@ function nextChord(skip = false)
 
 			nextKey();
 			generateProgression();
+
+			if (document.getElementById('sendMidiNotes').checked) {
+				setTimeout(playAnswerNotes, 200);
+			}
 		}
 
 		if (isIntervalChord(currentProgression[currentIndex]) ) {
@@ -398,11 +402,12 @@ function nextChord(skip = false)
 	} else {
 		nextKey();
 		setRandomChord();
+
+		if (document.getElementById('sendMidiNotes').checked) {
+			setTimeout(playAnswerNotes, 200);
+		}
 	}
 
-	if (document.getElementById('sendMidiNotes').checked) {
-		setTimeout(playAnswerNotes, 200);
-	}
 	updateDisplay();
 }
 
@@ -425,8 +430,9 @@ function updateDisplay()
 		document.getElementById('cadenceDisplay').style.display = 'none';
 	} else {
 		document.getElementById('chordDisplay').style.display = 'none';
+		document.getElementById('currentKey').style.display = 'inline';
+		document.getElementById('cadenceDisplay').style.display = 'inline';
 		document.getElementById('progressionDisplay').style.display = 'block';
-		document.getElementById('cadenceDisplay').style.display = 'block';
 	}
 
 	let text = currentChordName;
