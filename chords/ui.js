@@ -388,3 +388,16 @@ document.addEventListener('DOMContentLoaded', () => {
 	initJazzBricks();
 	initMIDI();
 });
+
+document.getElementById('btnResetStats').addEventListener('click', () => {
+	chordCountCorrect.textContent = "0";
+	progCountCorrect.textContent = "0";
+	scalesCountCorrect.textContent = "0";
+	degreeCountCorrect.textContent = "0";
+	brickCountCorrect.textContent = "0";
+	chordCountIncorrect.textContent = "0";
+	progCountIncorrect.textContent = "0";
+	scalesCountIncorrect.textContent = "0";
+	degreeCountIncorrect.textContent = "0";
+	brickCountIncorrect.textContent = "0";
+});
