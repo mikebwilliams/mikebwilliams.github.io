@@ -5,6 +5,17 @@ body {
     font-family: Noto Sans, Calibri, Arial, sans-serif; /* Optional: sets the font to Arial */
 }
 
+a {
+  color: #1e90ff;
+}
+
+a:visited {
+  color: #4b8ef9;
+}
+
+a:hover {
+  color: #00bfff;
+}
 
 .container {
     max-width: 900px;
@@ -21,6 +32,10 @@ h2 {
 
 h3 {
     font-size: 36px;
+}
+
+h4 {
+    font-size: 20px;
 }
 
 p {
