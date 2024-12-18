@@ -240,7 +240,7 @@ function checkChord() {
 
 		if (modeIsChords()) {
 			if (isIncorrect) {
-				chordCountIncorrect.textContent = parseInt(chordCountIncorrect.textContent) + 1;
+				cntChordsIncorrect.textContent = parseInt(cntChordsIncorrect.textContent) + 1;
 			} else {
 				cntChordsCorrect.textContent = parseInt(cntChordsCorrect.textContent) + 1;
 			}
@@ -248,7 +248,7 @@ function checkChord() {
 			isIncorrect = false;
 		} else if (modeIsDegrees()) {
 			if (isIncorrect) {
-				degreeCountIncorrect.textContent = parseInt(degreeCountIncorrect.textContent) + 1;
+				cntDegreesIncorrect.textContent = parseInt(cntDegreesIncorrect.textContent) + 1;
 			} else {
 				cntDegreesCorrect.textContent = parseInt(cntDegreesCorrect.textContent) + 1;
 			}
@@ -362,19 +362,19 @@ function nextChord(skip = false)
 		if (skip || currentIndex >= currentProgression.length) {
 			if (modeIsProgressions()) {
 				if (isIncorrect) {
-					progCountIncorrect.textContent = parseInt(progCountIncorrect.textContent) + 1;
+					cntProgsIncorrect.textContent = parseInt(cntProgsIncorrect.textContent) + 1;
 				} else if (!skip) {
 					cntProgsCorrect.textContent = parseInt(cntProgsCorrect.textContent) + 1;
 				}
 			} else if (modeIsJazz()) {
 				if (isIncorrect) {
-					brickCountIncorrect.textContent = parseInt(brickCountIncorrect.textContent) + 1;
+					cntBricksIncorrect.textContent = parseInt(cntBricksIncorrect.textContent) + 1;
 				} else if (!skip) {
 					cntBricksCorrect.textContent = parseInt(cntBricksCorrect.textContent) + 1;
 				}
 			} else if (modeIsScales()) {
 				if (isIncorrect) {
-					scalesCountIncorrect.textContent = parseInt(scalesCountIncorrect.textContent) + 1;
+					cntScalesIncorrect.textContent = parseInt(cntScalesIncorrect.textContent) + 1;
 				} else if (!skip) {
 					cntScalesCorrect.textContent = parseInt(cntScalesCorrect.textContent) + 1;
 				}
