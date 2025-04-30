@@ -387,6 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	initScales();
 	initJazzBricks();
 	initMIDI();
+	initAudioContext();
 });
 
 document.getElementById('btnResetStats').addEventListener('click', () => {
@@ -401,3 +402,16 @@ document.getElementById('btnResetStats').addEventListener('click', () => {
 	cntDegreesIncorrect.textContent = "0";
 	cntBricksIncorrect.textContent = "0";
 });
+
+document.getElementById('playNoteSounds').addEventListener('change', function() {
+    if (this.checked && !audioContext) {
+        initAudioContext();
+    }
+});
+
+// User interaction is required to start audio context in some browsers
+document.addEventListener('click', function() {
+    if (audioContext && audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+}, { once: true });

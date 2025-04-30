@@ -10,19 +10,71 @@ let currentIndex = 0;
 let keyIndex = 0;
 let keys = [];
 
-
 let highlightTimer; 
 
+let audioContext;
+let oscillators = {};
+
+function initAudioContext() {
+	audioContext = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playNote(noteNumber) {
+	if (!audioContext) {
+		initAudioContext();
+	}
+	
+	if (!document.getElementById('playNoteSounds').checked) {
+		return;
+	}
+	
+	const frequency = 440 * Math.pow(2, (noteNumber - 69) / 12);
+	
+	const oscillator = audioContext.createOscillator();
+	const gainNode = audioContext.createGain();
+	
+	oscillator.type = 'sine';
+	oscillator.frequency.value = frequency;
+	
+	gainNode.gain.value = 0.3;
+	
+	oscillator.connect(gainNode);
+	gainNode.connect(audioContext.destination);
+	
+	oscillator.start();
+	oscillators[noteNumber] = { oscillator, gainNode };
+	
+	gainNode.gain.setValueAtTime(gainNode.gain.value, audioContext.currentTime);
+	gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.5);
+	
+	oscillator.stop(audioContext.currentTime + 1.5);
+	
+	oscillator.onended = function() {
+		delete oscillators[noteNumber];
+	};
+}
+
+function stopNote(noteNumber) {
+	if (oscillators[noteNumber]) {
+		const { gainNode } = oscillators[noteNumber];
+		gainNode.gain.setValueAtTime(gainNode.gain.value, audioContext.currentTime);
+		gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+		setTimeout(() => {
+			if (oscillators[noteNumber]) {
+				oscillators[noteNumber].oscillator.stop();
+				delete oscillators[noteNumber];
+			}
+		}, 100);
+	}
+}
 
 function isIntervalChord(chord) {
 	return chord.match(/^(#|b|B)?[iIvV]{1,3}.*/);
 }
 
-
 function isNamedChord(chord) {
 	return chord.match(/^[A-G](#|b)?/);
 }
-
 
 function generateNotesFromChordName(chordName) {
 	let rootNotePattern = /^[A-G](#|b)?/; // Matches the root note
@@ -97,7 +149,6 @@ function setRandomChord()
 	} while (currentChordName === lastChordName && selectedChordTypes.length > 1 && keys.length > 1);
 }
 
-
 function handleKeyClick(key)
 {
 	if (activeKeys.includes(key)) {
@@ -109,12 +160,12 @@ function handleKeyClick(key)
 	checkChord();
 }
 
-
 function handleKeyPressed(key)
 {
 	let keyElement = document.querySelector(`.key[data-note="${key}"]`);
 
 	activeKeys.push(key);
+    playNote(parseInt(key));
 
 	if (getSortedAnswerNotes().includes(key % 12)) {
 		keyElement.classList.add('correct');
@@ -125,16 +176,15 @@ function handleKeyPressed(key)
 	}
 }
 
-
 function handleKeyReleased(key)
 {
 	let keyElement = document.querySelector(`.key[data-note="${key}"]`);
 
 	activeKeys.splice(activeKeys.indexOf(key), 1);
+    stopNote(parseInt(key));
 
 	keyElement.classList.remove('correct', 'incorrect');
 }
-
 
 function handleMidiMessage(midiMessage)
 {
@@ -156,7 +206,6 @@ function handleMidiMessage(midiMessage)
 	}
 }
 
-
 function sendMidiNote(note, velocity, time)
 {
 	// Send a MIDI message to the first available MIDI output
@@ -172,6 +221,13 @@ function sendMidiNote(note, velocity, time)
 			}
 		});
 	}
+    
+    if (document.getElementById('playNoteSounds').checked) {
+        playNote(note + 48);
+        setTimeout(() => {
+            stopNote(note + 48);
+        }, time);
+    }
 }
 
 // Returns the current chord notes wrapped around the octave and sorted
@@ -262,7 +318,6 @@ function checkChord() {
 	}
 }
 
-
 function highlightCorrectKeys() {
 	// Clear previous highlights
 	document.querySelectorAll('.key.highlight').forEach(key => key.classList.remove('highlight'));
@@ -279,7 +334,6 @@ function highlightCorrectKeys() {
 		});
 	}, 3000);  // 3 seconds
 }
-
 
 function onMIDISuccess(midiAccess)
 {
@@ -304,13 +358,11 @@ function onMIDISuccess(midiAccess)
 	});
 }
 
-
 function onMIDIFailure(error)
 {
 	document.getElementById("midiStatusText").textContent = "Failed to get MIDI access. Error: " + error;
 }
 
-	
 function initMIDI()
 {
 	// Initialize MIDI access
@@ -320,7 +372,6 @@ function initMIDI()
 		document.getElementById("midiStatusText").textContent = "Your browser does not support MIDI access. Please ensure you are using a browser that supports WebMIDI, and that you are accessing this site from HTTPS, as some browsers require secure connections for WebMIDI."
 
 }
-
 
 function updateAvailableKeys()
 {
@@ -338,7 +389,6 @@ function updateAvailableKeys()
 		}
 	}
 }
-
 
 function nextKey()
 {
@@ -564,7 +614,6 @@ function getIntervalChordNotesAndName(key, degree, wrap = true)
 	];
 }
 
-
 function generateProgression()
 {
 	currentKeySpan.textContent = keys[keyIndex];
@@ -659,10 +708,8 @@ function generateProgression()
 	}
 }
 
-
 hideProgressionChordNamesCheckbox.addEventListener('change', updateDisplay);
 hideProgressionChordNumerals.addEventListener('change', updateDisplay);
-
 
 function nextProgression()
 {
