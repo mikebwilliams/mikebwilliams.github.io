@@ -1,4 +1,9 @@
+let midiAccess = null;
+
+// This string is the name of the chord, with possible alternative spellings
 let currentChordName = '';
+// This is the name of the chord using the internal chord type string mappings
+let currentChordInternalName = '';
 let currentChordNotes = [];
 let activeKeys = [];
 let isIncorrect = false;
@@ -57,7 +62,7 @@ function generateChordName(root, chordType)
 
 function setRandomChord()
 {
-	let lastChordName = currentChordName;
+	let lastChordInternalName = currentChordInternalName;
 
 	// Grab the selected chord types
 	let selectedChordTypes = [];
@@ -91,10 +96,11 @@ function setRandomChord()
 		let randomRoot = keys[keyIndex];
 		let randomChordType = selectedChordTypes[Math.floor(Math.random() * selectedChordTypes.length)];
 
-		currentChordNotes = generateNotesFromChordName(randomRoot + randomChordType);
+		currentChordInternalName = randomRoot + randomChordType;
+		currentChordNotes = generateNotesFromChordName(currentChordInternalName);
 		currentChordName = generateChordName(randomRoot, randomChordType);
 	// Loop until we get a new chord, or the user has only selected one chord type
-	} while (currentChordName === lastChordName && selectedChordTypes.length > 1 && keys.length > 1);
+	} while (currentChordInternalName === lastChordInternalName && (selectedChordTypes.length > 1 || keys.length > 1));
 }
 
 
@@ -160,17 +166,15 @@ function handleMidiMessage(midiMessage)
 function sendMidiNote(note, velocity, time)
 {
 	// Send a MIDI message to the first available MIDI output
-	if (navigator.requestMIDIAccess) {
-		navigator.requestMIDIAccess().then(function(midiAccess) {
-			const outputs = Array.from(midiAccess.outputs.values());
-			if (outputs.length > 0) {
-				outputs[0].send([0x90, note, velocity]);
+	if (midiAccess) {
+		const outputs = Array.from(midiAccess.outputs.values());
+		if (outputs.length > 0) {
+			outputs[0].send([0x90, note, velocity]);
 
-				setTimeout(() => {
-					outputs[0].send([0x80, note, 0]);
-				} , time);
-			}
-		});
+			setTimeout(() => {
+				outputs[0].send([0x80, note, 0]);
+			} , time);
+		}
 	}
 }
 
@@ -281,8 +285,10 @@ function highlightCorrectKeys() {
 }
 
 
-function onMIDISuccess(midiAccess)
+function onMIDISuccess(midiAccessResult)
 {
+	midiAccess = midiAccessResult;
+
 	// If there are no inputs, notify the user.
 	if (!midiAccess.inputs.size) {
 		document.getElementById("midiStatusText").textContent = "No MIDI inputs detected. Please connect a MIDI device.";
@@ -314,7 +320,7 @@ function onMIDIFailure(error)
 function initMIDI()
 {
 	// Initialize MIDI access
-	if( navigator.requestMIDIAccess )
+	if (navigator.requestMIDIAccess)
 		navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
 	else
 		document.getElementById("midiStatusText").textContent = "Your browser does not support MIDI access. Please ensure you are using a browser that supports WebMIDI, and that you are accessing this site from HTTPS, as some browsers require secure connections for WebMIDI."
@@ -453,7 +459,7 @@ function updateDisplay()
 	currentKeySpan.textContent = keys[keyIndex];
 
 	if (hideNumerals) {
-		progressionDisplay.innerHTML = currentProgression.map(chord => `<span class="chord">?</span>`).join(' - ');
+		progressionDisplay.innerHTML = currentProgression.map(chord => `<span class="chord" title="${chord}">?</span>`).join(' - ');
 	} else {
 		progressionDisplay.innerHTML = currentProgression.map(chord => `<span class="chord">${chord}</span>`).join(' - ');
 	}
