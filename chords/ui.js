@@ -319,11 +319,6 @@ function initScales()
 function initJazzBricks() {
 	const tbody = document.querySelector('#jazzBricks tbody');
 
-	// Enable every jazzCadence in jazzCadencesBasic by default
-	jazzCadencesBasic.forEach(cadence => { 
-		const jazzCadence = jazzCadences.find(c => c.name === cadence);
-		if (jazzCadence) jazzCadence.enabled = true;
-	} );
 
 	jazzCadences.forEach(cadence => {
 		const tr = document.createElement('tr');
@@ -343,45 +338,48 @@ function initJazzBricks() {
 			console.log(`${cadence.name} enabled state is now ${cadence.enabled}`);
 		});
 	});
-}
+	// initialize by selecting only the basic group by default
+	document.getElementById("btnJazzBricksBasic").click();
+	}
 
-document.getElementById("btnJazzBricksNone").addEventListener('click', () => {
-	jazzCadences.forEach(cadence => {
-		cadence.enabled = false;
-		cadence.element.checked = false;
-	});
-} );
-
-document.getElementById("btnJazzBricksAll").addEventListener('click', () => {
-	jazzCadences.forEach(cadence => {
-		cadence.enabled = true;
-		cadence.element.checked = true;
-	});
-} );
-
+// Basic group toggle: turns on/off all basic cadences
 document.getElementById("btnJazzBricksBasic").addEventListener('click', () => {
-	jazzCadences.forEach(cadence => {
-		if (jazzCadencesBasic.includes(cadence.name)) {
-			cadence.enabled = true;
-			cadence.element.checked = true;
-		} else {
-			cadence.enabled = false;
-			cadence.element.checked = false;
+	const anyOn = jazzCadences.some(c => jazzCadencesBasic.includes(c.name) && c.enabled);
+	jazzCadences.forEach(c => {
+		if (jazzCadencesBasic.includes(c.name)) {
+			c.enabled = !anyOn;
+			c.element.checked = !anyOn;
 		}
 	});
-} );
+});
 
+// Intermediate group toggle: excludes basic group, toggles intermediate-only cadences
+const jazzCadencesIntermediateOnly = jazzCadencesIntermediate.filter(name => !jazzCadencesBasic.includes(name));
 document.getElementById("btnJazzBricksIntermediate").addEventListener('click', () => {
-	jazzCadences.forEach(cadence => {
-		if (jazzCadencesIntermediate.includes(cadence.name)) {
-			cadence.enabled = true;
-			cadence.element.checked = true;
-		} else {
-			cadence.enabled = false;
-			cadence.element.checked = false;
+	const anyOn = jazzCadences.some(c => jazzCadencesIntermediateOnly.includes(c.name) && c.enabled);
+	jazzCadences.forEach(c => {
+		if (jazzCadencesIntermediateOnly.includes(c.name)) {
+			c.enabled = !anyOn;
+			c.element.checked = !anyOn;
 		}
 	});
-} );
+});
+
+// 'All' button: enable all cadences
+document.getElementById("btnJazzBricksAll").addEventListener('click', () => {
+	jazzCadences.forEach(c => {
+		c.enabled = true;
+		c.element.checked = true;
+	});
+});
+
+// 'None' button: disable all cadences
+document.getElementById("btnJazzBricksNone").addEventListener('click', () => {
+	jazzCadences.forEach(c => {
+		c.enabled = false;
+		c.element.checked = false;
+	});
+});
 
 document.addEventListener('DOMContentLoaded', () => {
 	initScales();
