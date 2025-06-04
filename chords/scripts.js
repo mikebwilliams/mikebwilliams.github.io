@@ -525,9 +525,7 @@ function getIntervalChordNotesAndName(key, degree, wrap = true)
 	let noteValue = (keyValue + degreeValue) % (wrap ? 12 : 127);
 
 	// Get sevenths
-	let majorSeventh = currentProgression[currentIndex].match(/M7/) || currentProgression[currentIndex].match(/Δ/) ||
-		        (diminished && currentProgression[currentIndex].match(/7/));
-
+	let majorSeventh = currentProgression[currentIndex].match(/M7/) || currentProgression[currentIndex].match(/Δ/);
 	let domSeventh = !majorSeventh && (halfDiminished || currentProgression[currentIndex].match(/7/));
 
 	// Later fix this to handle key signatures with flats
