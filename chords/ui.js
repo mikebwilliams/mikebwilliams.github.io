@@ -354,11 +354,10 @@ document.getElementById("btnJazzBricksBasic").addEventListener('click', () => {
 });
 
 // Intermediate group toggle: excludes basic group, toggles intermediate-only cadences
-const jazzCadencesIntermediateOnly = jazzCadencesIntermediate.filter(name => !jazzCadencesBasic.includes(name));
 document.getElementById("btnJazzBricksIntermediate").addEventListener('click', () => {
-	const anyOn = jazzCadences.some(c => jazzCadencesIntermediateOnly.includes(c.name) && c.enabled);
+	const anyOn = jazzCadences.some(c => jazzCadencesIntermediate.includes(c.name) && c.enabled);
 	jazzCadences.forEach(c => {
-		if (jazzCadencesIntermediateOnly.includes(c.name)) {
+		if (jazzCadencesIntermediate.includes(c.name)) {
 			c.enabled = !anyOn;
 			c.element.checked = !anyOn;
 		}
@@ -375,10 +374,40 @@ document.getElementById("btnJazzBricksAll").addEventListener('click', () => {
 
 // 'None' button: disable all cadences
 document.getElementById("btnJazzBricksNone").addEventListener('click', () => {
-	jazzCadences.forEach(c => {
-		c.enabled = false;
-		c.element.checked = false;
-	});
+   jazzCadences.forEach(c => {
+       c.enabled = false;
+       c.element.checked = false;
+   });
+});
+
+document.getElementById("btnJazzBricksTurnarounds").addEventListener('click', () => {
+   const anyOn = jazzCadences.some(c => jazzCadencesTurnarounds.includes(c.name) && c.enabled);
+   jazzCadences.forEach(c => {
+       if (jazzCadencesTurnarounds.includes(c.name)) {
+           c.enabled = !anyOn;
+           c.element.checked = !anyOn;
+       }
+   });
+});
+
+document.getElementById("btnJazzBricksMetabricks").addEventListener('click', () => {
+   const anyOn = jazzCadences.some(c => jazzCadencesMetabricks.includes(c.name) && c.enabled);
+   jazzCadences.forEach(c => {
+       if (jazzCadencesMetabricks.includes(c.name)) {
+           c.enabled = !anyOn;
+           c.element.checked = !anyOn;
+       }
+   });
+});
+
+document.getElementById("btnJazzBricksDropbacks").addEventListener('click', () => {
+   const anyOn = jazzCadences.some(c => jazzCadencesDropbacks.includes(c.name) && c.enabled);
+   jazzCadences.forEach(c => {
+       if (jazzCadencesDropbacks.includes(c.name)) {
+           c.enabled = !anyOn;
+           c.element.checked = !anyOn;
+       }
+   });
 });
 
 document.addEventListener('DOMContentLoaded', () => {

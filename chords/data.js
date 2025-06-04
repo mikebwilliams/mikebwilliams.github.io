@@ -405,9 +405,9 @@ const jazzCadences = [
 { name: "Twopenny Ending", chords: ['ii7', 'iv7', 'bVII7', 'IΔ', 'iii7', 'VI7', 'ii7', 'V7', 'IΔ'], enabled: false },
 // Miscellaneous
 { name: "Chromatic Dropback", chords: ['IΔ', 'VII7', 'bVII7', 'VI7', 'ii7'], enabled: false },
-{ name: "Dogleg", chords: ['ii7', 'V7', 'v7', 'I7', 'i7'], enabled: false },
+{ name: "Dogleg Dropback", chords: ['ii7', 'V7', 'v7', 'I7', 'i7'], enabled: false },
 { name: "Dropback", chords: ['IΔ', 'VI7', 'ii7'], enabled: false },
-{ name: "Raindrop", chords: ['iii7', 'bIIIo7', 'ii7'], enabled: false },
+{ name: "Raindrop Dropback", chords: ['iii7', 'bIIIo7', 'ii7'], enabled: false },
 { name: "Starlight Dropback", chords: ['#iv7', 'VII7', 'iii7', 'VI7', 'ii7'], enabled: false },
 { name: "TINGLe Dropback", chords: ['IΔ', 'IV7', 'bVII7', 'VI7', 'ii7'], enabled: false },
 { name: "TTFA Dropback", chords: ['IΔ', 'IV7', 'iii7', 'VI7', 'ii7'], enabled: false }
@@ -420,8 +420,27 @@ const jazzCadencesBasic = [
 ];
 
 const jazzCadencesIntermediate = [
-	"POT", "SPOT",
+	"SPOT",
 	"Nowhere (turnaround)",
-	"Dropback", "Pullback", "TTFA Dropback",
-	"Regular", "Two-Goes", "Long", "Overrun", "Yardbird", "Starlight", "Rainy"
+	"TTFA Dropback",
+	"Yardbird", "Starlight", "Rainy"
+];
+
+const jazzCadencesTurnarounds = [
+	"Foggy", "II ’n’ Back", "Ladybird", "Nowhere (turnaround)",
+	"Pennies", "POT", "POT (minor)", "Rhythm",
+	"SPOT", "To IV 'n' Back", "To IV 'n' Hack", "To IV 'n' Mack",
+	"To IV 'n' Yak", "Whoopee",
+];
+
+const jazzCadencesMetabricks = [
+	"Autumn Leaves Opening", "Four-Star Ending", "Honeysuckle Bridge",
+	"ITCHY Opening", "On-Off(any dom7)-On + Dropback", "Pennies Ending",
+	"Rhythm Bridge", "Sharp Fourpenny Ending", "Sixpenny Ending",
+	"To IV ’n’ Bird SPOT", "Twopenny Ending",
+];
+
+const jazzCadencesDropbacks = [
+	"Chromatic Dropback", "Dogleg Dropback", "Dropback", "Raindrop Dropback",
+	"Starlight Dropback", "TINGLe Dropback", "TTFA Dropback",
 ];
