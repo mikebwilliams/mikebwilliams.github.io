@@ -16,7 +16,21 @@ let keyIndex = 0;
 let keys = [];
 
 
-let highlightTimer; 
+let highlightTimer;
+
+/* Spaced repetition support for failed chords */
+let spacedQueue = [];
+let scheduledRepeatFlag = false;
+let scheduledEntryIndex = null;
+
+function isSpacedRepetitionEnabled() {
+	return document.getElementById('enableSpacedRepetition').checked;
+}
+
+function getMasteryThreshold() {
+	const t = parseInt(document.getElementById('spacedRepThreshold').value, 10);
+	return isNaN(t) || t < 1 ? 1 : t;
+}
 
 
 function isIntervalChord(chord) {
@@ -63,6 +77,23 @@ function generateChordName(root, chordType)
 function setRandomChord()
 {
 	let lastChordInternalName = currentChordInternalName;
+
+	if (isSpacedRepetitionEnabled() && spacedQueue.length) {
+		let idx = spacedQueue.reduce((best, entry, i) => entry.counter <= 0 && (best < 0 || entry.counter < spacedQueue[best].counter) ? i : best, -1);
+		if (idx >= 0) {
+			let entry = spacedQueue[idx];
+			let rootMatch = entry.chord.match(/^[A-G](#|b)?/);
+			let root = rootMatch[0];
+			let chordType = entry.chord.slice(root.length);
+			currentChordInternalName = entry.chord;
+			currentChordNotes = generateNotesFromChordName(entry.chord);
+			currentChordName = generateChordName(root, chordType);
+			scheduledRepeatFlag = true;
+			scheduledEntryIndex = idx;
+			return;
+		}
+		spacedQueue.forEach(entry => entry.counter--);
+	}
 
 	// Grab the selected chord types
 	let selectedChordTypes = [];
@@ -243,6 +274,27 @@ function checkChord() {
 		document.getElementById('chordDisplay').classList.add('correct');
 
 		if (modeIsChords()) {
+			if (scheduledRepeatFlag) {
+				let entry = spacedQueue[scheduledEntryIndex];
+				if (isIncorrect) {
+					entry.interval = 1;
+					entry.successStreak = 0;
+				} else {
+					entry.successStreak++;
+					entry.interval *= 2;
+				}
+				entry.counter = entry.interval;
+				if (entry.successStreak >= getMasteryThreshold()) {
+					spacedQueue.splice(scheduledEntryIndex, 1);
+				}
+				scheduledRepeatFlag = false;
+				scheduledEntryIndex = null;
+			} else if (isIncorrect) {
+				if (!spacedQueue.find(e => e.chord === currentChordInternalName)) {
+					spacedQueue.push({ chord: currentChordInternalName, interval: 1, counter: 1, successStreak: 0 });
+				}
+			}
+
 			if (isIncorrect) {
 				cntChordsIncorrect.textContent = parseInt(cntChordsIncorrect.textContent) + 1;
 			} else {
