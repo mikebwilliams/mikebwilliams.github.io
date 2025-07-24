@@ -23,6 +23,11 @@ let spacedQueue = [];
 let scheduledRepeatFlag = false;
 let scheduledEntryIndex = null;
 
+/* Spaced repetition support for Jazz Bricks (chord progressions) */
+let spacedQueueBricks = [];
+let scheduledRepeatFlagBricks = false;
+let scheduledEntryIndexBricks = null;
+
 function isSpacedRepetitionEnabled() {
 	return document.getElementById('enableSpacedRepetition').checked;
 }
@@ -425,6 +430,28 @@ function nextChord(skip = false)
 					cntProgsCorrect.textContent = parseInt(cntProgsCorrect.textContent) + 1;
 				}
 			} else if (modeIsJazz()) {
+				// handle scheduled repetition entries for Jazz Bricks
+				if (scheduledRepeatFlagBricks) {
+					let entry = spacedQueueBricks[scheduledEntryIndexBricks];
+					if (isIncorrect) {
+						entry.interval = 1;
+						entry.successStreak = 0;
+					} else {
+						entry.successStreak++;
+						entry.interval *= 2;
+					}
+					entry.counter = entry.interval;
+					if (entry.successStreak >= getMasteryThreshold()) {
+						spacedQueueBricks.splice(scheduledEntryIndexBricks, 1);
+					}
+					scheduledRepeatFlagBricks = false;
+					scheduledEntryIndexBricks = null;
+				} else if (isIncorrect) {
+					// schedule failed Jazz Brick cadence for spaced repetition
+					if (!spacedQueueBricks.find(e => e.chord === selectedProgression)) {
+						spacedQueueBricks.push({ chord: selectedProgression, interval: 1, counter: 1, successStreak: 0 });
+					}
+				}
 				if (isIncorrect) {
 					cntBricksIncorrect.textContent = parseInt(cntBricksIncorrect.textContent) + 1;
 				} else if (!skip) {
@@ -701,11 +728,27 @@ function generateProgression()
 				enabledCadences[cadence] = jazzCadences[cadence].chords;
 				enabledNames[cadence] = jazzCadences[cadence].name;
 			}
-		} );
+		});
+
+		// Spaced repetition: schedule due Jazz Brick cadences before random selection
+		if (isSpacedRepetitionEnabled() && spacedQueueBricks.length) {
+			let idx = spacedQueueBricks.reduce((best, entry, i) =>
+				entry.counter <= 0 && (best < 0 || entry.counter < spacedQueueBricks[best].counter) ? i : best
+			, -1);
+			if (idx >= 0) {
+				let entry = spacedQueueBricks[idx];
+				currentProgression = enabledCadences[entry.chord];
+				currentProgressionName = enabledNames[entry.chord];
+				scheduledRepeatFlagBricks = true;
+				scheduledEntryIndexBricks = idx;
+				return;
+			}
+			spacedQueueBricks.forEach(e => e.counter--);
+		}
 
 		// Select a random cadence from the enabled list
 		if (Object.keys(enabledCadences).length === 0) {
-			enabledCadences['Regular'] =['ii', 'V7', 'IΔ'];
+			enabledCadences['Regular'] = ['ii', 'V7', 'IΔ'];
 			enabledNames['Regular'] = 'Regular';
 		}
 
