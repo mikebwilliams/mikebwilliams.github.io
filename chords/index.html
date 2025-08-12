@@ -82,6 +82,8 @@
 			<label><input type="checkbox" id="showKeyboard" checked>Show Keyboard</label><br>
 			<label><input type="checkbox" id="highlightCorrectKeys">Show Correct Keys After 3s</label><br>
 			<label><input type="checkbox" id="sendMidiNotes">Play Answer Notes over MIDI (for guessing from sound)</label><br>
+			<label><input type="checkbox" id="enableSpacedRepetition" checked> Enable Spaced Repetition</label><br>
+			<label>Mastery Threshold: <input type="number" id="spacedRepThreshold" value="3" min="1" style="width:3em;"></label><br>
 		</details>
 
 		<details class="midiCollapsible">
@@ -174,8 +176,6 @@
 
 			<label><input type="checkbox" id="randomizeSpellings" checked> Use Alternate Spellings ( Cm7♭5 => △ )</label>
 			<br>
-			<label><input type="checkbox" id="enableSpacedRepetition"> Enable Spaced Repetition</label>
-			<label>Mastery Threshold: <input type="number" id="spacedRepThreshold" value="3" min="1" style="width:3em;"></label>
 		</div>
 
 		<div class="tabContent" id="progressionOptions">
