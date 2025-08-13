@@ -582,11 +582,14 @@ function getIntervalChordNotesAndName(key, degree, wrap = true)
 		];
 	}
 
-	// Get the extension (7th, 9th, etc.)
-	let extension = currentProgression[currentIndex].match(/(7,9,11,13)/);
+	// Get the extension (7th, 9th, etc.) — capture selected alterations
+	// Note: extension variable was unused; instead, detect specific alterations.
+	const hasSharp9  = /(\+9|#9)/.test(currentProgression[currentIndex]);
+	const hasFlat9   = /b9/.test(currentProgression[currentIndex]);
+	const hasSharp11 = /(\+11|#11)/.test(currentProgression[currentIndex]);
 
-	// Get the augmented
-	let augmented = currentProgression[currentIndex].match(/\+/);
+	// Get the augmented — but only if '+' is NOT part of +9/+11/+13
+	let augmented = /\+(?!9|11|13)/.test(currentProgression[currentIndex]);
 
 	// Get the diminished
 	let diminished = currentProgression[currentIndex].match(/o/);
@@ -639,6 +642,12 @@ function getIntervalChordNotesAndName(key, degree, wrap = true)
 
 	if (halfDiminished) {
 		ext += 'b5';
+	} else if (hasSharp9) {
+		ext += '#9';
+	} else if (hasFlat9) {
+		ext += 'b9';
+	} else if (hasSharp11) {
+		ext += '#11';
 	}
 
 	return [
