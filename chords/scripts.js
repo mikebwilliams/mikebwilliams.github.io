@@ -252,7 +252,7 @@ function playAnswerNotes()
 }
 
 function checkChord() {
-	
+
 	if (awaitingKeyRelease) {
 		if (activeKeys.length > 0) {
 			return;
@@ -373,7 +373,7 @@ function onMIDIFailure(error)
 	document.getElementById("midiStatusText").textContent = "Failed to get MIDI access. Error: " + error;
 }
 
-	
+
 function initMIDI()
 {
 	// Initialize MIDI access
@@ -422,7 +422,12 @@ function nextChord(skip = false)
 	if (modeIsProgressions() || modeIsScales() || modeIsDegrees() || modeIsJazz()) {
 		currentIndex++;
 
-		if (skip || currentIndex >= currentProgression.length) {
+		// Ensure progression exists before using it
+		if (!Array.isArray(currentProgression)) {
+			generateProgression();
+		}
+
+		if (skip || currentIndex >= (currentProgression ? currentProgression.length : 0)) {
 			if (modeIsProgressions()) {
 				if (isIncorrect) {
 					cntProgsIncorrect.textContent = parseInt(cntProgsIncorrect.textContent) + 1;
@@ -476,12 +481,18 @@ function nextChord(skip = false)
 			}
 		}
 
-		if (isIntervalChord(currentProgression[currentIndex]) ) {
-			[currentChordName, currentChordNotes] = getIntervalChordNotesAndName(keys[keyIndex], currentProgression[currentIndex]);
-		} else if (isNamedChord(currentProgression[currentIndex]) ) {
-			currentChordName = generateChordName(currentProgression[currentIndex], '');
-			currentChordNotes = generateNotesFromChordName(currentProgression[currentIndex]);
+		// Safety: guard against missing progression entries
+		if (Array.isArray(currentProgression) && currentProgression[currentIndex]) {
+			if (isIntervalChord(currentProgression[currentIndex]) ) {
+				[currentChordName, currentChordNotes] = getIntervalChordNotesAndName(keys[keyIndex], currentProgression[currentIndex]);
+			} else if (isNamedChord(currentProgression[currentIndex]) ) {
+				currentChordName = generateChordName(currentProgression[currentIndex], '');
+				currentChordNotes = generateNotesFromChordName(currentProgression[currentIndex]);
+			} else {
+				setRandomChord();
+			}
 		} else {
+			// Fallback for unexpected undefined progression
 			setRandomChord();
 		}
 	} else {
@@ -537,10 +548,14 @@ function updateDisplay()
 
 	currentKeySpan.textContent = keys[keyIndex];
 
-	if (hideNumerals) {
-		progressionDisplay.innerHTML = currentProgression.map(chord => `<span class="chord" title="${chord}">?</span>`).join(' - ');
+	if (Array.isArray(currentProgression)) {
+		if (hideNumerals) {
+			progressionDisplay.innerHTML = currentProgression.map(chord => `<span class="chord" title="${chord}">?</span>`).join(' - ');
+		} else {
+			progressionDisplay.innerHTML = currentProgression.map(chord => `<span class="chord">${chord}</span>`).join(' - ');
+		}
 	} else {
-		progressionDisplay.innerHTML = currentProgression.map(chord => `<span class="chord">${chord}</span>`).join(' - ');
+		progressionDisplay.innerHTML = '';
 	}
 
 	if (hideChordName) {
@@ -569,7 +584,7 @@ function getIntervalChordNotesAndName(key, degree, wrap = true)
 	// the degree, which is all letters that are either I or V
 	// the augmented or diminished, which is all letters that are + or o
 	// and the 7th, 9th, etc. which is all arabic numerals at the end
-	
+
 	// Get the degree
 	let bareDegree = degree.match(/[bB#iIvV]{1,4}/)[0];
 
@@ -729,13 +744,14 @@ function generateProgression()
 		currentProgressionName = currentScaleName;
 	} else if (modeIsJazz()) {
 
-		// Get list of all enabled Jazz cadences
+		// Get list of all enabled Jazz cadences keyed by cadence name
 		enabledCadences = {};
 		enabledNames = {};
-		Object.keys(jazzCadences).forEach(cadence => {
-			if (jazzCadences[cadence].enabled) {
-				enabledCadences[cadence] = jazzCadences[cadence].chords;
-				enabledNames[cadence] = jazzCadences[cadence].name;
+		Object.keys(jazzCadences).forEach(idx => {
+			const c = jazzCadences[idx];
+			if (c.enabled) {
+				enabledCadences[c.name] = c.chords;
+				enabledNames[c.name] = c.name;
 			}
 		});
 
@@ -743,14 +759,17 @@ function generateProgression()
 		if (isSpacedRepetitionEnabled() && spacedQueueBricks.length) {
 			let idx = spacedQueueBricks.reduce((best, entry, i) =>
 				entry.counter <= 0 && (best < 0 || entry.counter < spacedQueueBricks[best].counter) ? i : best
-			, -1);
+				, -1);
 			if (idx >= 0) {
 				let entry = spacedQueueBricks[idx];
-				currentProgression = enabledCadences[entry.chord];
-				currentProgressionName = enabledNames[entry.chord];
-				scheduledRepeatFlagBricks = true;
-				scheduledEntryIndexBricks = idx;
-				return;
+				const scheduled = enabledCadences[entry.chord];
+				if (scheduled) {
+					currentProgression = scheduled;
+					currentProgressionName = enabledNames[entry.chord] || entry.chord;
+					scheduledRepeatFlagBricks = true;
+					scheduledEntryIndexBricks = idx;
+					return;
+				}
 			}
 			spacedQueueBricks.forEach(e => e.counter--);
 		}
@@ -769,7 +788,7 @@ function generateProgression()
 
 
 hideProgressionChordNamesCheckbox.addEventListener('change', updateDisplay);
-hideProgressionChordNumerals.addEventListener('change', updateDisplay);
+hideProgressionChordNumeralsCheckbox.addEventListener('change', updateDisplay);
 
 
 function nextProgression()
