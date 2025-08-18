@@ -81,7 +81,7 @@ function generateChordName(root, chordType)
 
 function setRandomChord()
 {
-	let lastChordInternalName = currentChordInternalName;
+    let lastChordInternalName = currentChordInternalName;
 
 	if (isSpacedRepetitionEnabled() && spacedQueue.length) {
 		let idx = spacedQueue.reduce((best, entry, i) => entry.counter <= 0 && (best < 0 || entry.counter < spacedQueue[best].counter) ? i : best, -1);
@@ -132,11 +132,11 @@ function setRandomChord()
 		let randomRoot = keys[keyIndex];
 		let randomChordType = selectedChordTypes[Math.floor(Math.random() * selectedChordTypes.length)];
 
-		currentChordInternalName = randomRoot + randomChordType;
-		currentChordNotes = generateNotesFromChordName(currentChordInternalName);
-		currentChordName = generateChordName(randomRoot, randomChordType);
-	// Loop until we get a new chord, or the user has only selected one chord type
-	} while (currentChordInternalName === lastChordInternalName && (selectedChordTypes.length > 1 || keys.length > 1));
+        currentChordInternalName = randomRoot + randomChordType;
+        currentChordNotes = applyShellVoicing(generateNotesFromChordName(currentChordInternalName));
+        currentChordName = generateChordName(randomRoot, randomChordType);
+    // Loop until we get a new chord, or the user has only selected one chord type
+    } while (currentChordInternalName === lastChordInternalName && (selectedChordTypes.length > 1 || keys.length > 1));
 }
 
 
@@ -665,10 +665,10 @@ function getIntervalChordNotesAndName(key, degree, wrap = true)
 		ext += '#11';
 	}
 
-	return [
-		generateChordName(degreeChordRoot, chordQuality + chord7th + ext),
-		generateNotesFromChordName(degreeChordRoot + chordQuality + chord7th + ext)
-	];
+    return [
+        generateChordName(degreeChordRoot, chordQuality + chord7th + ext),
+        generateNotesFromChordName(degreeChordRoot + chordQuality + chord7th + ext)
+    ];
 }
 
 
@@ -803,3 +803,44 @@ setRandomChord();
 highlightCorrectKeys();
 updateDisplay();
 modeChange();
+// Apply shell voicing according to selected mode (chords tab only)
+function applyShellVoicing(notes) {
+    // Only alter notes in chord practice mode
+    try {
+        if (!Array.isArray(notes)) return notes;
+        if (typeof getShellMode !== 'function' || !modeIsChords()) return notes;
+        const mode = getShellMode();
+        if (mode === 'off') return notes;
+
+        const root = notes[0];
+        // Prefer actual 3rds if present, otherwise take first non-root tone
+        let third = notes.find(n => n === 3 || n === 4);
+        if (third === undefined) third = notes.find(n => n !== root);
+
+        // Detect 7th (dom=10, maj=11, dim=9)
+        let seventh = notes.find(n => n === 10 || n === 11 || n === 9);
+
+        if (mode === 'r37') {
+            if (third !== undefined && seventh !== undefined) return [root, third, seventh];
+            if (third !== undefined) return [root, third];
+            return [root];
+        } else if (mode === '37') {
+            if (third !== undefined && seventh !== undefined) return [third, seventh];
+            if (third !== undefined) return [third];
+            return notes; // fallback
+        }
+        return notes;
+    } catch (_) {
+        return notes;
+    }
+}
+
+// React to shell mode changes immediately in chord mode
+document.querySelectorAll("input[name='shellMode']").forEach(r => {
+    r.addEventListener('change', () => {
+        if (modeIsChords() && currentChordInternalName) {
+            currentChordNotes = applyShellVoicing(generateNotesFromChordName(currentChordInternalName));
+            updateDisplay();
+        }
+    });
+});

@@ -20,6 +20,13 @@ const cntScalesIncorrect = document.getElementById("cntScalesIncorrect");
 const cntDegreesIncorrect = document.getElementById("cntDegreesIncorrect");
 const cntBricksIncorrect = document.getElementById("cntBricksIncorrect");
 
+// Shell voicing controls
+const shellModeRadios = document.querySelectorAll("input[name='shellMode']");
+function getShellMode() {
+    const sel = Array.from(shellModeRadios).find(r => r.checked);
+    return sel ? sel.value : 'off';
+}
+
 function noKeys() {
 	allNotes.forEach(key => {
 		document.getElementById(key).checked = false;
