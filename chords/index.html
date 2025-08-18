@@ -75,8 +75,85 @@
 			<button id="btnResetStats">Reset</button>
 		</details>
 
-		<details class="optionsCollapsible">
-			<summary>Display Options</summary>
+
+		<h3>Options</h3>
+		<div class="tabs" id="optionsTabs">
+			<input type="radio" id="tabKeys" name="options" value="tabKeys" checked>
+			<label for="tabKeys">Keys</label>
+
+			<input type="radio" id="tabDisplay" name="options" value="tabDisplay">
+			<label for="tabDisplay">Display</label>
+
+			<input type="radio" id="tabMidi" name="options" value="tabMidi">
+			<label for="tabMidi">MIDI</label>
+		</div>
+
+		<div class="tabContent" id="keysOptions">
+			<div id="flowOptions">Flow:
+				<select id="flowSelect">
+					<option value="random">Random</option>
+					<option value="circleOfFourths">Circle of Fourths</option>
+					<option value="circleOfFifths">Circle of Fifths</option>
+				</select>
+				<br>
+				<br>
+			</div>
+			<div id="presetButtons">
+				<button id="normalKeys">Normal</button>
+				<button id="whiteKeys">White</button>
+				<button id="blackKeys">Black</button>
+				<button id="sharpKeys">Sharps</button>
+				<button id="flatKeys">Flats</button>
+				<button id="noKeys">None</button>
+				<button id="allKeys">All</button>
+			</div>
+			<div id="keyOptions">
+				<table>
+					<tr>
+						<th>Flats</th>
+						<th>White</th>
+						<th>Sharps</th>
+					</tr>
+					<tr>
+						<td><label><input type="checkbox" id="Cb"> C♭</label></td>
+						<td><label><input type="checkbox" id="C" checked> C</label></td>
+						<td><label><input type="checkbox" id="C#" checked> C#</label></td>
+					</tr>
+					<tr>
+						<td><label><input type="checkbox" id="Db" checked> D♭</label></td>
+						<td><label><input type="checkbox" id="D" checked> D</label></td>
+						<td><label><input type="checkbox" id="D#" checked> D#</label></td>
+					</tr>
+					<tr>
+						<td><label><input type="checkbox" id="Eb" checked> E♭</label></td>
+						<td><label><input type="checkbox" id="E" checked> E</label></td>
+						<td><label><input type="checkbox" id="E#"> E#</label></td>
+					</tr>
+					<tr>
+						<td><label><input type="checkbox" id="Fb"> F♭</label></td>
+						<td><label><input type="checkbox" id="F" checked> F</label></td>
+						<td><label><input type="checkbox" id="F#" checked> F#</label></td>
+					</tr>
+					<tr>
+						<td><label><input type="checkbox" id="Gb" checked> G♭</label></td>
+						<td><label><input type="checkbox" id="G" checked> G</label></td>
+						<td><label><input type="checkbox" id="G#" checked> G#</label></td>
+					</tr>
+					<tr>
+						<td><label><input type="checkbox" id="Ab" checked> A♭</label></td>
+						<td><label><input type="checkbox" id="A" checked> A</label></td>
+						<td><label><input type="checkbox" id="A#" checked> A#</label></td>
+					</tr>
+					<tr>
+						<td><label><input type="checkbox" id="Bb" checked> B♭</label></td>
+						<td><label><input type="checkbox" id="B" checked> B</label></td>
+						<td><label><input type="checkbox" id="B#"> B#</label></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+		<div class="tabContent" id="displayOptions">
 			<label><input type="checkbox" id="hideProgressionChordNames">Hide Progression Chord Names</label><br>
 			<label><input type="checkbox" id="hideProgressionChordNumerals">Hide Progression Chord Numerals</label><br>
 			<label><input type="checkbox" id="showKeyboard" checked>Show Keyboard</label><br>
@@ -84,14 +161,13 @@
 			<label><input type="checkbox" id="sendMidiNotes">Play Answer Notes over MIDI (for guessing from sound)</label><br>
 			<label><input type="checkbox" id="enableSpacedRepetition" checked> Enable Spaced Repetition</label><br>
 			<label>Mastery Threshold: <input type="number" id="spacedRepThreshold" value="3" min="1" style="width:3em;"></label><br>
-		</details>
+		</div>
 
-		<details class="midiCollapsible">
-			<summary>MIDI Options</summary>
+		<div class="tabContent" id="midiOptions">
 			<label id="midiStatus">MIDI Status: <span id="midiStatusText">Not Connected</span></label>
 			<table id="midiInputs"></table>
 			<table id="midiOutputs"></table>
-		</details>
+		</div>
 
 
 		<h3>Mode</h3>
@@ -267,73 +343,7 @@
 			</table>
 		</div>
 
-		<h3>Options</h3>
 
-		<details>
-			<summary>Keys</summary>
-			<div id="flowOptions">Flow:
-				<select id="flowSelect">
-					<option value="random">Random</option>
-					<option value="circleOfFourths">Circle of Fourths</option>
-					<option value="circleOfFifths">Circle of Fifths</option>
-				</select>
-				<br>
-				<br>
-			</div>
-			<div id="presetButtons">
-				<button id="normalKeys">Normal</button>
-				<button id="whiteKeys">White</button>
-				<button id="blackKeys">Black</button>
-				<button id="sharpKeys">Sharps</button>
-				<button id="flatKeys">Flats</button>
-				<button id="noKeys">None</button>
-				<button id="allKeys">All</button>
-			</div>
-			<div id="keyOptions">
-				<table>
-					<tr>
-						<th>Flats</th>
-						<th>White</th>
-						<th>Sharps</th>
-					</tr>
-					<tr>
-						<td><label><input type="checkbox" id="Cb"> C♭</label></td>
-						<td><label><input type="checkbox" id="C" checked> C</label></td>
-						<td><label><input type="checkbox" id="C#" checked> C#</label></td>
-					</tr>
-					<tr>
-						<td><label><input type="checkbox" id="Db" checked> D♭</label></td>
-						<td><label><input type="checkbox" id="D" checked> D</label></td>
-						<td><label><input type="checkbox" id="D#" checked> D#</label></td>
-					</tr>
-					<tr>
-						<td><label><input type="checkbox" id="Eb" checked> E♭</label></td>
-						<td><label><input type="checkbox" id="E" checked> E</label></td>
-						<td><label><input type="checkbox" id="E#"> E#</label></td>
-					</tr>
-					<tr>
-						<td><label><input type="checkbox" id="Fb"> F♭</label></td>
-						<td><label><input type="checkbox" id="F" checked> F</label></td>
-						<td><label><input type="checkbox" id="F#" checked> F#</label></td>
-					</tr>
-					<tr>
-						<td><label><input type="checkbox" id="Gb" checked> G♭</label></td>
-						<td><label><input type="checkbox" id="G" checked> G</label></td>
-						<td><label><input type="checkbox" id="G#" checked> G#</label></td>
-					</tr>
-					<tr>
-						<td><label><input type="checkbox" id="Ab" checked> A♭</label></td>
-						<td><label><input type="checkbox" id="A" checked> A</label></td>
-						<td><label><input type="checkbox" id="A#" checked> A#</label></td>
-					</tr>
-					<tr>
-						<td><label><input type="checkbox" id="Bb" checked> B♭</label></td>
-						<td><label><input type="checkbox" id="B" checked> B</label></td>
-						<td><label><input type="checkbox" id="B#"> B#</label></td>
-					</tr>
-				</table>
-			</div>
-		</details>
 
 		<script src="data.js"></script>
 		<script src="ui.js"></script>

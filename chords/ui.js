@@ -96,7 +96,34 @@ function modeIsDegrees() {
 }
 
 function modeIsJazz() {
-	return document.querySelector('input[name="mode"]:checked').value === "tabJazz";
+    return document.querySelector('input[name="mode"]:checked').value === "tabJazz";
+}
+
+
+function optionsIsKeys() {
+    const sel = document.querySelector('input[name="options"]:checked');
+    return sel && sel.value === 'tabKeys';
+}
+
+function optionsIsDisplay() {
+    const sel = document.querySelector('input[name="options"]:checked');
+    return sel && sel.value === 'tabDisplay';
+}
+
+function optionsIsMidi() {
+    const sel = document.querySelector('input[name="options"]:checked');
+    return sel && sel.value === 'tabMidi';
+}
+
+function optionsChange() {
+    // Toggle visibility of Options tab content
+    const keys = document.getElementById('keysOptions');
+    const disp = document.getElementById('displayOptions');
+    const midi = document.getElementById('midiOptions');
+    if (!keys || !disp || !midi) return;
+    keys.style.display = optionsIsKeys() ? 'block' : 'none';
+    disp.style.display = optionsIsDisplay() ? 'block' : 'none';
+    midi.style.display = optionsIsMidi() ? 'block' : 'none';
 }
 
 
@@ -220,8 +247,15 @@ document.getElementById("minorChordsOn").addEventListener("click", () => toggleM
 document.getElementById("minorChordsOff").addEventListener("click", () => toggleMinorChords(false));
 
 document.querySelectorAll("input[name='mode']").forEach((input) => {
-	input.addEventListener('change', modeChange);
+    input.addEventListener('change', modeChange);
 });
+
+// Options tab listeners
+document.querySelectorAll("input[name='options']").forEach((input) => {
+    input.addEventListener('change', optionsChange);
+});
+// Initialize options tab visibility
+optionsChange();
 
 // Get every div that has a data-note element form 48 to 70 and add a click handler
 document.querySelectorAll("div[data-note]").forEach((div) => {
