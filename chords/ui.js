@@ -115,15 +115,22 @@ function optionsIsMidi() {
     return sel && sel.value === 'tabMidi';
 }
 
+function optionsIsSpacedRep() {
+    const sel = document.querySelector('input[name="options"]:checked');
+    return sel && sel.value === 'tabSpacedRep';
+}
+
 function optionsChange() {
     // Toggle visibility of Options tab content
     const keys = document.getElementById('keysOptions');
     const disp = document.getElementById('displayOptions');
     const midi = document.getElementById('midiOptions');
-    if (!keys || !disp || !midi) return;
+    const spaced = document.getElementById('spacedRepOptions');
+    if (!keys || !disp || !midi || !spaced) return;
     keys.style.display = optionsIsKeys() ? 'block' : 'none';
     disp.style.display = optionsIsDisplay() ? 'block' : 'none';
     midi.style.display = optionsIsMidi() ? 'block' : 'none';
+    spaced.style.display = optionsIsSpacedRep() ? 'block' : 'none';
 }
 
 
