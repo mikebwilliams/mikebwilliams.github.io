@@ -123,6 +123,10 @@ function optionsIsVoicings() {
     const sel = document.querySelector('input[name="options"]:checked');
     return sel && sel.value === 'tabVoicings';
 }
+function optionsIsEar() {
+    const sel = document.querySelector('input[name="options"]:checked');
+    return sel && sel.value === 'tabEar';
+}
 
 function optionsChange() {
     // Toggle visibility of Options tab content
@@ -130,12 +134,14 @@ function optionsChange() {
     const disp = document.getElementById('displayOptions');
     const midi = document.getElementById('midiOptions');
     const spaced = document.getElementById('spacedRepOptions');
+    const ear = document.getElementById('earOptions');
     const voicings = document.getElementById('voicingsOptions');
-    if (!keys || !disp || !midi || !spaced || !voicings) return;
+    if (!keys || !disp || !midi || !spaced || !ear || !voicings) return;
     keys.style.display = optionsIsKeys() ? 'block' : 'none';
     disp.style.display = optionsIsDisplay() ? 'block' : 'none';
     midi.style.display = optionsIsMidi() ? 'block' : 'none';
     spaced.style.display = optionsIsSpacedRep() ? 'block' : 'none';
+    ear.style.display = optionsIsEar() ? 'block' : 'none';
     voicings.style.display = optionsIsVoicings() ? 'block' : 'none';
 }
 
