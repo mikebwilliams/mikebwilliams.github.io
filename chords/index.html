@@ -84,12 +84,15 @@
 			<input type="radio" id="tabDisplay" name="options" value="tabDisplay">
 			<label for="tabDisplay">Display</label>
 
-			<input type="radio" id="tabSpacedRep" name="options" value="tabSpacedRep">
-			<label for="tabSpacedRep">Spaced Repetition</label>
+				<input type="radio" id="tabSpacedRep" name="options" value="tabSpacedRep">
+				<label for="tabSpacedRep">Spaced Repetition</label>
 
-			<input type="radio" id="tabMidi" name="options" value="tabMidi">
-			<label for="tabMidi">MIDI</label>
-		</div>
+				<input type="radio" id="tabVoicings" name="options" value="tabVoicings">
+				<label for="tabVoicings">Voicings</label>
+
+				<input type="radio" id="tabMidi" name="options" value="tabMidi">
+				<label for="tabMidi">MIDI</label>
+			</div>
 
 		<div class="tabContent" id="keysOptions">
 			<div id="flowOptions">Flow:
@@ -165,10 +168,19 @@
 				<label><input type="checkbox" id="randomizeSpellings" checked> Use Alternate Spellings ( Cm7♭5 => △ )</label><br>
 			</div>
 
-		<div class="tabContent" id="spacedRepOptions">
-			<label><input type="checkbox" id="enableSpacedRepetition" checked> Enable Spaced Repetition</label><br>
-			<label>Mastery Threshold: <input type="number" id="spacedRepThreshold" value="3" min="1" style="width:3em;"></label><br>
-		</div>
+			<div class="tabContent" id="spacedRepOptions">
+				<label><input type="checkbox" id="enableSpacedRepetition" checked> Enable Spaced Repetition</label><br>
+				<label>Mastery Threshold: <input type="number" id="spacedRepThreshold" value="3" min="1" style="width:3em;"></label><br>
+			</div>
+
+			<div class="tabContent" id="voicingsOptions">
+				<fieldset id="shellVoicings">
+					<legend>Shell Voicings</legend>
+					<label><input type="radio" name="shellMode" id="shellOff" value="off" checked> Off</label>
+					<label><input type="radio" name="shellMode" id="shellR37" value="r37"> R-3-7</label>
+					<label><input type="radio" name="shellMode" id="shell37" value="37"> 3-7 (rootless)</label>
+				</fieldset>
+			</div>
 
 		<div class="tabContent" id="midiOptions">
 			<label id="midiStatus">MIDI Status: <span id="midiStatusText">Not Connected</span></label>
@@ -255,17 +267,8 @@
 				</tr>
 			</table>
 
-			<br>
-
-				<fieldset id="shellVoicings">
-					<legend>Shell Voicings</legend>
-					<label><input type="radio" name="shellMode" id="shellOff" value="off" checked> Off</label>
-					<label><input type="radio" name="shellMode" id="shellR37" value="r37"> R-3-7</label>
-					<label><input type="radio" name="shellMode" id="shell37" value="37"> 3-7 (rootless)</label>
-				</fieldset>
-
 				<br>
-			</div>
+				</div>
 
 		<div class="tabContent" id="progressionOptions">
 			<br>

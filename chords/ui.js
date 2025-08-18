@@ -119,6 +119,10 @@ function optionsIsSpacedRep() {
     const sel = document.querySelector('input[name="options"]:checked');
     return sel && sel.value === 'tabSpacedRep';
 }
+function optionsIsVoicings() {
+    const sel = document.querySelector('input[name="options"]:checked');
+    return sel && sel.value === 'tabVoicings';
+}
 
 function optionsChange() {
     // Toggle visibility of Options tab content
@@ -126,11 +130,13 @@ function optionsChange() {
     const disp = document.getElementById('displayOptions');
     const midi = document.getElementById('midiOptions');
     const spaced = document.getElementById('spacedRepOptions');
-    if (!keys || !disp || !midi || !spaced) return;
+    const voicings = document.getElementById('voicingsOptions');
+    if (!keys || !disp || !midi || !spaced || !voicings) return;
     keys.style.display = optionsIsKeys() ? 'block' : 'none';
     disp.style.display = optionsIsDisplay() ? 'block' : 'none';
     midi.style.display = optionsIsMidi() ? 'block' : 'none';
     spaced.style.display = optionsIsSpacedRep() ? 'block' : 'none';
+    voicings.style.display = optionsIsVoicings() ? 'block' : 'none';
 }
 
 
@@ -462,6 +468,13 @@ document.addEventListener('DOMContentLoaded', () => {
 	initScales();
 	initJazzBricks();
 	initMIDI();
+
+	// Ensure Keys is the default Options tab on load
+	const tabKeys = document.getElementById('tabKeys');
+	if (tabKeys) {
+		tabKeys.checked = true;
+		optionsChange();
+	}
 });
 
 document.getElementById('btnResetStats').addEventListener('click', () => {
