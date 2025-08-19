@@ -1,12 +1,16 @@
-const hideProgressionChordNamesCheckbox = document.getElementById('hideProgressionChordNames');
-const hideProgressionChordNumeralsCheckbox = document.getElementById('hideProgressionChordNumerals');
-const progressionOptionsDiv = document.getElementById('progressionOptions');
-const progressionSelect = document.getElementById('progressionSelect');
-const flowSelect = document.getElementById('flowSelect');
+const hideProgressionChordNamesCheckbox = document.getElementById(
+  "hideProgressionChordNames",
+);
+const hideProgressionChordNumeralsCheckbox = document.getElementById(
+  "hideProgressionChordNumerals",
+);
+const progressionOptionsDiv = document.getElementById("progressionOptions");
+const progressionSelect = document.getElementById("progressionSelect");
+const flowSelect = document.getElementById("flowSelect");
 
-const currentKeySpan = document.getElementById('currentKey');
-const progressionDisplay = document.getElementById('progressionDisplay');
-const cadenceDisplay = document.getElementById('cadenceDisplay');
+const currentKeySpan = document.getElementById("currentKey");
+const progressionDisplay = document.getElementById("progressionDisplay");
+const cadenceDisplay = document.getElementById("cadenceDisplay");
 const chordDisplay = document.getElementById("chordDisplay");
 
 const cntChordsCorrect = document.getElementById("cntChordsCorrect");
@@ -23,309 +27,373 @@ const cntBricksIncorrect = document.getElementById("cntBricksIncorrect");
 // Shell voicing controls
 const shellModeRadios = document.querySelectorAll("input[name='shellMode']");
 function getShellMode() {
-    const sel = Array.from(shellModeRadios).find(r => r.checked);
-    return sel ? sel.value : 'off';
+  const sel = Array.from(shellModeRadios).find((r) => r.checked);
+  return sel ? sel.value : "off";
 }
 
 function noKeys() {
-	allNotes.forEach(key => {
-		document.getElementById(key).checked = false;
-	});
+  allNotes.forEach((key) => {
+    document.getElementById(key).checked = false;
+  });
 }
 
 function allKeys() {
-	allNotes.forEach(key => {
-		document.getElementById(key).checked = true;
-	});
+  allNotes.forEach((key) => {
+    document.getElementById(key).checked = true;
+  });
 }
 
 function normalKeys() {
-	noKeys();
+  noKeys();
 
-	normalNotes.forEach(key => {
-		document.getElementById(key).checked = true;
-	});
+  normalNotes.forEach((key) => {
+    document.getElementById(key).checked = true;
+  });
 }
 
 function flatKeys() {
-	noKeys();
+  noKeys();
 
-	allNotes.filter(key => key.endsWith('b')).forEach(key => {
-		document.getElementById(key).checked = true;
-	});
+  allNotes
+    .filter((key) => key.endsWith("b"))
+    .forEach((key) => {
+      document.getElementById(key).checked = true;
+    });
 }
 
 function sharpKeys() {
-	noKeys();
+  noKeys();
 
-	allNotes.filter(key => key.endsWith('#')).forEach(key => {
-		document.getElementById(key).checked = true;
-	});
+  allNotes
+    .filter((key) => key.endsWith("#"))
+    .forEach((key) => {
+      document.getElementById(key).checked = true;
+    });
 }
 
 function blackKeys() {
-	noKeys();
+  noKeys();
 
-	normalNotes.filter(key => key.endsWith('#') || key.endsWith('b')).forEach(key => {
-		document.getElementById(key).checked = true;
-	});
+  normalNotes
+    .filter((key) => key.endsWith("#") || key.endsWith("b"))
+    .forEach((key) => {
+      document.getElementById(key).checked = true;
+    });
 }
 
 function whiteKeys() {
-	noKeys();
+  noKeys();
 
-	allNotes.filter(key => !key.endsWith('#') && !key.endsWith('b')).forEach(key => {
-		document.getElementById(key).checked = true;
-	});
+  allNotes
+    .filter((key) => !key.endsWith("#") && !key.endsWith("b"))
+    .forEach((key) => {
+      document.getElementById(key).checked = true;
+    });
 }
 
 function modeIsChords() {
-	return document.querySelector('input[name="mode"]:checked').value === "tabChords";
+  return (
+    document.querySelector('input[name="mode"]:checked').value === "tabChords"
+  );
 }
 
 function modeIsProgressions() {
-	return document.querySelector('input[name="mode"]:checked').value === "tabProgressions";
+  return (
+    document.querySelector('input[name="mode"]:checked').value ===
+    "tabProgressions"
+  );
 }
 
 function modeIsScales() {
-	return document.querySelector('input[name="mode"]:checked').value === "tabScales";
+  return (
+    document.querySelector('input[name="mode"]:checked').value === "tabScales"
+  );
 }
 
 function modeIsDegrees() {
-	return document.querySelector('input[name="mode"]:checked').value === "tabDegrees";
+  return (
+    document.querySelector('input[name="mode"]:checked').value === "tabDegrees"
+  );
 }
 
 function modeIsJazz() {
-    return document.querySelector('input[name="mode"]:checked').value === "tabJazz";
+  return (
+    document.querySelector('input[name="mode"]:checked').value === "tabJazz"
+  );
 }
 
-
 function optionsIsKeys() {
-    const sel = document.querySelector('input[name="options"]:checked');
-    return sel && sel.value === 'tabKeys';
+  const sel = document.querySelector('input[name="options"]:checked');
+  return sel && sel.value === "tabKeys";
 }
 
 function optionsIsDisplay() {
-    const sel = document.querySelector('input[name="options"]:checked');
-    return sel && sel.value === 'tabDisplay';
+  const sel = document.querySelector('input[name="options"]:checked');
+  return sel && sel.value === "tabDisplay";
 }
 
 function optionsIsMidi() {
-    const sel = document.querySelector('input[name="options"]:checked');
-    return sel && sel.value === 'tabMidi';
+  const sel = document.querySelector('input[name="options"]:checked');
+  return sel && sel.value === "tabMidi";
 }
 
 function optionsIsSpacedRep() {
-    const sel = document.querySelector('input[name="options"]:checked');
-    return sel && sel.value === 'tabSpacedRep';
+  const sel = document.querySelector('input[name="options"]:checked');
+  return sel && sel.value === "tabSpacedRep";
 }
 function optionsIsVoicings() {
-    const sel = document.querySelector('input[name="options"]:checked');
-    return sel && sel.value === 'tabVoicings';
+  const sel = document.querySelector('input[name="options"]:checked');
+  return sel && sel.value === "tabVoicings";
 }
 function optionsIsEar() {
-    const sel = document.querySelector('input[name="options"]:checked');
-    return sel && sel.value === 'tabEar';
+  const sel = document.querySelector('input[name="options"]:checked');
+  return sel && sel.value === "tabEar";
 }
 
 function optionsChange() {
-    // Toggle visibility of Options tab content
-    const keys = document.getElementById('keysOptions');
-    const disp = document.getElementById('displayOptions');
-    const midi = document.getElementById('midiOptions');
-    const spaced = document.getElementById('spacedRepOptions');
-    const ear = document.getElementById('earOptions');
-    const voicings = document.getElementById('voicingsOptions');
-    if (!keys || !disp || !midi || !spaced || !ear || !voicings) return;
-    keys.style.display = optionsIsKeys() ? 'block' : 'none';
-    disp.style.display = optionsIsDisplay() ? 'block' : 'none';
-    midi.style.display = optionsIsMidi() ? 'block' : 'none';
-    spaced.style.display = optionsIsSpacedRep() ? 'block' : 'none';
-    ear.style.display = optionsIsEar() ? 'block' : 'none';
-    voicings.style.display = optionsIsVoicings() ? 'block' : 'none';
+  // Toggle visibility of Options tab content
+  const keys = document.getElementById("keysOptions");
+  const disp = document.getElementById("displayOptions");
+  const midi = document.getElementById("midiOptions");
+  const spaced = document.getElementById("spacedRepOptions");
+  const ear = document.getElementById("earOptions");
+  const voicings = document.getElementById("voicingsOptions");
+  if (!keys || !disp || !midi || !spaced || !ear || !voicings) return;
+  keys.style.display = optionsIsKeys() ? "block" : "none";
+  disp.style.display = optionsIsDisplay() ? "block" : "none";
+  midi.style.display = optionsIsMidi() ? "block" : "none";
+  spaced.style.display = optionsIsSpacedRep() ? "block" : "none";
+  ear.style.display = optionsIsEar() ? "block" : "none";
+  voicings.style.display = optionsIsVoicings() ? "block" : "none";
 }
 
-
-
-document.getElementById('noKeys').addEventListener('click', noKeys);
-document.getElementById('allKeys').addEventListener('click', allKeys);
-document.getElementById('normalKeys').addEventListener('click', normalKeys);
-document.getElementById('flatKeys').addEventListener('click', flatKeys);
-document.getElementById('sharpKeys').addEventListener('click', sharpKeys);
-document.getElementById('blackKeys').addEventListener('click', blackKeys);
-document.getElementById('whiteKeys').addEventListener('click', whiteKeys);
+document.getElementById("noKeys").addEventListener("click", noKeys);
+document.getElementById("allKeys").addEventListener("click", allKeys);
+document.getElementById("normalKeys").addEventListener("click", normalKeys);
+document.getElementById("flatKeys").addEventListener("click", flatKeys);
+document.getElementById("sharpKeys").addEventListener("click", sharpKeys);
+document.getElementById("blackKeys").addEventListener("click", blackKeys);
+document.getElementById("whiteKeys").addEventListener("click", whiteKeys);
 
 // Handler functions for preset buttons
 
 const toggleAllChords = (state) => {
-	const checkboxes = document.querySelectorAll("#chordOptions input[type='checkbox']");
-	checkboxes.forEach(chk => chk.checked = state);
+  const checkboxes = document.querySelectorAll(
+    "#chordOptions input[type='checkbox']",
+  );
+  checkboxes.forEach((chk) => (chk.checked = state));
 };
 
 const toggleTriadChords = (state) => {
-	const triads = ["majorChord", "minorChord", "augmentedChord", "diminishedChord", "suspendedSecondChord", "suspendedFourthChord"];
-	triads.forEach(id => document.getElementById(id).checked = state);
+  const triads = [
+    "majorChord",
+    "minorChord",
+    "augmentedChord",
+    "diminishedChord",
+    "suspendedSecondChord",
+    "suspendedFourthChord",
+  ];
+  triads.forEach((id) => (document.getElementById(id).checked = state));
 };
 
 const toggleSixthChords = (state) => {
-	const sixths = ["sixthChord", "minorSixthChord"];
-	sixths.forEach(id => document.getElementById(id).checked = state);
+  const sixths = ["sixthChord", "minorSixthChord"];
+  sixths.forEach((id) => (document.getElementById(id).checked = state));
 };
 
 const toggleSeventhChords = (state) => {
-	const sevenths = [
-		"seventhChord", "minorSeventhChord", "majorSeventhChord", 
-		"minorMajorSeventhChord", "halfDiminishedSeventhChord", 
-		"diminishedSeventhChord", "augmentedSeventhChord", 
-		"augmentedMajorSeventhChord"
-	];
-	sevenths.forEach(id => document.getElementById(id).checked = state);
+  const sevenths = [
+    "seventhChord",
+    "minorSeventhChord",
+    "majorSeventhChord",
+    "minorMajorSeventhChord",
+    "halfDiminishedSeventhChord",
+    "diminishedSeventhChord",
+    "augmentedSeventhChord",
+    "augmentedMajorSeventhChord",
+  ];
+  sevenths.forEach((id) => (document.getElementById(id).checked = state));
 };
 
 const toggleMajorChords = (state) => {
-	const majors = [
-		"majorChord", "augmentedChord", "suspendedFourthChord", "sixthChord",
-		"seventhChord", "majorSeventhChord", "augmentedSeventhChord", 
-		"augmentedMajorSeventhChord"
-	];
-	majors.forEach(id => document.getElementById(id).checked = state);
+  const majors = [
+    "majorChord",
+    "augmentedChord",
+    "suspendedFourthChord",
+    "sixthChord",
+    "seventhChord",
+    "majorSeventhChord",
+    "augmentedSeventhChord",
+    "augmentedMajorSeventhChord",
+  ];
+  majors.forEach((id) => (document.getElementById(id).checked = state));
 };
 
 const toggleMinorChords = (state) => {
-	const minors = [
-		"minorChord", "diminishedChord", "suspendedSecondChord", "minorSixthChord",
-		"minorSeventhChord", "minorMajorSeventhChord", 
-		"halfDiminishedSeventhChord", "diminishedSeventhChord"
-	];
-	minors.forEach(id => document.getElementById(id).checked = state);
+  const minors = [
+    "minorChord",
+    "diminishedChord",
+    "suspendedSecondChord",
+    "minorSixthChord",
+    "minorSeventhChord",
+    "minorMajorSeventhChord",
+    "halfDiminishedSeventhChord",
+    "diminishedSeventhChord",
+  ];
+  minors.forEach((id) => (document.getElementById(id).checked = state));
 };
 
-function modeChange()
-{
-	// Three options: chords, progressions, and scale degrees
-	if (modeIsChords()) {
-		// Show the chord options
-		document.getElementById("chordOptions").style.display = "block";
-		document.getElementById("progressionOptions").style.display = "none";
-		document.getElementById("degreesOptions").style.display = "none";
-		document.getElementById("scalesOptions").style.display = "none";
-		document.getElementById("jazzOptions").style.display = "none";
-	} else if (modeIsProgressions()) {
-		// Show the progression options
-		document.getElementById("chordOptions").style.display = "none";
-		document.getElementById("progressionOptions").style.display = "block";
-		document.getElementById("degreesOptions").style.display = "none";
-		document.getElementById("scalesOptions").style.display = "none";
-		document.getElementById("jazzOptions").style.display = "none";
-	} else if (modeIsDegrees()) {
-		// Show the scale degree options
-		document.getElementById("chordOptions").style.display = "none";
-		document.getElementById("progressionOptions").style.display = "block";
-		document.getElementById("degreesOptions").style.display = "block";
-		document.getElementById("scalesOptions").style.display = "none";
-		document.getElementById("jazzOptions").style.display = "none";
-	} else if (modeIsScales()) {
-		document.getElementById("chordOptions").style.display = "none";
-		document.getElementById("progressionOptions").style.display = "none";
-		document.getElementById("degreesOptions").style.display = "none";
-		document.getElementById("scalesOptions").style.display = "block";
-		document.getElementById("jazzOptions").style.display = "none";
-	} else if (modeIsJazz()) {
-		document.getElementById("chordOptions").style.display = "none";
-		document.getElementById("progressionOptions").style.display = "none";
-		document.getElementById("degreesOptions").style.display = "none";
-		document.getElementById("scalesOptions").style.display = "none";
-		document.getElementById("jazzOptions").style.display = "block";
-	}
+function modeChange() {
+  // Three options: chords, progressions, and scale degrees
+  if (modeIsChords()) {
+    // Show the chord options
+    document.getElementById("chordOptions").style.display = "block";
+    document.getElementById("progressionOptions").style.display = "none";
+    document.getElementById("degreesOptions").style.display = "none";
+    document.getElementById("scalesOptions").style.display = "none";
+    document.getElementById("jazzOptions").style.display = "none";
+  } else if (modeIsProgressions()) {
+    // Show the progression options
+    document.getElementById("chordOptions").style.display = "none";
+    document.getElementById("progressionOptions").style.display = "block";
+    document.getElementById("degreesOptions").style.display = "none";
+    document.getElementById("scalesOptions").style.display = "none";
+    document.getElementById("jazzOptions").style.display = "none";
+  } else if (modeIsDegrees()) {
+    // Show the scale degree options
+    document.getElementById("chordOptions").style.display = "none";
+    document.getElementById("progressionOptions").style.display = "block";
+    document.getElementById("degreesOptions").style.display = "block";
+    document.getElementById("scalesOptions").style.display = "none";
+    document.getElementById("jazzOptions").style.display = "none";
+  } else if (modeIsScales()) {
+    document.getElementById("chordOptions").style.display = "none";
+    document.getElementById("progressionOptions").style.display = "none";
+    document.getElementById("degreesOptions").style.display = "none";
+    document.getElementById("scalesOptions").style.display = "block";
+    document.getElementById("jazzOptions").style.display = "none";
+  } else if (modeIsJazz()) {
+    document.getElementById("chordOptions").style.display = "none";
+    document.getElementById("progressionOptions").style.display = "none";
+    document.getElementById("degreesOptions").style.display = "none";
+    document.getElementById("scalesOptions").style.display = "none";
+    document.getElementById("jazzOptions").style.display = "block";
+  }
 
-	nextProgression();
+  nextProgression();
 }
 
 // Attach the handlers
-document.getElementById("skip").addEventListener("click", () => nextProgression());
-document.getElementById("playAnswer").addEventListener("click", () => playAnswerNotes());
+document
+  .getElementById("skip")
+  .addEventListener("click", () => nextProgression());
+document
+  .getElementById("playAnswer")
+  .addEventListener("click", () => playAnswerNotes());
 
-document.getElementById("progressionSelect").addEventListener('change', () => nextProgression());
+document
+  .getElementById("progressionSelect")
+  .addEventListener("change", () => nextProgression());
 
-document.getElementById("chordsOn").addEventListener("click", () => toggleAllChords(true));
-document.getElementById("chordsOff").addEventListener("click", () => toggleAllChords(false));
+document
+  .getElementById("chordsOn")
+  .addEventListener("click", () => toggleAllChords(true));
+document
+  .getElementById("chordsOff")
+  .addEventListener("click", () => toggleAllChords(false));
 
-document.getElementById("triadChordsOn").addEventListener("click", () => toggleTriadChords(true));
-document.getElementById("triadChordsOff").addEventListener("click", () => toggleTriadChords(false));
+document
+  .getElementById("triadChordsOn")
+  .addEventListener("click", () => toggleTriadChords(true));
+document
+  .getElementById("triadChordsOff")
+  .addEventListener("click", () => toggleTriadChords(false));
 
-document.getElementById("sixthChordsOn").addEventListener("click", () => toggleSixthChords(true));
-document.getElementById("sixthChordsOff").addEventListener("click", () => toggleSixthChords(false));
+document
+  .getElementById("sixthChordsOn")
+  .addEventListener("click", () => toggleSixthChords(true));
+document
+  .getElementById("sixthChordsOff")
+  .addEventListener("click", () => toggleSixthChords(false));
 
-document.getElementById("seventhChordsOn").addEventListener("click", () => toggleSeventhChords(true));
-document.getElementById("seventhChordsOff").addEventListener("click", () => toggleSeventhChords(false));
+document
+  .getElementById("seventhChordsOn")
+  .addEventListener("click", () => toggleSeventhChords(true));
+document
+  .getElementById("seventhChordsOff")
+  .addEventListener("click", () => toggleSeventhChords(false));
 
-document.getElementById("majorChordsOn").addEventListener("click", () => toggleMajorChords(true));
-document.getElementById("majorChordsOff").addEventListener("click", () => toggleMajorChords(false));
+document
+  .getElementById("majorChordsOn")
+  .addEventListener("click", () => toggleMajorChords(true));
+document
+  .getElementById("majorChordsOff")
+  .addEventListener("click", () => toggleMajorChords(false));
 
-document.getElementById("minorChordsOn").addEventListener("click", () => toggleMinorChords(true));
-document.getElementById("minorChordsOff").addEventListener("click", () => toggleMinorChords(false));
+document
+  .getElementById("minorChordsOn")
+  .addEventListener("click", () => toggleMinorChords(true));
+document
+  .getElementById("minorChordsOff")
+  .addEventListener("click", () => toggleMinorChords(false));
 
 document.querySelectorAll("input[name='mode']").forEach((input) => {
-    input.addEventListener('change', modeChange);
+  input.addEventListener("change", modeChange);
 });
 
 // Options tab listeners
 document.querySelectorAll("input[name='options']").forEach((input) => {
-    input.addEventListener('change', optionsChange);
+  input.addEventListener("change", optionsChange);
 });
 // Initialize options tab visibility
 optionsChange();
 
 // Get every div that has a data-note element form 48 to 70 and add a click handler
 document.querySelectorAll("div[data-note]").forEach((div) => {
-	div.addEventListener('click', () => {
-		// Send the key from the data-note to the handleKeyClick function
-		handleKeyClick(div.dataset.note);
-	});
+  div.addEventListener("click", () => {
+    // Send the key from the data-note to the handleKeyClick function
+    handleKeyClick(div.dataset.note);
+  });
 });
 
-document.getElementById("showKeyboard").addEventListener('click', () => {
-	// Show the keyboard if checked, otherwise hide
-	if (document.getElementById("showKeyboard").checked)
-		document.getElementById("piano").style.display = "block";
-	else
-		document.getElementById("piano").style.display = "none";
+document.getElementById("showKeyboard").addEventListener("click", () => {
+  // Show the keyboard if checked, otherwise hide
+  if (document.getElementById("showKeyboard").checked)
+    document.getElementById("piano").style.display = "block";
+  else document.getElementById("piano").style.display = "none";
 });
-
 
 function generateScalesTable() {
-    const container = document.getElementById("scalesSelected");
+  const container = document.getElementById("scalesSelected");
 
-    let tableHtml = '<table><tr><td><label>Scales</label></td></tr>';
+  let tableHtml = "<table><tr><td><label>Scales</label></td></tr>";
 
-    for (let key in scales) {
-        if (scales.hasOwnProperty(key)) {
-            const isChecked = scales[key].enabled ? 'checked' : '';
-            tableHtml += `<tr><td><label><input type="checkbox" id="${key}" ${isChecked}> ${scales[key].label}</label></td></tr>`;
-        }
+  for (let key in scales) {
+    if (scales.hasOwnProperty(key)) {
+      const isChecked = scales[key].enabled ? "checked" : "";
+      tableHtml += `<tr><td><label><input type="checkbox" id="${key}" ${isChecked}> ${scales[key].label}</label></td></tr>`;
     }
+  }
 
-    tableHtml += '</table>';
-    container.innerHTML += tableHtml;
+  tableHtml += "</table>";
+  container.innerHTML += tableHtml;
 }
-
 
 function toggleScales(category) {
-    const selectedScales = scaleGroups[category];
+  const selectedScales = scaleGroups[category];
 
-    for (let key in scales) {
-        if (scales.hasOwnProperty(key)) {
-            const checkbox = document.getElementById(key);
-            checkbox.checked = selectedScales.includes(key);
-        }
+  for (let key in scales) {
+    if (scales.hasOwnProperty(key)) {
+      const checkbox = document.getElementById(key);
+      checkbox.checked = selectedScales.includes(key);
     }
+  }
 }
 
-
 function generateScalesButtons() {
-    const buttonContainer = document.getElementById("scalesButtons");
+  const buttonContainer = document.getElementById("scalesButtons");
 
-    const buttonsHtml = `
+  const buttonsHtml = `
         <button onclick="toggleScales('basic')">Basic</button>
         <button onclick="toggleScales('greekModes')">Greek Modes</button>
         <button onclick="toggleScales('classicalMusic')">Classical Music</button>
@@ -333,165 +401,177 @@ function generateScalesButtons() {
         <button onclick="toggleScales('all')">All</button>
     `;
 
-    buttonContainer.innerHTML = buttonsHtml;
+  buttonContainer.innerHTML = buttonsHtml;
 }
-
 
 function getEnabledScales() {
-    const enabledScales = [];
-    
-    for (let key in scales) {
-        if (scales.hasOwnProperty(key)) {
-            const checkbox = document.getElementById(key);
-            if (checkbox && checkbox.checked) {
-                enabledScales.push(key);
-            }
-        }
-    }
-    
-    return enabledScales;
-}
+  const enabledScales = [];
 
+  for (let key in scales) {
+    if (scales.hasOwnProperty(key)) {
+      const checkbox = document.getElementById(key);
+      if (checkbox && checkbox.checked) {
+        enabledScales.push(key);
+      }
+    }
+  }
+
+  return enabledScales;
+}
 
 function getEnabledScaleDetails() {
-    const enabledScaleDetails = [];
-    
-    for (let key in scales) {
-        if (scales.hasOwnProperty(key)) {
-            const checkbox = document.getElementById(key);
-            if (checkbox && checkbox.checked) {
-                enabledScaleDetails.push(scales[key]);
-            }
-        }
+  const enabledScaleDetails = [];
+
+  for (let key in scales) {
+    if (scales.hasOwnProperty(key)) {
+      const checkbox = document.getElementById(key);
+      if (checkbox && checkbox.checked) {
+        enabledScaleDetails.push(scales[key]);
+      }
     }
-    
-    return enabledScaleDetails;
+  }
+
+  return enabledScaleDetails;
 }
 
-
-function initScales()
-{
-	generateScalesTable();
-	generateScalesButtons();
+function initScales() {
+  generateScalesTable();
+  generateScalesButtons();
 }
-
 
 function initJazzBricks() {
-	const tbody = document.querySelector('#jazzBricks tbody');
+  const tbody = document.querySelector("#jazzBricks tbody");
 
-
-	jazzCadences.forEach(cadence => {
-		const tr = document.createElement('tr');
-		tr.innerHTML = `
+  jazzCadences.forEach((cadence) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
 			<td>${cadence.name}</td>
-			<td>${cadence.chords.join(' ')}</td>
-			<td><input type="checkbox" ${cadence.enabled ? 'checked' : ''}></td>
+			<td>${cadence.chords.join(" ")}</td>
+			<td><input type="checkbox" ${cadence.enabled ? "checked" : ""}></td>
 			`;
-		tbody.appendChild(tr);
+    tbody.appendChild(tr);
 
-		cadence.element = tr.querySelector('input[type="checkbox"]');
+    cadence.element = tr.querySelector('input[type="checkbox"]');
 
-		// Event listener to handle changes in checkbox
-		cadence.element.addEventListener('change', function() {
-			cadence.enabled = this.checked;
-			cadence.element = tr.querySelector('input[type="checkbox"]');
-			console.log(`${cadence.name} enabled state is now ${cadence.enabled}`);
-		});
-	});
-	// initialize by selecting only the basic group by default
-	document.getElementById("btnJazzBricksBasic").click();
-	}
+    // Event listener to handle changes in checkbox
+    cadence.element.addEventListener("change", function () {
+      cadence.enabled = this.checked;
+      cadence.element = tr.querySelector('input[type="checkbox"]');
+      console.log(`${cadence.name} enabled state is now ${cadence.enabled}`);
+    });
+  });
+  // initialize by selecting only the basic group by default
+  document.getElementById("btnJazzBricksBasic").click();
+}
 
 // Basic group toggle: turns on/off all basic cadences
-document.getElementById("btnJazzBricksBasic").addEventListener('click', () => {
-	const anyOn = jazzCadences.some(c => jazzCadencesBasic.includes(c.name) && c.enabled);
-	jazzCadences.forEach(c => {
-		if (jazzCadencesBasic.includes(c.name)) {
-			c.enabled = !anyOn;
-			c.element.checked = !anyOn;
-		}
-	});
+document.getElementById("btnJazzBricksBasic").addEventListener("click", () => {
+  const anyOn = jazzCadences.some(
+    (c) => jazzCadencesBasic.includes(c.name) && c.enabled,
+  );
+  jazzCadences.forEach((c) => {
+    if (jazzCadencesBasic.includes(c.name)) {
+      c.enabled = !anyOn;
+      c.element.checked = !anyOn;
+    }
+  });
 });
 
 // Intermediate group toggle: excludes basic group, toggles intermediate-only cadences
-document.getElementById("btnJazzBricksIntermediate").addEventListener('click', () => {
-	const anyOn = jazzCadences.some(c => jazzCadencesIntermediate.includes(c.name) && c.enabled);
-	jazzCadences.forEach(c => {
-		if (jazzCadencesIntermediate.includes(c.name)) {
-			c.enabled = !anyOn;
-			c.element.checked = !anyOn;
-		}
-	});
-});
+document
+  .getElementById("btnJazzBricksIntermediate")
+  .addEventListener("click", () => {
+    const anyOn = jazzCadences.some(
+      (c) => jazzCadencesIntermediate.includes(c.name) && c.enabled,
+    );
+    jazzCadences.forEach((c) => {
+      if (jazzCadencesIntermediate.includes(c.name)) {
+        c.enabled = !anyOn;
+        c.element.checked = !anyOn;
+      }
+    });
+  });
 
 // 'All' button: enable all cadences
-document.getElementById("btnJazzBricksAll").addEventListener('click', () => {
-	jazzCadences.forEach(c => {
-		c.enabled = true;
-		c.element.checked = true;
-	});
+document.getElementById("btnJazzBricksAll").addEventListener("click", () => {
+  jazzCadences.forEach((c) => {
+    c.enabled = true;
+    c.element.checked = true;
+  });
 });
 
 // 'None' button: disable all cadences
-document.getElementById("btnJazzBricksNone").addEventListener('click', () => {
-   jazzCadences.forEach(c => {
-       c.enabled = false;
-       c.element.checked = false;
-   });
+document.getElementById("btnJazzBricksNone").addEventListener("click", () => {
+  jazzCadences.forEach((c) => {
+    c.enabled = false;
+    c.element.checked = false;
+  });
 });
 
-document.getElementById("btnJazzBricksTurnarounds").addEventListener('click', () => {
-   const anyOn = jazzCadences.some(c => jazzCadencesTurnarounds.includes(c.name) && c.enabled);
-   jazzCadences.forEach(c => {
-       if (jazzCadencesTurnarounds.includes(c.name)) {
-           c.enabled = !anyOn;
-           c.element.checked = !anyOn;
-       }
-   });
+document
+  .getElementById("btnJazzBricksTurnarounds")
+  .addEventListener("click", () => {
+    const anyOn = jazzCadences.some(
+      (c) => jazzCadencesTurnarounds.includes(c.name) && c.enabled,
+    );
+    jazzCadences.forEach((c) => {
+      if (jazzCadencesTurnarounds.includes(c.name)) {
+        c.enabled = !anyOn;
+        c.element.checked = !anyOn;
+      }
+    });
+  });
+
+document
+  .getElementById("btnJazzBricksMetabricks")
+  .addEventListener("click", () => {
+    const anyOn = jazzCadences.some(
+      (c) => jazzCadencesMetabricks.includes(c.name) && c.enabled,
+    );
+    jazzCadences.forEach((c) => {
+      if (jazzCadencesMetabricks.includes(c.name)) {
+        c.enabled = !anyOn;
+        c.element.checked = !anyOn;
+      }
+    });
+  });
+
+document
+  .getElementById("btnJazzBricksDropbacks")
+  .addEventListener("click", () => {
+    const anyOn = jazzCadences.some(
+      (c) => jazzCadencesDropbacks.includes(c.name) && c.enabled,
+    );
+    jazzCadences.forEach((c) => {
+      if (jazzCadencesDropbacks.includes(c.name)) {
+        c.enabled = !anyOn;
+        c.element.checked = !anyOn;
+      }
+    });
+  });
+
+document.addEventListener("DOMContentLoaded", () => {
+  initScales();
+  initJazzBricks();
+  initMIDI();
+
+  // Ensure Keys is the default Options tab on load
+  const tabKeys = document.getElementById("tabKeys");
+  if (tabKeys) {
+    tabKeys.checked = true;
+    optionsChange();
+  }
 });
 
-document.getElementById("btnJazzBricksMetabricks").addEventListener('click', () => {
-   const anyOn = jazzCadences.some(c => jazzCadencesMetabricks.includes(c.name) && c.enabled);
-   jazzCadences.forEach(c => {
-       if (jazzCadencesMetabricks.includes(c.name)) {
-           c.enabled = !anyOn;
-           c.element.checked = !anyOn;
-       }
-   });
-});
-
-document.getElementById("btnJazzBricksDropbacks").addEventListener('click', () => {
-   const anyOn = jazzCadences.some(c => jazzCadencesDropbacks.includes(c.name) && c.enabled);
-   jazzCadences.forEach(c => {
-       if (jazzCadencesDropbacks.includes(c.name)) {
-           c.enabled = !anyOn;
-           c.element.checked = !anyOn;
-       }
-   });
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-	initScales();
-	initJazzBricks();
-	initMIDI();
-
-	// Ensure Keys is the default Options tab on load
-	const tabKeys = document.getElementById('tabKeys');
-	if (tabKeys) {
-		tabKeys.checked = true;
-		optionsChange();
-	}
-});
-
-document.getElementById('btnResetStats').addEventListener('click', () => {
-	cntChordsCorrect.textContent = "0";
-	cntProgsCorrect.textContent = "0";
-	cntScalesCorrect.textContent = "0";
-	cntDegreesCorrect.textContent = "0";
-	cntBricksCorrect.textContent = "0";
-	cntChordsIncorrect.textContent = "0";
-	cntProgsIncorrect.textContent = "0";
-	cntScalesIncorrect.textContent = "0";
-	cntDegreesIncorrect.textContent = "0";
-	cntBricksIncorrect.textContent = "0";
+document.getElementById("btnResetStats").addEventListener("click", () => {
+  cntChordsCorrect.textContent = "0";
+  cntProgsCorrect.textContent = "0";
+  cntScalesCorrect.textContent = "0";
+  cntDegreesCorrect.textContent = "0";
+  cntBricksCorrect.textContent = "0";
+  cntChordsIncorrect.textContent = "0";
+  cntProgsIncorrect.textContent = "0";
+  cntScalesIncorrect.textContent = "0";
+  cntDegreesIncorrect.textContent = "0";
+  cntBricksIncorrect.textContent = "0";
 });

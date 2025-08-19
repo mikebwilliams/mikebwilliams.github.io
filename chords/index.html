@@ -1,368 +1,573 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<title>Chord Challenge</title>
-		<link rel="stylesheet" href="styles.css">
-	</head>
-	<body>
-		<div class="container">
-			<h2 id="progDisplay"><span id="currentKey"></span><span id="chordDisplay">Chord</span><span id="cadenceDisplay"></span><br><span id="progressionDisplay"></span></h2>
-		</div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chord Challenge</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h2 id="progDisplay">
+        <span id="currentKey"></span><span id="chordDisplay">Chord</span
+        ><span id="cadenceDisplay"></span><br /><span
+          id="progressionDisplay"
+        ></span>
+      </h2>
+    </div>
 
-		<div id="piano">
-			<!-- White keys -->
-			<div class="key white" data-note="48"></div>
-			<div class="key white" data-note="50"></div>
-			<div class="key white" data-note="52"></div>
-			<div class="key white" data-note="53"></div>
-			<div class="key white" data-note="55"></div>
-			<div class="key white" data-note="57"></div>
-			<div class="key white" data-note="59"></div>
-			<div class="key white" data-note="60"></div>
-			<div class="key white" data-note="62"></div>
-			<div class="key white" data-note="64"></div>
-			<div class="key white" data-note="65"></div>
-			<div class="key white" data-note="67"></div>
-			<div class="key white" data-note="69"></div>
-			<div class="key white" data-note="71"></div>
-			<div class="key white" data-note="72"></div>
+    <div id="piano">
+      <!-- White keys -->
+      <div class="key white" data-note="48"></div>
+      <div class="key white" data-note="50"></div>
+      <div class="key white" data-note="52"></div>
+      <div class="key white" data-note="53"></div>
+      <div class="key white" data-note="55"></div>
+      <div class="key white" data-note="57"></div>
+      <div class="key white" data-note="59"></div>
+      <div class="key white" data-note="60"></div>
+      <div class="key white" data-note="62"></div>
+      <div class="key white" data-note="64"></div>
+      <div class="key white" data-note="65"></div>
+      <div class="key white" data-note="67"></div>
+      <div class="key white" data-note="69"></div>
+      <div class="key white" data-note="71"></div>
+      <div class="key white" data-note="72"></div>
 
-			<!-- Black keys -->
-			<div class="key black" data-note="49" ></div>
-			<div class="key black" data-note="51" ></div>
-			<div class="key black" data-note="54" ></div>
-			<div class="key black" data-note="56" ></div>
-			<div class="key black" data-note="58" ></div>
-			<div class="key black" data-note="61" ></div>
-			<div class="key black" data-note="63" ></div>
-			<div class="key black" data-note="66" ></div>
-			<div class="key black" data-note="68" ></div>
-			<div class="key black" data-note="70" ></div>
-		</div>
+      <!-- Black keys -->
+      <div class="key black" data-note="49"></div>
+      <div class="key black" data-note="51"></div>
+      <div class="key black" data-note="54"></div>
+      <div class="key black" data-note="56"></div>
+      <div class="key black" data-note="58"></div>
+      <div class="key black" data-note="61"></div>
+      <div class="key black" data-note="63"></div>
+      <div class="key black" data-note="66"></div>
+      <div class="key black" data-note="68"></div>
+      <div class="key black" data-note="70"></div>
+    </div>
 
-		<div><button id="skip">Skip</button></div>
-		<div><button id="playAnswer">Play Answer</button></div>
+    <div><button id="skip">Skip</button></div>
+    <div><button id="playAnswer">Play Answer</button></div>
 
-		<details open>
-			<summary>Stats</summary>
-			<table>
-				<th>
-					<td>Chords</td>
-					<td>Progressions</td>
-					<td>Degrees</td>
-					<td>Scales</td>
-					<td>Bricks</td>
-				</th>
-				<tr>
-					<td>Correct</td>
-					<td id="cntChordsCorrect">0</td>
-					<td id="cntProgsCorrect">0</td>
-					<td id="cntDegreesCorrect">0</td>
-					<td id="cntScalesCorrect">0</td>
-					<td id="cntBricksCorrect">0</td>
-				</tr>
-				<tr>
-					<td>Incorrect</td>
-					<td id="cntChordsIncorrect">0</td>
-					<td id="cntProgsIncorrect">0</td>
-					<td id="cntDegreesIncorrect">0</td>
-					<td id="cntScalesIncorrect">0</td>
-					<td id="cntBricksIncorrect">0</td>
-				</tr>
-			</table>
-			<button id="btnResetStats">Reset</button>
-		</details>
+    <details open>
+      <summary>Stats</summary>
+      <table>
+        <tr>
+          <th>Chords</th>
+          <th>Progressions</th>
+          <th>Degrees</th>
+          <th>Scales</th>
+          <th>Bricks</th>
+        </tr>
+        <tr>
+          <td>Correct</td>
+          <td id="cntChordsCorrect">0</td>
+          <td id="cntProgsCorrect">0</td>
+          <td id="cntDegreesCorrect">0</td>
+          <td id="cntScalesCorrect">0</td>
+          <td id="cntBricksCorrect">0</td>
+        </tr>
+        <tr>
+          <td>Incorrect</td>
+          <td id="cntChordsIncorrect">0</td>
+          <td id="cntProgsIncorrect">0</td>
+          <td id="cntDegreesIncorrect">0</td>
+          <td id="cntScalesIncorrect">0</td>
+          <td id="cntBricksIncorrect">0</td>
+        </tr>
+      </table>
+      <button id="btnResetStats">Reset</button>
+    </details>
 
+    <h3>Options</h3>
+    <div class="tabs" id="optionsTabs">
+      <input type="radio" id="tabKeys" name="options" value="tabKeys" checked />
+      <label for="tabKeys">Keys</label>
 
-		<h3>Options</h3>
-			<div class="tabs" id="optionsTabs">
-				<input type="radio" id="tabKeys" name="options" value="tabKeys" checked>
-				<label for="tabKeys">Keys</label>
+      <input type="radio" id="tabDisplay" name="options" value="tabDisplay" />
+      <label for="tabDisplay">Display</label>
 
-				<input type="radio" id="tabDisplay" name="options" value="tabDisplay">
-				<label for="tabDisplay">Display</label>
+      <input type="radio" id="tabVoicings" name="options" value="tabVoicings" />
+      <label for="tabVoicings">Voicings</label>
 
-				<input type="radio" id="tabVoicings" name="options" value="tabVoicings">
-				<label for="tabVoicings">Voicings</label>
+      <input
+        type="radio"
+        id="tabSpacedRep"
+        name="options"
+        value="tabSpacedRep"
+      />
+      <label for="tabSpacedRep">Spaced Repetition</label>
 
-				<input type="radio" id="tabSpacedRep" name="options" value="tabSpacedRep">
-				<label for="tabSpacedRep">Spaced Repetition</label>
+      <input type="radio" id="tabEar" name="options" value="tabEar" />
+      <label for="tabEar">Ear Training</label>
 
-				<input type="radio" id="tabEar" name="options" value="tabEar">
-				<label for="tabEar">Ear Training</label>
+      <input type="radio" id="tabMidi" name="options" value="tabMidi" />
+      <label for="tabMidi">MIDI</label>
+    </div>
 
-				<input type="radio" id="tabMidi" name="options" value="tabMidi">
-				<label for="tabMidi">MIDI</label>
-			</div>
+    <div class="tabContent" id="keysOptions">
+      <div id="flowOptions">
+        Flow:
+        <select id="flowSelect">
+          <option value="random">Random</option>
+          <option value="circleOfFourths">Circle of Fourths</option>
+          <option value="circleOfFifths">Circle of Fifths</option>
+        </select>
+        <br />
+        <br />
+      </div>
+      <div id="presetButtons">
+        <button id="normalKeys">Normal</button>
+        <button id="whiteKeys">White</button>
+        <button id="blackKeys">Black</button>
+        <button id="sharpKeys">Sharps</button>
+        <button id="flatKeys">Flats</button>
+        <button id="noKeys">None</button>
+        <button id="allKeys">All</button>
+      </div>
+      <div id="keyOptions">
+        <table>
+          <tr>
+            <th>Flats</th>
+            <th>White</th>
+            <th>Sharps</th>
+          </tr>
+          <tr>
+            <td>
+              <label><input type="checkbox" id="Cb" /> C♭</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="C" checked /> C</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="C#" checked /> C#</label>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label><input type="checkbox" id="Db" checked /> D♭</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="D" checked /> D</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="D#" checked /> D#</label>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label><input type="checkbox" id="Eb" checked /> E♭</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="E" checked /> E</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="E#" /> E#</label>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label><input type="checkbox" id="Fb" /> F♭</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="F" checked /> F</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="F#" checked /> F#</label>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label><input type="checkbox" id="Gb" checked /> G♭</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="G" checked /> G</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="G#" checked /> G#</label>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label><input type="checkbox" id="Ab" checked /> A♭</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="A" checked /> A</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="A#" checked /> A#</label>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label><input type="checkbox" id="Bb" checked /> B♭</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="B" checked /> B</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="B#" /> B#</label>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
 
-		<div class="tabContent" id="keysOptions">
-			<div id="flowOptions">Flow:
-				<select id="flowSelect">
-					<option value="random">Random</option>
-					<option value="circleOfFourths">Circle of Fourths</option>
-					<option value="circleOfFifths">Circle of Fifths</option>
-				</select>
-				<br>
-				<br>
-			</div>
-			<div id="presetButtons">
-				<button id="normalKeys">Normal</button>
-				<button id="whiteKeys">White</button>
-				<button id="blackKeys">Black</button>
-				<button id="sharpKeys">Sharps</button>
-				<button id="flatKeys">Flats</button>
-				<button id="noKeys">None</button>
-				<button id="allKeys">All</button>
-			</div>
-			<div id="keyOptions">
-				<table>
-					<tr>
-						<th>Flats</th>
-						<th>White</th>
-						<th>Sharps</th>
-					</tr>
-					<tr>
-						<td><label><input type="checkbox" id="Cb"> C♭</label></td>
-						<td><label><input type="checkbox" id="C" checked> C</label></td>
-						<td><label><input type="checkbox" id="C#" checked> C#</label></td>
-					</tr>
-					<tr>
-						<td><label><input type="checkbox" id="Db" checked> D♭</label></td>
-						<td><label><input type="checkbox" id="D" checked> D</label></td>
-						<td><label><input type="checkbox" id="D#" checked> D#</label></td>
-					</tr>
-					<tr>
-						<td><label><input type="checkbox" id="Eb" checked> E♭</label></td>
-						<td><label><input type="checkbox" id="E" checked> E</label></td>
-						<td><label><input type="checkbox" id="E#"> E#</label></td>
-					</tr>
-					<tr>
-						<td><label><input type="checkbox" id="Fb"> F♭</label></td>
-						<td><label><input type="checkbox" id="F" checked> F</label></td>
-						<td><label><input type="checkbox" id="F#" checked> F#</label></td>
-					</tr>
-					<tr>
-						<td><label><input type="checkbox" id="Gb" checked> G♭</label></td>
-						<td><label><input type="checkbox" id="G" checked> G</label></td>
-						<td><label><input type="checkbox" id="G#" checked> G#</label></td>
-					</tr>
-					<tr>
-						<td><label><input type="checkbox" id="Ab" checked> A♭</label></td>
-						<td><label><input type="checkbox" id="A" checked> A</label></td>
-						<td><label><input type="checkbox" id="A#" checked> A#</label></td>
-					</tr>
-					<tr>
-						<td><label><input type="checkbox" id="Bb" checked> B♭</label></td>
-						<td><label><input type="checkbox" id="B" checked> B</label></td>
-						<td><label><input type="checkbox" id="B#"> B#</label></td>
-					</tr>
-				</table>
-			</div>
-		</div>
+    <div class="tabContent" id="displayOptions">
+      <label
+        ><input type="checkbox" id="showKeyboard" checked />Show Keyboard</label
+      ><br />
+      <label
+        ><input type="checkbox" id="highlightCorrectKeys" />Show Correct Keys
+        After 3s</label
+      ><br />
+      <label
+        ><input type="checkbox" id="hideProgressionChordNames" />Hide
+        Progression Chord Names</label
+      ><br />
+      <label
+        ><input type="checkbox" id="hideProgressionChordNumerals" />Hide
+        Progression Chord Numerals</label
+      ><br />
+      <label
+        ><input type="checkbox" id="randomizeSpellings" checked /> Use Alternate
+        Spellings ( Cm7♭5 => △ )</label
+      ><br />
+    </div>
 
-			<div class="tabContent" id="displayOptions">
-				<label><input type="checkbox" id="showKeyboard" checked>Show Keyboard</label><br>
-				<label><input type="checkbox" id="highlightCorrectKeys">Show Correct Keys After 3s</label><br>
-				<label><input type="checkbox" id="hideProgressionChordNames">Hide Progression Chord Names</label><br>
-				<label><input type="checkbox" id="hideProgressionChordNumerals">Hide Progression Chord Numerals</label><br>
-				<label><input type="checkbox" id="randomizeSpellings" checked> Use Alternate Spellings ( Cm7♭5 => △ )</label><br>
-			</div>
+    <div class="tabContent" id="spacedRepOptions">
+      <label
+        ><input type="checkbox" id="enableSpacedRepetition" checked /> Enable
+        Spaced Repetition</label
+      ><br />
+      <label
+        >Mastery Threshold:
+        <input
+          type="number"
+          id="spacedRepThreshold"
+          value="3"
+          min="1"
+          style="width: 3em" /></label
+      ><br />
+    </div>
 
-			<div class="tabContent" id="spacedRepOptions">
-				<label><input type="checkbox" id="enableSpacedRepetition" checked> Enable Spaced Repetition</label><br>
-				<label>Mastery Threshold: <input type="number" id="spacedRepThreshold" value="3" min="1" style="width:3em;"></label><br>
-			</div>
+    <div class="tabContent" id="earOptions">
+      <label
+        ><input type="checkbox" id="sendMidiNotes" />Play Answer Notes over MIDI
+        (for guessing from sound)</label
+      ><br />
+    </div>
 
-			<div class="tabContent" id="earOptions">
-				<label><input type="checkbox" id="sendMidiNotes">Play Answer Notes over MIDI (for guessing from sound)</label><br>
-			</div>
+    <div class="tabContent" id="voicingsOptions">
+      <fieldset id="shellVoicings">
+        <legend>Shell Voicings</legend>
+        <label
+          ><input
+            type="radio"
+            name="shellMode"
+            id="shellOff"
+            value="off"
+            checked
+          />
+          Off</label
+        >
+        <label
+          ><input type="radio" name="shellMode" id="shellR37" value="r37" />
+          R-3-7</label
+        >
+        <label
+          ><input type="radio" name="shellMode" id="shell37" value="37" /> 3-7
+          (rootless)</label
+        >
+      </fieldset>
+    </div>
 
-			<div class="tabContent" id="voicingsOptions">
-				<fieldset id="shellVoicings">
-					<legend>Shell Voicings</legend>
-					<label><input type="radio" name="shellMode" id="shellOff" value="off" checked> Off</label>
-					<label><input type="radio" name="shellMode" id="shellR37" value="r37"> R-3-7</label>
-					<label><input type="radio" name="shellMode" id="shell37" value="37"> 3-7 (rootless)</label>
-				</fieldset>
-			</div>
+    <div class="tabContent" id="midiOptions">
+      <label id="midiStatus"
+        >MIDI Status: <span id="midiStatusText">Not Connected</span></label
+      >
+      <table id="midiInputs"></table>
+      <table id="midiOutputs"></table>
+    </div>
 
-		<div class="tabContent" id="midiOptions">
-			<label id="midiStatus">MIDI Status: <span id="midiStatusText">Not Connected</span></label>
-			<table id="midiInputs"></table>
-			<table id="midiOutputs"></table>
-		</div>
+    <h3>Mode</h3>
+    <div class="tabs">
+      <input
+        type="radio"
+        id="tabChords"
+        name="mode"
+        value="tabChords"
+        checked
+      />
+      <label for="tabChords">Chords</label>
 
+      <input
+        type="radio"
+        id="tabProgressions"
+        name="mode"
+        value="tabProgressions"
+      />
+      <label for="tabProgressions">Progressions</label>
 
-		<h3>Mode</h3>
-		<div class="tabs">
-			<input type="radio" id="tabChords" name="mode" value="tabChords" checked>
-			<label for="tabChords">Chords</label>
+      <input type="radio" id="tabScales" name="mode" value="tabScales" />
+      <label for="tabScales">Scales</label>
 
-			<input type="radio" id="tabProgressions" name="mode" value="tabProgressions">
-			<label for="tabProgressions">Progressions</label>
+      <input type="radio" id="tabDegrees" name="mode" value="tabDegrees" />
+      <label for="tabDegrees">Degrees</label>
 
-			<input type="radio" id="tabScales" name="mode" value="tabScales">
-			<label for="tabScales">Scales</label>
+      <input type="radio" id="tabJazz" name="mode" value="tabJazz" />
+      <label for="tabJazz">Jazz Bricks</label>
+    </div>
 
-			<input type="radio" id="tabDegrees" name="mode" value="tabDegrees">
-			<label for="tabDegrees">Degrees</label>
+    <div class="tabContent" id="chordOptions">
+      <table id="chordTable">
+        <tr>
+          <td><button id="chordsOn">All</button></td>
+          <td><button id="chordsOff">None</button></td>
+          <td><button id="majorChordsOn">On</button></td>
+          <td><button id="majorChordsOff">Off</button></td>
+          <td><button id="minorChordsOn">On</button></td>
+          <td><button id="minorChordsOff">Off</button></td>
+        </tr>
+        <tr>
+          <td><button id="triadChordsOn">Triads On</button></td>
+          <td><button id="triadChordsOff">Triads Off</button></td>
+          <td colspan="2">
+            <input type="checkbox" id="majorChord" checked />Major
+          </td>
+          <td colspan="2">
+            <input type="checkbox" id="minorChord" checked />Minor
+          </td>
+        </tr>
 
-			<input type="radio" id="tabJazz" name="mode" value="tabJazz">
-			<label for="tabJazz">Jazz Bricks</label>
-		</div>
+        <tr>
+          <td></td>
+          <td></td>
+          <td colspan="2">
+            <input type="checkbox" id="augmentedChord" checked />Augmented
+          </td>
+          <td colspan="2">
+            <input type="checkbox" id="diminishedChord" checked />Diminished
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td colspan="2">
+            <input type="checkbox" id="suspendedFourthChord" checked />Suspended
+            4th
+          </td>
+          <td colspan="2">
+            <input type="checkbox" id="suspendedSecondChord" checked />Suspended
+            2nd
+          </td>
+        </tr>
+        <tr>
+          <td><button id="sixthChordsOn">Sixths On</button></td>
+          <td><button id="sixthChordsOff">Sixths Off</button></td>
+          <td colspan="2">
+            <input type="checkbox" id="sixthChord" checked />6th
+          </td>
+          <td colspan="2">
+            <input type="checkbox" id="minorSixthChord" checked />Minor 6th
+          </td>
+        </tr>
+        <tr>
+          <td><button id="seventhChordsOn">Sevenths On</button></td>
+          <td><button id="seventhChordsOff">Sevenths Off</button></td>
+          <td colspan="2">
+            <input type="checkbox" id="seventhChord" checked />7th
+          </td>
+          <td colspan="2">
+            <input type="checkbox" id="minorSeventhChord" checked />Minor 7th
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td colspan="2">
+            <input type="checkbox" id="majorSeventhChord" checked />Major 7th
+          </td>
+          <td colspan="2">
+            <input type="checkbox" id="minorMajorSeventhChord" checked />Minor
+            Major 7th
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td colspan="2">
+            <input
+              type="checkbox"
+              id="augmentedSeventhChord"
+              checked
+            />Augmented 7th
+          </td>
+          <td colspan="2">
+            <input
+              type="checkbox"
+              id="halfDiminishedSeventhChord"
+              checked
+            />Half-Diminished 7th
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td colspan="2">
+            <input
+              type="checkbox"
+              id="augmentedMajorSeventhChord"
+              checked
+            />Augmented Major 7th
+          </td>
+          <td colspan="2">
+            <input
+              type="checkbox"
+              id="diminishedSeventhChord"
+              checked
+            />Diminished 7th
+          </td>
+        </tr>
+      </table>
 
-		<div class="tabContent" id="chordOptions">
-			<table id="chordTable">
-				<tr>
-					<td><button id="chordsOn">All</button></td>
-					<td><button id="chordsOff">None</button></td>
-					<td><button id="majorChordsOn">On</button></td>
-					<td><button id="majorChordsOff">Off</button></td>
-					<td><button id="minorChordsOn">On</button></td>
-					<td><button id="minorChordsOff">Off</button></td>
-				</tr>
-				<tr>
-					<td><button id="triadChordsOn">Triads On</button></td>
-					<td><button id="triadChordsOff">Triads Off</button></td>
-					<td colspan="2"><input type="checkbox" id="majorChord" checked>Major</td>
-					<td colspan="2"><input type="checkbox" id="minorChord" checked>Minor</td>
+      <br />
+    </div>
 
-				<tr>
-					<td></td>
-					<td></td>
-					<td colspan="2"><input type="checkbox" id="augmentedChord" checked>Augmented</td>
-					<td colspan="2"><input type="checkbox" id="diminishedChord" checked>Diminished</td>
-				</tr>
-				<tr>
-					<td></td>
-					<td></td>
-					<td colspan="2"><input type="checkbox" id="suspendedFourthChord" checked>Suspended 4th</td>
-					<td colspan="2"><input type="checkbox" id="suspendedSecondChord" checked>Suspended 2nd</td>
-				</tr>
-				<tr>
-					<td><button id="sixthChordsOn">Sixths On</button></td>
-					<td><button id="sixthChordsOff">Sixths Off</button></td>
-					<td colspan="2"><input type="checkbox" id="sixthChord" checked>6th</td>
-					<td colspan="2"><input type="checkbox" id="minorSixthChord" checked>Minor 6th</td>
-				</tr>
-				<tr>
-					<td><button id="seventhChordsOn">Sevenths On</button></td>
-					<td><button id="seventhChordsOff">Sevenths Off</button></td>
-					<td colspan="2"><input type="checkbox" id="seventhChord" checked>7th</td>
-					<td colspan="2"><input type="checkbox" id="minorSeventhChord" checked>Minor 7th</td>
-				</tr>
-				<tr>
-					<td></td>
-					<td></td>
-					<td colspan="2"><input type="checkbox" id="majorSeventhChord" checked>Major 7th</td>
-					<td colspan="2"><input type="checkbox" id="minorMajorSeventhChord" checked>Minor Major 7th</td>
-				</tr>
-				<tr>
-					<td></td>
-					<td></td>
-					<td colspan="2"><input type="checkbox" id="augmentedSeventhChord" checked>Augmented 7th</td>
-					<td colspan="2"><input type="checkbox" id="halfDiminishedSeventhChord" checked>Half-Diminished 7th</td>
-				</tr>
-				<tr>
-					<td></td>
-					<td></td>
-					<td colspan="2"><input type="checkbox" id="augmentedMajorSeventhChord" checked>Augmented Major 7th</td>
-					<td colspan="2"><input type="checkbox" id="diminishedSeventhChord" checked>Diminished 7th</td>
-				</tr>
-			</table>
+    <div class="tabContent" id="progressionOptions">
+      <br />
+      <label
+        >Progression:
+        <select id="progressionSelect">
+          <option value="I-IV-V">I-IV-V</option>
+          <option value="ii-V-I">ii-V-I</option>
+          <option value="ii7-V7-IM7">ii7-V7-IM7</option>
+          <option value="I-V-vi-IV">I-V-vi-IV</option>
+          <option value="I-vi-ii-V">I-vi-ii-V</option>
+          <option value="vi-IV-I-V">vi-IV-I-V</option>
+          <option value="I-IV-iii-vi-ii-V-I">Jazzy Improv</option>
+          <option value="I-ii-iii-IV-V-vi-viio-I">Ascending Major Key</option>
+          <option value="I-viio-vi-V-IV-iii-ii-I">Descending Major Key</option>
+          <option value="i-ii-bIII-iv-v-bVI-bVII-i">Ascending Minor Key</option>
+          <option value="i-bVII-bVI-v-iv-bIII-ii-i">
+            Descending Minor Key
+          </option>
+          <option value="I-V-vi-iii-IV-I-IV-V">
+            I-V-vi-iii-IV-I-IV-V (Pachabel)
+          </option>
+          <option value="I-vi-IV-V">I-vi-IV-V (Doo-Wop)</option>
+          <option value="I-III-IV-vi">I-III-IV-vi (Lawsuits)</option>
+          <option value="custom">Custom</option>
+          <option value="random">Random</option>
+        </select>
+      </label>
+      <br />
+      <label
+        >Custom:
+        <input
+          type="textbox"
+          id="customProgression"
+          value="I-II-iii-IV-V-vi-viio-I"
+        />
+      </label>
+      <br />
+      <label
+        >Random Count:
+        <input
+          type="number"
+          id="randomProgression"
+          min="1"
+          max="10"
+          value="5"
+        />
+      </label>
 
-				<br>
-				</div>
+      <div id="degreesOptions">
+        <table>
+          <tr>
+            <td><label>Random Intervals</label></td>
+            <td>
+              <label><input type="checkbox" id="I" checked /> I</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="BII" /> ♭II</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="II" checked /> II</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="BIII" /> ♭III</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="III" checked /> III</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="IV" checked /> IV</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="BV" /> ♭V</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="V" checked /> V</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="BVI" /> ♭VI</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="VI" checked /> VI</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="BVII" /> ♭VII</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="VII" checked /> VII</label>
+            </td>
+            <td>
+              <label><input type="checkbox" id="VIII" checked /> VIII</label>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
 
-		<div class="tabContent" id="progressionOptions">
-			<br>
-			<label>Progression:
-				<select id="progressionSelect">
-					<option value="I-IV-V">I-IV-V</option>
-					<option value="ii-V-I">ii-V-I</option>
-					<option value="ii7-V7-IM7">ii7-V7-IM7</option>
-					<option value="I-V-vi-IV">I-V-vi-IV</option>
-					<option value="I-vi-ii-V">I-vi-ii-V</option>
-					<option value="vi-IV-I-V">vi-IV-I-V</option>
-					<option value="I-IV-iii-vi-ii-V-I">Jazzy Improv</option>
-					<option value="I-ii-iii-IV-V-vi-viio-I">Ascending Major Key</option>
-					<option value="I-viio-vi-V-IV-iii-ii-I">Descending Major Key</option>
-					<option value="i-ii-bIII-iv-v-bVI-bVII-i">Ascending Minor Key</option>
-					<option value="i-bVII-bVI-v-iv-bIII-ii-i">Descending Minor Key</option>
-					<option value="I-V-vi-iii-IV-I-IV-V">I-V-vi-iii-IV-I-IV-V (Pachabel)</option>
-					<option value="I-vi-IV-V">I-vi-IV-V (Doo-Wop)</option>
-					<option value="I-III-IV-vi">I-III-IV-vi (Lawsuits)</option>
-					<option value="custom">Custom</option>
-					<option value="random">Random</option>
-				</select>
-			</label>
-			<br>
-			<label>Custom:
-				<input type="textbox" id="customProgression" value="I-II-iii-IV-V-vi-viio-I">
-			</label>
-			<br>
-			<label>Random Count:
-				<input type="number" id="randomProgression" min="1" max="10" value="5">
-			</label>
+    <div class="tabContent" id="scalesOptions">
+      <br />
+      <div id="scalesButtons"></div>
+      <div id="scalesSelected"></div>
+    </div>
 
-			<div id="degreesOptions">
+    <div class="tabContent" id="jazzOptions">
+      <h4>
+        Courtesy of <a href="https://linktr.ee/Jaelliott">John Elliott</a> and
+        his book <a href="https://dropback.co.uk/the-book/">Insights in Jazz</a>
+      </h4>
+      <button id="btnJazzBricksNone">None</button>
+      <button id="btnJazzBricksAll">All</button>
+      <button id="btnJazzBricksBasic">Beginner</button>
+      <button id="btnJazzBricksIntermediate">Intermediate</button>
+      <button id="btnJazzBricksTurnarounds">Turnarounds</button>
+      <button id="btnJazzBricksMetabricks">Metabricks</button>
+      <button id="btnJazzBricksDropbacks">Dropbacks</button>
+      <table id="jazzBricks">
+        <thead>
+          <tr>
+            <th>Chord</th>
+            <th>Chord Name</th>
+            <th>Enabled</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
-				<table>
-					<tr>
-						<td><label>Random Intervals</label></td>
-						<td><label><input type="checkbox" id="I" checked> I</label></td>
-						<td><label><input type="checkbox" id="BII"> ♭II</label></td>
-						<td><label><input type="checkbox" id="II" checked> II</label></td>
-						<td><label><input type="checkbox" id="BIII"> ♭III</label></td>
-						<td><label><input type="checkbox" id="III" checked> III</label></td>
-						<td><label><input type="checkbox" id="IV" checked> IV</label></td>
-						<td><label><input type="checkbox" id="BV" > ♭V</label></td>
-						<td><label><input type="checkbox" id="V" checked> V</label></td>
-						<td><label><input type="checkbox" id="BVI"> ♭VI</label></td>
-						<td><label><input type="checkbox" id="VI" checked> VI</label></td>
-						<td><label><input type="checkbox" id="BVII"> ♭VII</label></td>
-						<td><label><input type="checkbox" id="VII" checked> VII</label></td>
-						<td><label><input type="checkbox" id="VIII" checked> VIII</label></td>
-					</tr>
-				</table>
-			</div>
-		</div>
-
-		<div class="tabContent" id="scalesOptions">
-			<br>
-			<div id="scalesButtons"></div>
-			<div id="scalesSelected"></div>
-			</div>
-		</div>
-
-		<div class="tabContent" id="jazzOptions">
-			<h4>Courtesy of <a href="https://linktr.ee/Jaelliott">John Elliott</a> and his book <a href="https://dropback.co.uk/the-book/">Insights in Jazz</a></h4>
-			<button id="btnJazzBricksNone">None</button></td>
-			<button id="btnJazzBricksAll">All</button></td>
-			<button id="btnJazzBricksBasic">Beginner</button></td>
-			<button id="btnJazzBricksIntermediate">Intermediate</button></td>
-			<button id="btnJazzBricksTurnarounds">Turnarounds</button></td>
-			<button id="btnJazzBricksMetabricks">Metabricks</button></td>
-			<button id="btnJazzBricksDropbacks">Dropbacks</button></td>
-			<table id="jazzBricks">
-				<thead>
-					<tr>
-						<th>Chord</th>
-						<th>Chord Name</th>
-						<th>Enabled</th>
-					</tr>
-				</thead>
-				<tbody></tbody>
-			</table>
-		</div>
-
-
-
-		<script src="data.js"></script>
-		<script src="ui.js"></script>
-		<script src="scripts.js"></script>
-		<script data-goatcounter="https://mikebwilliams.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
-	</body>
+    <script src="data.js"></script>
+    <script src="ui.js"></script>
+    <script src="scripts.js"></script>
+    <script
+      data-goatcounter="https://mikebwilliams.goatcounter.com/count"
+      async
+      src="//gc.zgo.at/count.js"
+    ></script>
+  </body>
 </html>

@@ -1,447 +1,756 @@
-const allNotes = ['Cb', 'C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'E#', 'Fb', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B', 'B#'];
+const allNotes = [
+  "Cb",
+  "C",
+  "C#",
+  "Db",
+  "D",
+  "D#",
+  "Eb",
+  "E",
+  "E#",
+  "Fb",
+  "F",
+  "F#",
+  "Gb",
+  "G",
+  "G#",
+  "Ab",
+  "A",
+  "A#",
+  "Bb",
+  "B",
+  "B#",
+];
 
-const normalNotes = allNotes.filter(item => ['Cb', 'E#', 'Fb', 'B#'].indexOf(item) === -1);
+const normalNotes = allNotes.filter(
+  (item) => ["Cb", "E#", "Fb", "B#"].indexOf(item) === -1,
+);
 
 const noteValues = {
-	'B#': 0, 'C': 0,
-	'C#': 1, 'Db': 1,
-	'D': 2,
-	'D#': 3, 'Eb': 3,
-	'E': 4, 'Fb': 4,
-	'E#': 5, 'F': 5,
-	'F#': 6, 'Gb': 6,
-	'G': 7,
-	'G#': 8, 'Ab': 8,
-	'A': 9,
-	'A#': 10, 'Bb': 10,
-	'B': 11, 'Cb': 11
+  "B#": 0,
+  C: 0,
+  "C#": 1,
+  Db: 1,
+  D: 2,
+  "D#": 3,
+  Eb: 3,
+  E: 4,
+  Fb: 4,
+  "E#": 5,
+  F: 5,
+  "F#": 6,
+  Gb: 6,
+  G: 7,
+  "G#": 8,
+  Ab: 8,
+  A: 9,
+  "A#": 10,
+  Bb: 10,
+  B: 11,
+  Cb: 11,
 };
 
 const valuesToNotesSharp = {
-	0: 'C',
-	1: 'C#',
-	2: 'D',
-	3: 'D#',
-	4: 'E',
-	5: 'F',
-	6: 'F#',
-	7: 'G',
-	8: 'G#',
-	9: 'A',
-	10: 'A#',
-	11: 'B'
+  0: "C",
+  1: "C#",
+  2: "D",
+  3: "D#",
+  4: "E",
+  5: "F",
+  6: "F#",
+  7: "G",
+  8: "G#",
+  9: "A",
+  10: "A#",
+  11: "B",
 };
 
 const valuesToNotesFlat = {
-	0: 'C',
-	1: 'Db',
-	2: 'D',
-	3: 'Eb',
-	4: 'E',
-	5: 'F',
-	6: 'Gb',
-	7: 'G',
-	8: 'Ab',
-	9: 'A',
-	10: 'Bb',
-	11: 'B'
+  0: "C",
+  1: "Db",
+  2: "D",
+  3: "Eb",
+  4: "E",
+  5: "F",
+  6: "Gb",
+  7: "G",
+  8: "Ab",
+  9: "A",
+  10: "Bb",
+  11: "B",
 };
 
 const stepsToNames = {
-	0: {
-	interval: 'Unison',
-	numeral: 'I'
-	},
-	1: {
-	interval: 'Minor 2nd',
-	numeral: 'bII'
-	},
-	2: {
-	interval: 'Major 2nd',
-	numeral: 'II'
-	},
-	3: {
-	interval: 'Minor 3rd',
-	numeral: 'bIII'
-	},
-	4: {
-	interval: 'Major 3rd',
-	numeral: 'III'
-	},
-	5: {
-	interval: 'Perfect 4th',
-	numeral: 'IV'
-	},
-	6: {
-	interval: 'Tritone',
-	numeral: 'bV'
-	},
-	7: {
-	interval: 'Perfect 5th',
-	numeral: 'V'
-	},
-	8: {
-	interval: 'Minor 6th',
-	numeral: 'bVI'
-	},
-	9: {
-	interval: 'Major 6th',
-	numeral: 'VI'
-	},
-	10: {
-	interval: 'Minor 7th',
-	numeral: 'bVII'
-	},
-	11: {
-	interval: 'Major 7th',
-	numeral: 'VII'
-	},
-	12: {
-	interval: 'Octave',
-	numeral: 'I'
-	}
+  0: {
+    interval: "Unison",
+    numeral: "I",
+  },
+  1: {
+    interval: "Minor 2nd",
+    numeral: "bII",
+  },
+  2: {
+    interval: "Major 2nd",
+    numeral: "II",
+  },
+  3: {
+    interval: "Minor 3rd",
+    numeral: "bIII",
+  },
+  4: {
+    interval: "Major 3rd",
+    numeral: "III",
+  },
+  5: {
+    interval: "Perfect 4th",
+    numeral: "IV",
+  },
+  6: {
+    interval: "Tritone",
+    numeral: "bV",
+  },
+  7: {
+    interval: "Perfect 5th",
+    numeral: "V",
+  },
+  8: {
+    interval: "Minor 6th",
+    numeral: "bVI",
+  },
+  9: {
+    interval: "Major 6th",
+    numeral: "VI",
+  },
+  10: {
+    interval: "Minor 7th",
+    numeral: "bVII",
+  },
+  11: {
+    interval: "Major 7th",
+    numeral: "VII",
+  },
+  12: {
+    interval: "Octave",
+    numeral: "I",
+  },
 };
 
-
 const romanNumerals = {
-	'I': 0,
-	'II': 2,
-	'III': 4,
-	'IV': 5,
-	'V': 7,
-	'VI': 9,
-	'VII': 11,
-	'VIII': 12,
-	// These are upper case since we check by uppercase to ignore
-	// major/minor chord quality when getting the scale degree
-	'BI': -1,
-	'BII': 1,
-	'BIII': 3,
-	'BIV': 4,
-	'BV': 6,
-	'BVI': 8,
-	'BVII': 10,
-	// Same as flats, but with sharps '#'
-	'#I': 1,
-	'#II': 3,
-	'#III': 5,
-	'#IV': 6,
-	'#V': 8,
-	'#VI': 10,
-	'#VII': 0
+  I: 0,
+  II: 2,
+  III: 4,
+  IV: 5,
+  V: 7,
+  VI: 9,
+  VII: 11,
+  VIII: 12,
+  // These are upper case since we check by uppercase to ignore
+  // major/minor chord quality when getting the scale degree
+  BI: -1,
+  BII: 1,
+  BIII: 3,
+  BIV: 4,
+  BV: 6,
+  BVI: 8,
+  BVII: 10,
+  // Same as flats, but with sharps '#'
+  "#I": 1,
+  "#II": 3,
+  "#III": 5,
+  "#IV": 6,
+  "#V": 8,
+  "#VI": 10,
+  "#VII": 0,
 };
 
 const romanNumeralNames = {
-	'I': 'Tonic',
-	'II': 'Supertonic',
-	'III': 'Mediant',
-	'IV': 'Subdominant',
-	'V': 'Dominant',
-	'VI': 'Submediant',
-	'VII': 'Leading Tone'
+  I: "Tonic",
+  II: "Supertonic",
+  III: "Mediant",
+  IV: "Subdominant",
+  V: "Dominant",
+  VI: "Submediant",
+  VII: "Leading Tone",
 };
-
 
 // These are separated so we can so one way gives us more flats and the other more sharps,
 // e.g. F# in the fifths vs Gb in the fourths.
-const circleOfFourths = ["C", "F", "Bb", "Eb", "Ab", "Db", "Gb", "B", "E", "A", "D", "G"];
-const circleOfFifths = ["C", "G", "D", "A", "E", "B", "F#", "C#", "G#", "D#", "A#", "F"];
+const circleOfFourths = [
+  "C",
+  "F",
+  "Bb",
+  "Eb",
+  "Ab",
+  "Db",
+  "Gb",
+  "B",
+  "E",
+  "A",
+  "D",
+  "G",
+];
+const circleOfFifths = [
+  "C",
+  "G",
+  "D",
+  "A",
+  "E",
+  "B",
+  "F#",
+  "C#",
+  "G#",
+  "D#",
+  "A#",
+  "F",
+];
 
 const majorScaleIntervals = [0, 2, 4, 5, 7, 9, 11];
 const minorScaleIntervals = [0, 2, 3, 5, 7, 8, 10];
 
-
 const chords = [
-	'C', 'Cm', 'C#', 'C#m', 'Db', 'Dbm', 'D', 'Dm', 'D#', 'D#m', 'Eb', 'Ebm', 
-	'E', 'Em', 'F', 'Fm', 'F#', 'F#m', 'Gb', 'Gbm', 'G', 'Gm', 'G#', 'G#m', 
-	'Ab', 'Abm', 'A', 'Am', 'A#', 'A#m', 'Bb', 'Bbm', 'B', 'Bm'
+  "C",
+  "Cm",
+  "C#",
+  "C#m",
+  "Db",
+  "Dbm",
+  "D",
+  "Dm",
+  "D#",
+  "D#m",
+  "Eb",
+  "Ebm",
+  "E",
+  "Em",
+  "F",
+  "Fm",
+  "F#",
+  "F#m",
+  "Gb",
+  "Gbm",
+  "G",
+  "Gm",
+  "G#",
+  "G#m",
+  "Ab",
+  "Abm",
+  "A",
+  "Am",
+  "A#",
+  "A#m",
+  "Bb",
+  "Bbm",
+  "B",
+  "Bm",
 ];
 
 const chordStructures = {
-	'': [0, 4, 7],       // Major
-	'm': [0, 3, 7],     // Minor
-	'dim': [0, 3, 6],
-	'aug': [0, 4, 8],
+  "": [0, 4, 7], // Major
+  m: [0, 3, 7], // Minor
+  dim: [0, 3, 6],
+  aug: [0, 4, 8],
 
-	'sus2': [0, 2, 7],
-	'sus4': [0, 5, 7],
+  sus2: [0, 2, 7],
+  sus4: [0, 5, 7],
 
-	'6': [0, 4, 7, 9],
-	'm6': [0, 3, 7, 9],
+  6: [0, 4, 7, 9],
+  m6: [0, 3, 7, 9],
 
-	'7': [0, 4, 7, 10],
-	'm7': [0, 3, 7, 10],
-	'M7': [0, 4, 7, 11],
-	'mM7': [0, 3, 7, 11],
-	'dim7': [0, 3, 6, 9],
-	'm7b5': [0, 3, 6, 10],  
-	'7b5':  [0, 4, 6, 10],
-	'aug7': [0, 4, 8, 10],
-	'augM7': [0, 4, 8, 11],
+  7: [0, 4, 7, 10],
+  m7: [0, 3, 7, 10],
+  M7: [0, 4, 7, 11],
+  mM7: [0, 3, 7, 11],
+  dim7: [0, 3, 6, 9],
+  m7b5: [0, 3, 6, 10],
+  "7b5": [0, 4, 6, 10],
+  aug7: [0, 4, 8, 10],
+  augM7: [0, 4, 8, 11],
 
-	'9': [0, 4, 7, 10, 14],
-	'm9': [0, 3, 7, 10, 14],
-	'M9': [0, 4, 7, 11, 14],
+  9: [0, 4, 7, 10, 14],
+  m9: [0, 3, 7, 10, 14],
+  M9: [0, 4, 7, 11, 14],
 
-	'11': [0, 4, 7, 10, 14],
-	'm11': [0, 3, 7, 10, 14, 17],
-	'M11': [0, 4, 7, 11, 14],
+  11: [0, 4, 7, 10, 14],
+  m11: [0, 3, 7, 10, 14, 17],
+  M11: [0, 4, 7, 11, 14],
 
-	'13': [0, 4, 7, 10, 14, 21],
-	'm13': [0, 3, 7, 10, 14, 17, 21],
-	'M13': [0, 4, 7, 11, 14, 21],
+  13: [0, 4, 7, 10, 14, 21],
+  m13: [0, 3, 7, 10, 14, 17, 21],
+  M13: [0, 4, 7, 11, 14, 21],
 
-	'7b9': [0, 4, 7, 10, 13],
-	'7#9': [0, 4, 7, 10, 15],
-	'7#11': [0, 4, 7, 10, 18],
+  "7b9": [0, 4, 7, 10, 13],
+  "7#9": [0, 4, 7, 10, 15],
+  "7#11": [0, 4, 7, 10, 18],
 };
 
-
 const chordStructureNames = {
-	'': [''],
-	'm': ['m', 'mi', 'min', '-'],
-	'dim': ['dim', 'o', 'º'],
-	'aug': ['aug', '+'],
+  "": [""],
+  m: ["m", "mi", "min", "-"],
+  dim: ["dim", "o", "º"],
+  aug: ["aug", "+"],
 
-	'sus2': ['sus2'],
-	'sus4': ['sus', 'sus4'],
+  sus2: ["sus2"],
+  sus4: ["sus", "sus4"],
 
-	'6': ['6'],
-	'm6': ['m6', 'mi6', 'min6', '-6'],
+  6: ["6"],
+  m6: ["m6", "mi6", "min6", "-6"],
 
-	'7': ['7'],
-	'm7': ['m7', 'mi7', 'min7', '-7'],
-	'M7': [ 'M7', 'ma7', 'maj7', '△7', '△'],
-	'mM7': ['mM7', 'm maj7', '-△7', '-△'],
-	'dim7': ['dim7', 'o7', 'º7'],
-	'm7b5': ['m7b5', '-7b5', 'ø', 'ø7'],
-	'aug7': ['7#5', '+7', 'aug7', ],
-	'augM7': ['M7#5', '+M7', 'augM7', ],
+  7: ["7"],
+  m7: ["m7", "mi7", "min7", "-7"],
+  M7: ["M7", "ma7", "maj7", "△7", "△"],
+  mM7: ["mM7", "m maj7", "-△7", "-△"],
+  dim7: ["dim7", "o7", "º7"],
+  m7b5: ["m7b5", "-7b5", "ø", "ø7"],
+  aug7: ["7#5", "+7", "aug7"],
+  augM7: ["M7#5", "+M7", "augM7"],
 
-	'9': ['9'],
-	'm9': ['m9', 'min9', '-9'],
-	'M9': ['M9', 'maj9', '△9'],
+  9: ["9"],
+  m9: ["m9", "min9", "-9"],
+  M9: ["M9", "maj9", "△9"],
 
-	'11': ['11'],
-	'm11': ['m11', 'min11', '-11'],
-	'M11': ['M11', 'maj11', '△11'],
+  11: ["11"],
+  m11: ["m11", "min11", "-11"],
+  M11: ["M11", "maj11", "△11"],
 
-	'13': ['13'],
-	'm13': ['m13', 'min13', '-13'],
-	'M13': ['M13', 'maj13', '△13'],
+  13: ["13"],
+  m13: ["m13", "min13", "-13"],
+  M13: ["M13", "maj13", "△13"],
 
-	'7b9': ['7b9'],
-	'7#9': ['7#9', '7+9'],
-	'7#11': ['7#11', '7+11'],
+  "7b9": ["7b9"],
+  "7#9": ["7#9", "7+9"],
+  "7#11": ["7#11", "7+11"],
 };
 
 const scales = {
-    scaleIonian: { 
-        label: "Ionian", 
-        steps: [2, 2, 1, 2, 2, 2, 1], 
-        enabled: true 
-    },
-    scaleDorian: { 
-        label: "Dorian", 
-        steps: [2, 1, 2, 2, 2, 1, 2], 
-        enabled: false 
-    },
-    scalePhrygian: { 
-        label: "Phrygian", 
-        steps: [1, 2, 2, 2, 1, 2, 2], 
-        enabled: false 
-    },
-    scaleLydian: { 
-        label: "Lydian", 
-        steps: [2, 2, 2, 1, 2, 2, 1], 
-        enabled: false 
-    },
-    scaleMixolydian: { 
-        label: "Mixolydian", 
-        steps: [2, 2, 1, 2, 2, 1, 2], 
-        enabled: false 
-    },
-    scaleAeolian: { 
-        label: "Aeolian", 
-        steps: [2, 1, 2, 2, 1, 2, 2], 
-        enabled: true 
-    },
-    scaleLocrian: { 
-        label: "Locrian", 
-        steps: [1, 2, 2, 1, 2, 2, 2], 
-        enabled: false 
-    },
-    scaleHarmonicMinor: { 
-        label: "Harmonic Minor Scale", 
-        steps: [2, 1, 2, 2, 1, 3, 1], 
-        enabled: false 
-    },
-    scaleMelodicMinor: { 
-        label: "Melodic Minor Scale (Ascending)", 
-        steps: [2, 1, 2, 2, 2, 2, 1], 
-        enabled: false 
-    },
-    scalePentatonicMajor: { 
-        label: "Pentatonic Scale (Major)", 
-        steps: [2, 2, 3, 2, 3], 
-        enabled: false 
-    },
-    scalePentatonicMinor: { 
-        label: "Pentatonic Scale (Minor)", 
-        steps: [3, 2, 2, 3, 2], 
-        enabled: false 
-    },
-    scaleBlues: { 
-        label: "Blues Scale", 
-        steps: [3, 2, 1, 1, 3, 2], 
-        enabled: false 
-    },
-    scaleWholeTone: { 
-        label: "Whole Tone Scale", 
-        steps: [2, 2, 2, 2, 2, 2], 
-        enabled: false 
-    },
-    scaleChromatic: { 
-        label: "Chromatic Scale", 
-        steps: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
-        enabled: false 
-    },
-    scaleDiminishedWholeHalf: { 
-        label: "Diminished Scale (Whole-Half)", 
-        steps: [2, 1, 2, 1, 2, 1, 2, 1], 
-        enabled: false 
-    },
-    scaleDiminishedHalfWhole: { 
-        label: "Diminished Scale (Half-Whole)", 
-        steps: [1, 2, 1, 2, 1, 2, 1, 2], 
-        enabled: false 
-    },
-    scaleAugmented: { 
-        label: "Augmented Scale", 
-        steps: [3, 1, 3, 1, 3, 1], 
-        enabled: false 
-    },
-    scaleHungarianMinor: { 
-        label: "Hungarian Minor Scale", 
-        steps: [2, 1, 3, 1, 1, 3, 1], 
-        enabled: false 
-    },
-    scaleNeapolitanMajor: { 
-        label: "Neapolitan Major Scale", 
-        steps: [1, 2, 2, 2, 2, 2, 1], 
-        enabled: false 
-    },
-    scaleNeapolitanMinor: { 
-        label: "Neapolitan Minor Scale", 
-        steps: [1, 2, 2, 2, 1, 3, 1], 
-        enabled: false 
-    }
+  scaleIonian: {
+    label: "Ionian",
+    steps: [2, 2, 1, 2, 2, 2, 1],
+    enabled: true,
+  },
+  scaleDorian: {
+    label: "Dorian",
+    steps: [2, 1, 2, 2, 2, 1, 2],
+    enabled: false,
+  },
+  scalePhrygian: {
+    label: "Phrygian",
+    steps: [1, 2, 2, 2, 1, 2, 2],
+    enabled: false,
+  },
+  scaleLydian: {
+    label: "Lydian",
+    steps: [2, 2, 2, 1, 2, 2, 1],
+    enabled: false,
+  },
+  scaleMixolydian: {
+    label: "Mixolydian",
+    steps: [2, 2, 1, 2, 2, 1, 2],
+    enabled: false,
+  },
+  scaleAeolian: {
+    label: "Aeolian",
+    steps: [2, 1, 2, 2, 1, 2, 2],
+    enabled: true,
+  },
+  scaleLocrian: {
+    label: "Locrian",
+    steps: [1, 2, 2, 1, 2, 2, 2],
+    enabled: false,
+  },
+  scaleHarmonicMinor: {
+    label: "Harmonic Minor Scale",
+    steps: [2, 1, 2, 2, 1, 3, 1],
+    enabled: false,
+  },
+  scaleMelodicMinor: {
+    label: "Melodic Minor Scale (Ascending)",
+    steps: [2, 1, 2, 2, 2, 2, 1],
+    enabled: false,
+  },
+  scalePentatonicMajor: {
+    label: "Pentatonic Scale (Major)",
+    steps: [2, 2, 3, 2, 3],
+    enabled: false,
+  },
+  scalePentatonicMinor: {
+    label: "Pentatonic Scale (Minor)",
+    steps: [3, 2, 2, 3, 2],
+    enabled: false,
+  },
+  scaleBlues: {
+    label: "Blues Scale",
+    steps: [3, 2, 1, 1, 3, 2],
+    enabled: false,
+  },
+  scaleWholeTone: {
+    label: "Whole Tone Scale",
+    steps: [2, 2, 2, 2, 2, 2],
+    enabled: false,
+  },
+  scaleChromatic: {
+    label: "Chromatic Scale",
+    steps: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    enabled: false,
+  },
+  scaleDiminishedWholeHalf: {
+    label: "Diminished Scale (Whole-Half)",
+    steps: [2, 1, 2, 1, 2, 1, 2, 1],
+    enabled: false,
+  },
+  scaleDiminishedHalfWhole: {
+    label: "Diminished Scale (Half-Whole)",
+    steps: [1, 2, 1, 2, 1, 2, 1, 2],
+    enabled: false,
+  },
+  scaleAugmented: {
+    label: "Augmented Scale",
+    steps: [3, 1, 3, 1, 3, 1],
+    enabled: false,
+  },
+  scaleHungarianMinor: {
+    label: "Hungarian Minor Scale",
+    steps: [2, 1, 3, 1, 1, 3, 1],
+    enabled: false,
+  },
+  scaleNeapolitanMajor: {
+    label: "Neapolitan Major Scale",
+    steps: [1, 2, 2, 2, 2, 2, 1],
+    enabled: false,
+  },
+  scaleNeapolitanMinor: {
+    label: "Neapolitan Minor Scale",
+    steps: [1, 2, 2, 2, 1, 3, 1],
+    enabled: false,
+  },
 };
-
 
 const scaleGroups = {
-    basic: ["scaleIonian", "scaleAeolian"],
-    greekModes: ["scaleIonian", "scaleDorian", "scalePhrygian", "scaleLydian", "scaleMixolydian", "scaleAeolian", "scaleLocrian"],
-    classicalMusic: ["scaleIonian", "scaleAeolian", "scaleHarmonicMinor", "scaleMelodicMinor", "scaleNeapolitanMajor", "scaleNeapolitanMinor"],
-    jazzBlues: ["scalePentatonicMajor", "scalePentatonicMinor", "scaleBlues", "scaleWholeTone", "scaleChromatic", "scaleDiminishedWholeHalf", "scaleDiminishedHalfWhole"],
-    all: Object.keys(scales)
+  basic: ["scaleIonian", "scaleAeolian"],
+  greekModes: [
+    "scaleIonian",
+    "scaleDorian",
+    "scalePhrygian",
+    "scaleLydian",
+    "scaleMixolydian",
+    "scaleAeolian",
+    "scaleLocrian",
+  ],
+  classicalMusic: [
+    "scaleIonian",
+    "scaleAeolian",
+    "scaleHarmonicMinor",
+    "scaleMelodicMinor",
+    "scaleNeapolitanMajor",
+    "scaleNeapolitanMinor",
+  ],
+  jazzBlues: [
+    "scalePentatonicMajor",
+    "scalePentatonicMinor",
+    "scaleBlues",
+    "scaleWholeTone",
+    "scaleChromatic",
+    "scaleDiminishedWholeHalf",
+    "scaleDiminishedHalfWhole",
+  ],
+  all: Object.keys(scales),
 };
 
-
 const jazzCadences = [
-{ name: "Amen", chords: ['IVΔ', 'IΔ'], enabled: false },
-{ name: "Autumnal", chords: ['ii7', 'V7', 'viiø', 'III7', 'viΔ'], enabled: false },
-{ name: "Body & Soul", chords: ['ii7', 'VI7', 'ii7', 'V7', 'IΔ', 'IΔ'], enabled: false },
-{ name: "Dizzy", chords: ['bvi7', 'bII7', 'IΔ', 'IΔ'], enabled: false },
-{ name: "Dogleg", chords: ['vi7', 'II7', 'ii7', 'V7', 'IΔ'], enabled: false },
-{ name: "(7-chord) Dropback", chords: ['ii7', 'V7', 'IΔ', 'VI7', 'ii7', 'V7', 'IΔ'], enabled: false },
-{ name: "Extended", chords: ['vi7', 'ii7', 'V7', 'IΔ'], enabled: false },
-{ name: "Happenstance", chords: ['#iv7', 'VII7', 'IΔ', 'IΔ'], enabled: false },
-{ name: "Long", chords: ['iii7', 'VI7', 'ii7', 'V7', 'IΔ'], enabled: false },
-{ name: "Overrun", chords: ['ii7', 'V7', 'IΔ', 'IVΔ'], enabled: false },
-{ name: "Moment’s", chords: ['#i7', '#IV7', 'ii7', 'V7', 'IΔ', 'IΔ'], enabled: false },
-{ name: "Night & Day", chords: ['bVIΔ', 'V7', 'IΔ', 'IΔ'], enabled: false },
-{ name: "Nobody’s", chords: ['IΔ', 'III7', 'viΔ'], enabled: false },
-{ name: "Nowhere", chords: ['bVI7', 'V7', 'IΔ', 'IΔ'], enabled: false },
-{ name: "(7-chord) Pullback", chords: ['ii7', 'V7', 'iii7', 'VI7', 'ii7', 'V7', 'IΔ'], enabled: false },
-{ name: "Rainbow", chords: ['IΔ', 'III7', 'IVΔ', 'IVΔ'], enabled: false },
-{ name: "Rainy", chords: ['iii7', 'bIIIø', 'ii7', 'V7', 'IΔ', 'IΔ'], enabled: false },
-{ name: "Satin", chords: ['vi7', 'ii7', 'bvi7', 'bII7', 'IΔ', 'IΔ'], enabled: false },
-{ name: "Spring", chords: ['VIIø', 'III7', 'ii7', 'V7', 'IΔ', 'IΔ'], enabled: false },
-{ name: "Stablemates", chords: ['biii7', 'bVI7', 'ii7', 'V7', 'IΔ', 'IΔ'], enabled: false },
-{ name: "Starlight", chords: ['#IVø', 'VII7', 'iii7', 'VI7', 'ii7', 'V7', 'IΔ'], enabled: false },
-{ name: "Starlight N&D Variant", chords: ['#IVø', 'vi7', 'biiio7', 'VI7', 'ii7', 'V7', 'IΔ'], enabled: false },
-{ name: "Regular", chords: ['ii7', 'V7', 'IΔ'], enabled: false },
-{ name: "Regular (minor)", chords: ['iiø', 'V7+9', 'IΔ', 'IΔ'], enabled: false },
-{ name: "Tension Ending", chords: ['ii7', 'V7', 'I7', 'I7'], enabled: false },
-{ name: "Tritone Substitution", chords: ['ii7', 'bII7', 'IΔ', 'IΔ'], enabled: false },
-{ name: "Two-Goes", chords: ['ii7', 'V7', 'ii7', 'V7', 'IΔ'], enabled: false },
-{ name: "Yardbird", chords: ['iv7', 'bVII7', 'IΔ', 'IΔ'], enabled: false },
-// Turnarounds
-{ name: "Foggy", chords: ['IΔ', 'bIII7', 'ii7', 'V7'], enabled: false },
-{ name: "II ’n’ Back", chords: ['ii7', '#iio7', 'iii7'], enabled: false },
-{ name: "Ladybird", chords: ['IΔ', 'bIII7', 'bVIΔ', 'bII7'], enabled: false },
-{ name: "Nowhere (turnaround)", chords: ['IΔ', 'VI7', 'bVI7', 'V7'], enabled: false },
-{ name: "Pennies", chords: ['IΔ', 'ii7', 'iii7', 'bIIIø', 'ii7', 'V7'], enabled: false },
-{ name: "POT", chords: ['IΔ', 'VI7', 'ii7', 'V7'], enabled: false },
-{ name: "POT (minor)", chords: ['iΔ', 'viø', 'iiø', 'V7+9'], enabled: false },
-{ name: "Rhythm", chords: ['IΔ', 'bIIo7', 'ii7', 'bIIIo7'], enabled: false },
-{ name: "SPOT", chords: ['iii7', 'VI7', 'ii7', 'V7'], enabled: false },
-{ name: "To IV 'n' Back", chords: ['IΔ', 'I7', 'IVΔ', '#IVo7', 'IΔ'], enabled: false },
-{ name: "To IV 'n' Hack", chords: ['IΔ', 'I7', 'IVΔ', 'VII7', 'IΔ'], enabled: false },
-{ name: "To IV 'n' Mack", chords: ['IΔ', 'I7', 'IVΔ', 'ivΔ', 'IΔ'], enabled: false },
-{ name: "To IV 'n' Yak", chords: ['IΔ', 'I7', 'IVΔ', 'bVII7', 'IΔ'], enabled: false },
-{ name: "Whoopee", chords: ['IΔ', 'bIIo7', 'ii7', 'V7'], enabled: false },
-// Metabricks
-{ name: "Autumn Leaves Opening", chords: ['ii7', 'V7', 'IΔ', 'IVΔ', 'viiø', 'III7', 'viΔ', 'VI7'], enabled: false },
-{ name: "Four-Star Ending", chords: ['IVΔ', '#iv7', 'VII7', 'iii7', 'VI7', 'ii7', 'V7', 'IΔ', 'IΔ'], enabled: false },
-{ name: "Honeysuckle Bridge", chords: ['v7', 'I7', 'IVΔ', 'IVΔ', 'vi7', 'II7', 'ii7', 'V7'], enabled: false },
-{ name: "ITCHY Opening", chords: ['IΔ', 'iii7', 'VI7', 'ii7', '#iv7', 'VII7'], enabled: false },
-{ name: "On-Off(any dom7)-On + Dropback", chords: ['IΔ', 'III7', 'IΔ', 'VI7'], enabled: false },
-{ name: "Pennies Ending", chords: ['IVΔ', '#ivo7', 'IΔ', 'iii7', 'VI7', 'ii7', 'V7', 'IΔ', 'IΔ'], enabled: false },
-{ name: "Rhythm Bridge", chords: ['vii7', 'III7', 'iii7', 'VI7', 'iv7', 'II7', 'ii7', 'V7'], enabled: false },
-{ name: "Sharp Fourpenny Ending", chords: ['#ivø', 'iv7', 'bVII7', 'IΔ', 'iii7', 'VI7', 'ii7', 'V7', 'IΔ', 'IΔ'], enabled: false },
-{ name: "Sixpenny Ending", chords: ['vi7', 'iv7', 'bVII7', 'IΔ', 'iii7', 'VI7', 'ii7', 'V7', 'IΔ', 'IΔ'], enabled: false },
-{ name: "To IV ’n’ Bird SPOT", chords: ['IΔ', 'I7', 'IVΔ', 'bVII7', 'iii7', 'VI7', 'ii7', 'V7'], enabled: false },
-{ name: "Twopenny Ending", chords: ['ii7', 'iv7', 'bVII7', 'IΔ', 'iii7', 'VI7', 'ii7', 'V7', 'IΔ'], enabled: false },
-// Miscellaneous
-{ name: "Chromatic Dropback", chords: ['IΔ', 'VII7', 'bVII7', 'VI7', 'ii7'], enabled: false },
-{ name: "Dogleg Dropback", chords: ['ii7', 'V7', 'v7', 'I7', 'i7'], enabled: false },
-{ name: "Dropback", chords: ['IΔ', 'VI7', 'ii7'], enabled: false },
-{ name: "Raindrop Dropback", chords: ['iii7', 'bIIIo7', 'ii7'], enabled: false },
-{ name: "Starlight Dropback", chords: ['#iv7', 'VII7', 'iii7', 'VI7', 'ii7'], enabled: false },
-{ name: "TINGLe Dropback", chords: ['IΔ', 'IV7', 'bVII7', 'VI7', 'ii7'], enabled: false },
-{ name: "TTFA Dropback", chords: ['IΔ', 'IV7', 'iii7', 'VI7', 'ii7'], enabled: false }
+  { name: "Amen", chords: ["IVΔ", "IΔ"], enabled: false },
+  {
+    name: "Autumnal",
+    chords: ["ii7", "V7", "viiø", "III7", "viΔ"],
+    enabled: false,
+  },
+  {
+    name: "Body & Soul",
+    chords: ["ii7", "VI7", "ii7", "V7", "IΔ", "IΔ"],
+    enabled: false,
+  },
+  { name: "Dizzy", chords: ["bvi7", "bII7", "IΔ", "IΔ"], enabled: false },
+  { name: "Dogleg", chords: ["vi7", "II7", "ii7", "V7", "IΔ"], enabled: false },
+  {
+    name: "(7-chord) Dropback",
+    chords: ["ii7", "V7", "IΔ", "VI7", "ii7", "V7", "IΔ"],
+    enabled: false,
+  },
+  { name: "Extended", chords: ["vi7", "ii7", "V7", "IΔ"], enabled: false },
+  {
+    name: "Happenstance",
+    chords: ["#iv7", "VII7", "IΔ", "IΔ"],
+    enabled: false,
+  },
+  { name: "Long", chords: ["iii7", "VI7", "ii7", "V7", "IΔ"], enabled: false },
+  { name: "Overrun", chords: ["ii7", "V7", "IΔ", "IVΔ"], enabled: false },
+  {
+    name: "Moment’s",
+    chords: ["#i7", "#IV7", "ii7", "V7", "IΔ", "IΔ"],
+    enabled: false,
+  },
+  { name: "Night & Day", chords: ["bVIΔ", "V7", "IΔ", "IΔ"], enabled: false },
+  { name: "Nobody’s", chords: ["IΔ", "III7", "viΔ"], enabled: false },
+  { name: "Nowhere", chords: ["bVI7", "V7", "IΔ", "IΔ"], enabled: false },
+  {
+    name: "(7-chord) Pullback",
+    chords: ["ii7", "V7", "iii7", "VI7", "ii7", "V7", "IΔ"],
+    enabled: false,
+  },
+  { name: "Rainbow", chords: ["IΔ", "III7", "IVΔ", "IVΔ"], enabled: false },
+  {
+    name: "Rainy",
+    chords: ["iii7", "bIIIø", "ii7", "V7", "IΔ", "IΔ"],
+    enabled: false,
+  },
+  {
+    name: "Satin",
+    chords: ["vi7", "ii7", "bvi7", "bII7", "IΔ", "IΔ"],
+    enabled: false,
+  },
+  {
+    name: "Spring",
+    chords: ["VIIø", "III7", "ii7", "V7", "IΔ", "IΔ"],
+    enabled: false,
+  },
+  {
+    name: "Stablemates",
+    chords: ["biii7", "bVI7", "ii7", "V7", "IΔ", "IΔ"],
+    enabled: false,
+  },
+  {
+    name: "Starlight",
+    chords: ["#IVø", "VII7", "iii7", "VI7", "ii7", "V7", "IΔ"],
+    enabled: false,
+  },
+  {
+    name: "Starlight N&D Variant",
+    chords: ["#IVø", "vi7", "biiio7", "VI7", "ii7", "V7", "IΔ"],
+    enabled: false,
+  },
+  { name: "Regular", chords: ["ii7", "V7", "IΔ"], enabled: false },
+  {
+    name: "Regular (minor)",
+    chords: ["iiø", "V7+9", "IΔ", "IΔ"],
+    enabled: false,
+  },
+  { name: "Tension Ending", chords: ["ii7", "V7", "I7", "I7"], enabled: false },
+  {
+    name: "Tritone Substitution",
+    chords: ["ii7", "bII7", "IΔ", "IΔ"],
+    enabled: false,
+  },
+  {
+    name: "Two-Goes",
+    chords: ["ii7", "V7", "ii7", "V7", "IΔ"],
+    enabled: false,
+  },
+  { name: "Yardbird", chords: ["iv7", "bVII7", "IΔ", "IΔ"], enabled: false },
+  // Turnarounds
+  { name: "Foggy", chords: ["IΔ", "bIII7", "ii7", "V7"], enabled: false },
+  { name: "II ’n’ Back", chords: ["ii7", "#iio7", "iii7"], enabled: false },
+  { name: "Ladybird", chords: ["IΔ", "bIII7", "bVIΔ", "bII7"], enabled: false },
+  {
+    name: "Nowhere (turnaround)",
+    chords: ["IΔ", "VI7", "bVI7", "V7"],
+    enabled: false,
+  },
+  {
+    name: "Pennies",
+    chords: ["IΔ", "ii7", "iii7", "bIIIø", "ii7", "V7"],
+    enabled: false,
+  },
+  { name: "POT", chords: ["IΔ", "VI7", "ii7", "V7"], enabled: false },
+  { name: "POT (minor)", chords: ["iΔ", "viø", "iiø", "V7+9"], enabled: false },
+  { name: "Rhythm", chords: ["IΔ", "bIIo7", "ii7", "bIIIo7"], enabled: false },
+  { name: "SPOT", chords: ["iii7", "VI7", "ii7", "V7"], enabled: false },
+  {
+    name: "To IV 'n' Back",
+    chords: ["IΔ", "I7", "IVΔ", "#IVo7", "IΔ"],
+    enabled: false,
+  },
+  {
+    name: "To IV 'n' Hack",
+    chords: ["IΔ", "I7", "IVΔ", "VII7", "IΔ"],
+    enabled: false,
+  },
+  {
+    name: "To IV 'n' Mack",
+    chords: ["IΔ", "I7", "IVΔ", "ivΔ", "IΔ"],
+    enabled: false,
+  },
+  {
+    name: "To IV 'n' Yak",
+    chords: ["IΔ", "I7", "IVΔ", "bVII7", "IΔ"],
+    enabled: false,
+  },
+  { name: "Whoopee", chords: ["IΔ", "bIIo7", "ii7", "V7"], enabled: false },
+  // Metabricks
+  {
+    name: "Autumn Leaves Opening",
+    chords: ["ii7", "V7", "IΔ", "IVΔ", "viiø", "III7", "viΔ", "VI7"],
+    enabled: false,
+  },
+  {
+    name: "Four-Star Ending",
+    chords: ["IVΔ", "#iv7", "VII7", "iii7", "VI7", "ii7", "V7", "IΔ", "IΔ"],
+    enabled: false,
+  },
+  {
+    name: "Honeysuckle Bridge",
+    chords: ["v7", "I7", "IVΔ", "IVΔ", "vi7", "II7", "ii7", "V7"],
+    enabled: false,
+  },
+  {
+    name: "ITCHY Opening",
+    chords: ["IΔ", "iii7", "VI7", "ii7", "#iv7", "VII7"],
+    enabled: false,
+  },
+  {
+    name: "On-Off(any dom7)-On + Dropback",
+    chords: ["IΔ", "III7", "IΔ", "VI7"],
+    enabled: false,
+  },
+  {
+    name: "Pennies Ending",
+    chords: ["IVΔ", "#ivo7", "IΔ", "iii7", "VI7", "ii7", "V7", "IΔ", "IΔ"],
+    enabled: false,
+  },
+  {
+    name: "Rhythm Bridge",
+    chords: ["vii7", "III7", "iii7", "VI7", "iv7", "II7", "ii7", "V7"],
+    enabled: false,
+  },
+  {
+    name: "Sharp Fourpenny Ending",
+    chords: [
+      "#ivø",
+      "iv7",
+      "bVII7",
+      "IΔ",
+      "iii7",
+      "VI7",
+      "ii7",
+      "V7",
+      "IΔ",
+      "IΔ",
+    ],
+    enabled: false,
+  },
+  {
+    name: "Sixpenny Ending",
+    chords: [
+      "vi7",
+      "iv7",
+      "bVII7",
+      "IΔ",
+      "iii7",
+      "VI7",
+      "ii7",
+      "V7",
+      "IΔ",
+      "IΔ",
+    ],
+    enabled: false,
+  },
+  {
+    name: "To IV ’n’ Bird SPOT",
+    chords: ["IΔ", "I7", "IVΔ", "bVII7", "iii7", "VI7", "ii7", "V7"],
+    enabled: false,
+  },
+  {
+    name: "Twopenny Ending",
+    chords: ["ii7", "iv7", "bVII7", "IΔ", "iii7", "VI7", "ii7", "V7", "IΔ"],
+    enabled: false,
+  },
+  // Miscellaneous
+  {
+    name: "Chromatic Dropback",
+    chords: ["IΔ", "VII7", "bVII7", "VI7", "ii7"],
+    enabled: false,
+  },
+  {
+    name: "Dogleg Dropback",
+    chords: ["ii7", "V7", "v7", "I7", "i7"],
+    enabled: false,
+  },
+  { name: "Dropback", chords: ["IΔ", "VI7", "ii7"], enabled: false },
+  {
+    name: "Raindrop Dropback",
+    chords: ["iii7", "bIIIo7", "ii7"],
+    enabled: false,
+  },
+  {
+    name: "Starlight Dropback",
+    chords: ["#iv7", "VII7", "iii7", "VI7", "ii7"],
+    enabled: false,
+  },
+  {
+    name: "TINGLe Dropback",
+    chords: ["IΔ", "IV7", "bVII7", "VI7", "ii7"],
+    enabled: false,
+  },
+  {
+    name: "TTFA Dropback",
+    chords: ["IΔ", "IV7", "iii7", "VI7", "ii7"],
+    enabled: false,
+  },
 ];
 
 const jazzCadencesBasic = [
-	"POT",
-	"Dropback", "Pullback",
-	"Regular", "Two-Goes", "Long", "Overrun",
+  "POT",
+  "Dropback",
+  "Pullback",
+  "Regular",
+  "Two-Goes",
+  "Long",
+  "Overrun",
 ];
 
 const jazzCadencesIntermediate = [
-	"SPOT",
-	"Nowhere (turnaround)",
-	"TTFA Dropback",
-	"Yardbird", "Starlight", "Rainy"
+  "SPOT",
+  "Nowhere (turnaround)",
+  "TTFA Dropback",
+  "Yardbird",
+  "Starlight",
+  "Rainy",
 ];
 
 const jazzCadencesTurnarounds = [
-	"Foggy", "II ’n’ Back", "Ladybird", "Nowhere (turnaround)",
-	"Pennies", "POT", "POT (minor)", "Rhythm",
-	"SPOT", "To IV 'n' Back", "To IV 'n' Hack", "To IV 'n' Mack",
-	"To IV 'n' Yak", "Whoopee",
+  "Foggy",
+  "II ’n’ Back",
+  "Ladybird",
+  "Nowhere (turnaround)",
+  "Pennies",
+  "POT",
+  "POT (minor)",
+  "Rhythm",
+  "SPOT",
+  "To IV 'n' Back",
+  "To IV 'n' Hack",
+  "To IV 'n' Mack",
+  "To IV 'n' Yak",
+  "Whoopee",
 ];
 
 const jazzCadencesMetabricks = [
-	"Autumn Leaves Opening", "Four-Star Ending", "Honeysuckle Bridge",
-	"ITCHY Opening", "On-Off(any dom7)-On + Dropback", "Pennies Ending",
-	"Rhythm Bridge", "Sharp Fourpenny Ending", "Sixpenny Ending",
-	"To IV ’n’ Bird SPOT", "Twopenny Ending",
+  "Autumn Leaves Opening",
+  "Four-Star Ending",
+  "Honeysuckle Bridge",
+  "ITCHY Opening",
+  "On-Off(any dom7)-On + Dropback",
+  "Pennies Ending",
+  "Rhythm Bridge",
+  "Sharp Fourpenny Ending",
+  "Sixpenny Ending",
+  "To IV ’n’ Bird SPOT",
+  "Twopenny Ending",
 ];
 
 const jazzCadencesDropbacks = [
-	"Chromatic Dropback", "Dogleg Dropback", "Dropback", "Raindrop Dropback",
-	"Starlight Dropback", "TINGLe Dropback", "TTFA Dropback",
+  "Chromatic Dropback",
+  "Dogleg Dropback",
+  "Dropback",
+  "Raindrop Dropback",
+  "Starlight Dropback",
+  "TINGLe Dropback",
+  "TTFA Dropback",
 ];

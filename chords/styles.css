@@ -1,8 +1,11 @@
-
 body {
-    background-color: #333; /* Dark gray background */
-    color: #f0f0f0;        /* Light gray font color */
-    font-family: Noto Sans, Calibri, Arial, sans-serif; /* Optional: sets the font to Arial */
+  background-color: #333; /* Dark gray background */
+  color: #f0f0f0; /* Light gray font color */
+  font-family:
+    Noto Sans,
+    Calibri,
+    Arial,
+    sans-serif; /* Optional: sets the font to Arial */
 }
 
 a {
@@ -18,210 +21,230 @@ a:hover {
 }
 
 .container {
-    max-width: 900px;
-    margin: 50px auto;
-    text-align: center;
+  max-width: 900px;
+  margin: 50px auto;
+  text-align: center;
 }
 
-h1, h2 {
+h1,
+h2 {
 }
 
 h2 {
-    font-size: 48px;
+  font-size: 48px;
 }
 
 h3 {
-    font-size: 36px;
+  font-size: 36px;
 }
 
 h4 {
-    font-size: 20px;
+  font-size: 20px;
 }
 
 p {
-    font-size: 24px;
+  font-size: 24px;
 }
 
-
 #piano {
-    width: 1050px;
-    height: 240px;   /* Adjusted height */
-    margin: 20px auto;
-    position: relative;
-    border: 1px solid #000;
+  width: 1050px;
+  height: 240px; /* Adjusted height */
+  margin: 20px auto;
+  position: relative;
+  border: 1px solid #000;
 }
 
 .key {
-    height: 240px;   /* Adjusted height for white keys */
-    width: 70px;
-    float: left;
-    border: 1px solid #000;
-    box-sizing: border-box;
+  height: 240px; /* Adjusted height for white keys */
+  width: 70px;
+  float: left;
+  border: 1px solid #000;
+  box-sizing: border-box;
 }
 
 .white {
-    background-color: white;
+  background-color: white;
 }
 
 .black {
-    background-color: black;
-    width: 40px;
-    height: 150px;   /* Adjusted height for black keys */
-    position: absolute;
-    margin-left: -20px;
-    z-index: 1;
+  background-color: black;
+  width: 40px;
+  height: 150px; /* Adjusted height for black keys */
+  position: absolute;
+  margin-left: -20px;
+  z-index: 1;
 }
 
-.key.black[data-note="49"] { left: 60px; }
-.key.black[data-note="51"] { left: 140px; }
-.key.black[data-note="54"] { left: 270px; }
-.key.black[data-note="56"] { left: 350px; }
-.key.black[data-note="58"] { left: 425px; }
-.key.black[data-note="61"] { left: 550px; }
-.key.black[data-note="63"] { left: 630px; }
-.key.black[data-note="66"] { left: 760px; }
-.key.black[data-note="68"] { left: 840px; }
-.key.black[data-note="70"] { left: 920px; }
+.key.black[data-note="49"] {
+  left: 60px;
+}
+.key.black[data-note="51"] {
+  left: 140px;
+}
+.key.black[data-note="54"] {
+  left: 270px;
+}
+.key.black[data-note="56"] {
+  left: 350px;
+}
+.key.black[data-note="58"] {
+  left: 425px;
+}
+.key.black[data-note="61"] {
+  left: 550px;
+}
+.key.black[data-note="63"] {
+  left: 630px;
+}
+.key.black[data-note="66"] {
+  left: 760px;
+}
+.key.black[data-note="68"] {
+  left: 840px;
+}
+.key.black[data-note="70"] {
+  left: 920px;
+}
 
 .key.highlight {
-    background-color: yellow;
+  background-color: yellow;
 }
 
 .key.incorrect {
-    background-color: red;
+  background-color: red;
 }
 
 .key.correct {
-    background-color: green;
+  background-color: green;
 }
 
 .incorrect {
-    color: red;
+  color: red;
 }
 
 .correct {
-    color: green;
+  color: green;
 }
 
 /* Style for all checkboxes in the option sections */
 input[type="checkbox"] {
-    font-size: 1.2em;
-    transform: scale(1.5);   /* Increase the size of the checkbox */
-    margin-left: 10px;
-    margin-right: 10px;      /* Add some spacing to the right of the checkbox */
-    margin-top: 10px;
-    margin-bottom: 10px;
-    align-items: center;
+  font-size: 1.2em;
+  transform: scale(1.5); /* Increase the size of the checkbox */
+  margin-left: 10px;
+  margin-right: 10px; /* Add some spacing to the right of the checkbox */
+  margin-top: 10px;
+  margin-bottom: 10px;
+  align-items: center;
 }
 
 /* Style for the labels of the checkboxes */
 label {
-    font-size: 1.4em;        /* Increase font size for better readability */
-    margin-right: 25px;     /* Add some spacing to separate each checkbox-label pair */
+  font-size: 1.4em; /* Increase font size for better readability */
+  margin-right: 25px; /* Add some spacing to separate each checkbox-label pair */
 }
 
 /* Style for the key checkboxes to align in a row */
 #keyOptions {
-    flex-wrap: wrap;
-    gap: 10px;              /* Add some gap between checkbox-label pairs */
+  flex-wrap: wrap;
+  gap: 10px; /* Add some gap between checkbox-label pairs */
 }
 
 #presetButtons {
-    justify-content: space-between;
-    flex-wrap: wrap;
-    margin-bottom: 15px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
 }
 
-
 button {
-    background-color: #007BFF;
-    color: #ffffff;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    margin: 5px 5px;
-    font-size: 1em;
-    transition: background-color 0.3s ease;
+  background-color: #007bff;
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  margin: 5px 5px;
+  font-size: 1em;
+  transition: background-color 0.3s ease;
 }
 
 button:hover {
-    background-color: #0056b3;
+  background-color: #0056b3;
 }
 
 button:active {
-    transform: scale(0.95);
+  transform: scale(0.95);
 }
 
 #chordTable button {
-	width: 80%;
+  width: 80%;
 }
 
 details {
-    border: 1px solid #aaa;
-    border-radius: 4px;
-    padding: 0.5em;
-    margin-bottom: 1em;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  padding: 0.5em;
+  margin-bottom: 1em;
 }
 
 summary {
-    font-weight: bold;
-    margin: -0.5em -0.5em 0.5em;
-    padding: 0.5em;
-    background-color: #444;
-    border-radius: 4px;
-    cursor: pointer;
+  font-weight: bold;
+  margin: -0.5em -0.5em 0.5em;
+  padding: 0.5em;
+  background-color: #444;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 summary:hover {
-    background-color: #ddd;
+  background-color: #ddd;
 }
 
 details[open] summary {
-    border-bottom: 1px solid #aaa;
+  border-bottom: 1px solid #aaa;
 }
 
 #chordOptions label {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
 }
 
 #chordOptions input[type="checkbox"] {
-    margin-right: 5px;
+  margin-right: 5px;
 }
 
 .tabContent {
-	width: 100%;
-	border: 1px solid #aaa;
-	padding: 10px;
+  width: 100%;
+  border: 1px solid #aaa;
+  padding: 10px;
 }
 
 .tabs {
-	display: block;
+  display: block;
 }
 
 .tabs input[type="radio"] {
-	display: none;
-	border-bottom: 1px solid #aaa;
+  display: none;
+  border-bottom: 1px solid #aaa;
 }
 
 .tabs label {
-    border: 1px solid #aaa;
-    padding: 0.5em;
-    margin-right: 0.2em;
-    cursor: pointer;
-    display: inline-block;
-    background-color: #444;
+  border: 1px solid #aaa;
+  padding: 0.5em;
+  margin-right: 0.2em;
+  cursor: pointer;
+  display: inline-block;
+  background-color: #444;
 }
 
 /* Highlight the active tab */
 .tabs input[type="radio"]:checked + label {
-    background-color: #777; /* Different color for active tab */
-    border-bottom: 1px solid white; /* To blend with the content area */
+  background-color: #777; /* Different color for active tab */
+  border-bottom: 1px solid white; /* To blend with the content area */
 }
 
 .tabs label:hover {
-    background-color: #ddd;
+  background-color: #ddd;
 }
 
-.tabs label:active, .tabs label:focus {
-    background-color: #ccc;
+.tabs label:active,
+.tabs label:focus {
+  background-color: #ccc;
 }
