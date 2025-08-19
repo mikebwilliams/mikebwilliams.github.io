@@ -1036,7 +1036,7 @@ function getTargetUpperIntervals(chordInternalName) {
   let seventhInterval;
   if (/M7/.test(chordType)) seventhInterval = 11;
   else if (/dim7/.test(chordType)) seventhInterval = 9;
-  else if (/^m?6$|m6|[^M]?6/.test(chordType))
+  else if (chordType === "6" || chordType === "m6")
     seventhInterval = 9; // use 6th in place of 7th for 6/m6
   else if (/7/.test(chordType) || isMinorish) seventhInterval = 10;
   else seventhInterval = 10; // infer b7 for chords without explicit 7th
@@ -1107,19 +1107,8 @@ function applySelectedVoicing(notes) {
   }
 }
 
-// React to shell mode changes immediately in chord mode
-document.querySelectorAll("input[name='shellMode']").forEach((r) => {
-  r.addEventListener("change", () => {
-    if (currentChordInternalName) {
-      const base = generateNotesFromChordName(currentChordInternalName);
-      currentChordNotes = applySelectedVoicing(base);
-      updateDisplay();
-    }
-  });
-});
-
-// React to upper mode changes immediately in chord mode
-document.querySelectorAll("input[name='upperMode']").forEach((r) => {
+// React to voicing mode changes immediately
+document.querySelectorAll("input[name='voicingMode']").forEach((r) => {
   r.addEventListener("change", () => {
     if (currentChordInternalName) {
       const base = generateNotesFromChordName(currentChordInternalName);

@@ -260,48 +260,73 @@
     </div>
 
     <div class="tabContent" id="voicingsOptions">
-      <fieldset id="shellVoicings">
-        <legend>Shell Voicings</legend>
-        <label
-          ><input
-            type="radio"
-            name="shellMode"
-            id="shellOff"
-            value="off"
-            checked
-          />
-          Off</label
-        >
-        <label
-          ><input type="radio" name="shellMode" id="shellR37" value="r37" />
-          R-3-7</label
-        >
-        <label
-          ><input type="radio" name="shellMode" id="shell37" value="37" /> 3-7
-          (rootless)</label
-        >
-      </fieldset>
-      <fieldset id="upperVoicings">
-        <legend>Upper Voicings</legend>
-        <label
-          ><input
-            type="radio"
-            name="upperMode"
-            id="upperOff"
-            value="off"
-            checked
-          />
-          Off</label
-        >
-        <label
-          ><input type="radio" name="upperMode" id="upperTypeA" value="typeA" />
-          Type A (3-7-9-5)</label
-        >
-        <label
-          ><input type="radio" name="upperMode" id="upperTypeB" value="typeB" />
-          Type B (7-3-5-9)</label
-        >
-      </fieldset>
+      <table>
+        <tr>
+          <th>Category</th>
+          <th>Options</th>
+        </tr>
+        <tr>
+          <td>Normal</td>
+          <td>
+            <label
+              ><input
+                type="radio"
+                name="voicingMode"
+                id="voicingDefault"
+                value="default"
+                checked
+              />
+              Default</label
+            >
+          </td>
+        </tr>
+        <tr>
+          <td>Shell</td>
+          <td>
+            <label
+              ><input
+                type="radio"
+                name="voicingMode"
+                id="shellR37"
+                value="shell:r37"
+              />
+              R-3-7</label
+            >
+            <label
+              ><input
+                type="radio"
+                name="voicingMode"
+                id="shell37"
+                value="shell:37"
+              />
+              3-7 (rootless)</label
+            >
+          </td>
+        </tr>
+        <tr>
+          <td>Type A/B</td>
+          <td>
+            <label
+              ><input
+                type="radio"
+                name="voicingMode"
+                id="upperTypeA"
+                value="upper:typeA"
+              />
+              Type A (3-7-9-5)</label
+            >
+            <label
+              ><input
+                type="radio"
+                name="voicingMode"
+                id="upperTypeB"
+                value="upper:typeB"
+              />
+              Type B (7-3-5-9)</label
+            >
+          </td>
+        </tr>
+      </table>
     </div>
 
     <div class="tabContent" id="midiOptions">

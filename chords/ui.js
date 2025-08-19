@@ -24,18 +24,22 @@ const cntScalesIncorrect = document.getElementById("cntScalesIncorrect");
 const cntDegreesIncorrect = document.getElementById("cntDegreesIncorrect");
 const cntBricksIncorrect = document.getElementById("cntBricksIncorrect");
 
-// Shell voicing controls
-const shellModeRadios = document.querySelectorAll("input[name='shellMode']");
-function getShellMode() {
-  const sel = Array.from(shellModeRadios).find((r) => r.checked);
-  return sel ? sel.value : "off";
+// Unified voicing selection: one radio group for all modes
+function getVoicingMode() {
+  const sel = document.querySelector("input[name='voicingMode']:checked");
+  return sel ? sel.value : "default";
 }
 
-// Upper voicing controls (Type A / Type B)
-const upperModeRadios = document.querySelectorAll("input[name='upperMode']");
+// Backward-compatible helpers used by scripts.js
+function getShellMode() {
+  const v = getVoicingMode();
+  if (v.startsWith("shell:")) return v.split(":")[1];
+  return "off";
+}
 function getUpperMode() {
-  const sel = Array.from(upperModeRadios).find((r) => r.checked);
-  return sel ? sel.value : "off";
+  const v = getVoicingMode();
+  if (v.startsWith("upper:")) return v.split(":")[1];
+  return "off";
 }
 
 function noKeys() {
