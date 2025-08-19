@@ -31,6 +31,13 @@ function getShellMode() {
   return sel ? sel.value : "off";
 }
 
+// Upper voicing controls (Type A / Type B)
+const upperModeRadios = document.querySelectorAll("input[name='upperMode']");
+function getUpperMode() {
+  const sel = Array.from(upperModeRadios).find((r) => r.checked);
+  return sel ? sel.value : "off";
+}
+
 function noKeys() {
   allNotes.forEach((key) => {
     document.getElementById(key).checked = false;
