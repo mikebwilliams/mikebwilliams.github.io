@@ -1,4 +1,6 @@
 let midiAccess = null;
+let selectedMidiInputIds = new Set();
+let selectedMidiOutputIds = new Set();
 
 // This string is the name of the chord, with possible alternative spellings
 let currentChordName = "";
@@ -219,16 +221,16 @@ function handleMidiMessage(midiMessage) {
 
 function sendMidiNote(note, velocity, time) {
   // Send a MIDI message to the first available MIDI output
-  if (midiAccess) {
-    const outputs = Array.from(midiAccess.outputs.values());
-    if (outputs.length > 0) {
-      outputs[0].send([0x90, note, velocity]);
-
-      setTimeout(() => {
-        outputs[0].send([0x80, note, 0]);
-      }, time);
-    }
-  }
+  if (!midiAccess) return;
+  const outputs = Array.from(midiAccess.outputs.values());
+  const selected = outputs.filter((o) => selectedMidiOutputIds.has(o.id));
+  const targets = selected.length ? selected : outputs.slice(0, 1);
+  targets.forEach((out) => {
+    out.send([0x90, note, velocity]);
+    setTimeout(() => {
+      out.send([0x80, note, 0]);
+    }, time);
+  });
 }
 
 // Returns the current chord notes wrapped around the octave and sorted
@@ -478,22 +480,10 @@ function onMIDISuccess(midiAccessResult) {
     return;
   }
 
-  document.getElementById("midiStatusText").textContent =
-    "MIDI inputs connected.";
+  document.getElementById("midiStatusText").textContent = "MIDI connected.";
 
-  // Attach a listener for 'midimessage' events to all input devices
-  const inputs = Array.from(midiAccess.inputs.values());
-  inputs.forEach((input) => {
-    if (
-      input.name.includes("Output connection") ||
-      input.name.includes("Midi Through")
-    ) {
-      console.log(`Skipping MIDI loopback input: ${input.name}`);
-      return;
-    }
-    console.log(`Listening to MIDI input: ${input.name}`);
-    input.onmidimessage = handleMidiMessage;
-  });
+  renderMidiDeviceTables();
+  refreshMidiListeners();
 }
 
 function onMIDIFailure(error) {
@@ -508,6 +498,84 @@ function initMIDI() {
   else
     document.getElementById("midiStatusText").textContent =
       "Your browser does not support MIDI access. Please ensure you are using a browser that supports WebMIDI, and that you are accessing this site from HTTPS, as some browsers require secure connections for WebMIDI.";
+}
+
+function renderMidiDeviceTables() {
+  if (!midiAccess) return;
+  const inputsTable = document.getElementById("midiInputs");
+  const outputsTable = document.getElementById("midiOutputs");
+  if (!inputsTable || !outputsTable) return;
+
+  const inputs = Array.from(midiAccess.inputs.values()).filter(
+    (i) =>
+      !i.name.includes("Output connection") && !i.name.includes("Midi Through"),
+  );
+  const outputs = Array.from(midiAccess.outputs.values());
+
+  // Initialize defaults if none selected yet
+  if (selectedMidiInputIds.size === 0)
+    inputs.forEach((i) => selectedMidiInputIds.add(i.id));
+  if (selectedMidiOutputIds.size === 0 && outputs[0])
+    selectedMidiOutputIds.add(outputs[0].id);
+
+  // Render inputs table
+  let iHtml = "<thead><tr><th>Inputs</th><th>Use</th></tr></thead><tbody>";
+  inputs.forEach((inp) => {
+    const checked = selectedMidiInputIds.has(inp.id) ? "checked" : "";
+    iHtml += `<tr><td>${inp.name}</td><td><input type="checkbox" data-midi-in="${inp.id}" ${checked}></td></tr>`;
+  });
+  iHtml += "</tbody>";
+  inputsTable.innerHTML = iHtml;
+
+  // Render outputs table
+  let oHtml = "<thead><tr><th>Outputs</th><th>Send</th></tr></thead><tbody>";
+  outputs.forEach((out) => {
+    const checked = selectedMidiOutputIds.has(out.id) ? "checked" : "";
+    oHtml += `<tr><td>${out.name}</td><td><input type="checkbox" data-midi-out="${out.id}" ${checked}></td></tr>`;
+  });
+  oHtml += "</tbody>";
+  outputsTable.innerHTML = oHtml;
+
+  // Wire input checkbox changes
+  inputsTable
+    .querySelectorAll("input[type='checkbox'][data-midi-in]")
+    .forEach((cb) => {
+      cb.addEventListener("change", (e) => {
+        const id = e.target.getAttribute("data-midi-in");
+        if (e.target.checked) selectedMidiInputIds.add(id);
+        else selectedMidiInputIds.delete(id);
+        refreshMidiListeners();
+      });
+    });
+
+  // Wire output checkbox changes
+  outputsTable
+    .querySelectorAll("input[type='checkbox'][data-midi-out]")
+    .forEach((cb) => {
+      cb.addEventListener("change", (e) => {
+        const id = e.target.getAttribute("data-midi-out");
+        if (e.target.checked) selectedMidiOutputIds.add(id);
+        else selectedMidiOutputIds.delete(id);
+      });
+    });
+}
+
+function refreshMidiListeners() {
+  if (!midiAccess) return;
+  const inputs = Array.from(midiAccess.inputs.values());
+  inputs.forEach((input) => {
+    // Skip loopback-ish inputs
+    if (
+      input.name.includes("Output connection") ||
+      input.name.includes("Midi Through")
+    ) {
+      input.onmidimessage = null;
+      return;
+    }
+    if (selectedMidiInputIds.has(input.id))
+      input.onmidimessage = handleMidiMessage;
+    else input.onmidimessage = null;
+  });
 }
 
 function updateAvailableKeys() {
