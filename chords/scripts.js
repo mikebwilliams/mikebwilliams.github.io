@@ -96,7 +96,8 @@ function setRandomChord() {
       let root = rootMatch[0];
       let chordType = entry.chord.slice(root.length);
       currentChordInternalName = entry.chord;
-      currentChordNotes = generateNotesFromChordName(entry.chord);
+      const baseNotes = generateNotesFromChordName(entry.chord);
+      currentChordNotes = applySelectedVoicing(baseNotes);
       currentChordName = generateChordName(root, chordType);
       scheduledRepeatFlag = true;
       scheduledEntryIndex = idx;
@@ -1055,31 +1056,31 @@ setRandomChord();
 highlightCorrectKeys();
 updateDisplay();
 modeChange();
-// Apply shell voicing according to selected mode (chords tab only)
+// Apply shell voicing according to selected mode (all chord-based modes)
 function applyShellVoicing(notes) {
   // Only alter notes in chord practice mode
   try {
     if (!Array.isArray(notes)) return notes;
-    if (typeof getShellMode !== "function" || !modeIsChords()) return notes;
+    if (typeof getShellMode !== "function") return notes;
+    // Apply in chords, progressions, and jazz modes
+    if (!(modeIsChords() || modeIsProgressions() || modeIsJazz())) return notes;
     const mode = getShellMode();
     if (mode === "off") return notes;
 
+    // New simplified indexing approach to support sus/6th/etc.
+    // Use the 2nd and 4th elements when present.
     const root = notes[0];
-    // Prefer actual 3rds if present, otherwise take first non-root tone
-    let third = notes.find((n) => n === 3 || n === 4);
-    if (third === undefined) third = notes.find((n) => n !== root);
-
-    // Detect 7th (dom=10, maj=11, dim=9)
-    let seventh = notes.find((n) => n === 10 || n === 11 || n === 9);
+    const second = notes.length > 1 ? notes[1] : undefined;
+    const fourth = notes.length > 3 ? notes[3] : undefined;
 
     if (mode === "r37") {
-      if (third !== undefined && seventh !== undefined)
-        return [root, third, seventh];
-      if (third !== undefined) return [root, third];
+      if (second !== undefined && fourth !== undefined)
+        return [root, second, fourth];
+      if (second !== undefined) return [root, second];
       return [root];
     } else if (mode === "37") {
-      if (third !== undefined && seventh !== undefined) return [third, seventh];
-      if (third !== undefined) return [third];
+      if (second !== undefined && fourth !== undefined) return [second, fourth];
+      if (second !== undefined) return [second];
       return notes; // fallback
     }
     return notes;
