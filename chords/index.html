@@ -239,7 +239,7 @@
     <div class="tabContent" id="spacedRepOptions">
       <label
         ><input type="checkbox" id="enableSpacedRepetition" checked /> Enable
-        Spaced Repetition</label
+        Spaced Repetition for Failed Items</label
       ><br />
       <label
         >Mastery Threshold:
@@ -250,6 +250,11 @@
           min="1"
           style="width: 3em" /></label
       ><br />
+      <div id="spacedRepListContainer">
+        <h4>Failed Items</h4>
+        <div id="spacedRepList"></div>
+        <button id="btnSpacedRepClear">Clear List</button>
+      </div>
     </div>
 
     <div class="tabContent" id="earOptions">
@@ -323,6 +328,15 @@
                 value="upper:typeB"
               />
               Type B (7-3-5-9)</label
+            >
+            <label
+              ><input
+                type="radio"
+                name="voicingMode"
+                id="upperEither"
+                value="upper:either"
+              />
+              Either (A or B)</label
             >
           </td>
         </tr>

@@ -19,15 +19,10 @@ let keys = [];
 
 let highlightTimer;
 
-/* Spaced repetition support for failed chords */
-let spacedQueue = [];
-let scheduledRepeatFlag = false;
-let scheduledEntryIndex = null;
-
-/* Spaced repetition support for Jazz Bricks (chord progressions) */
-let spacedQueueBricks = [];
-let scheduledRepeatFlagBricks = false;
-let scheduledEntryIndexBricks = null;
+/* Unified Spaced Repetition queue */
+// Entry: { kind: 'chord'|'brick', key: string, interval: number, counter: number, successStreak: number }
+let spacedQueueAll = [];
+let scheduledRepeat = null; // { kind, index }
 
 function isSpacedRepetitionEnabled() {
   return document.getElementById("enableSpacedRepetition").checked;
@@ -81,17 +76,19 @@ function generateChordName(root, chordType) {
 function setRandomChord() {
   let lastChordInternalName = currentChordInternalName;
 
-  if (isSpacedRepetitionEnabled() && spacedQueue.length) {
-    let idx = spacedQueue.reduce(
-      (best, entry, i) =>
+  if (isSpacedRepetitionEnabled() && spacedQueueAll.length) {
+    // Find due chord entry with smallest counter
+    let idx = spacedQueueAll.reduce((best, entry, i) => {
+      if (entry.kind !== "chord") return best;
+      if (
         entry.counter <= 0 &&
-        (best < 0 || entry.counter < spacedQueue[best].counter)
-          ? i
-          : best,
-      -1,
-    );
+        (best < 0 || entry.counter < spacedQueueAll[best].counter)
+      )
+        return i;
+      return best;
+    }, -1);
     if (idx >= 0) {
-      let entry = spacedQueue[idx];
+      let entry = spacedQueueAll[idx];
       let rootMatch = entry.chord.match(/^[A-G](#|b)?/);
       let root = rootMatch[0];
       let chordType = entry.chord.slice(root.length);
@@ -99,11 +96,13 @@ function setRandomChord() {
       const baseNotes = generateNotesFromChordName(entry.chord);
       currentChordNotes = applySelectedVoicing(baseNotes);
       currentChordName = generateChordName(root, chordType);
-      scheduledRepeatFlag = true;
-      scheduledEntryIndex = idx;
+      scheduledRepeat = { kind: "chord", index: idx };
       return;
     }
-    spacedQueue.forEach((entry) => entry.counter--);
+    // Tick down only chord entries
+    spacedQueueAll.forEach((entry) => {
+      if (entry.kind === "chord") entry.counter--;
+    });
   }
 
   // Grab the selected chord types
@@ -313,7 +312,11 @@ function checkChord() {
       (modeIsChords() || modeIsProgressions() || modeIsJazz())
     ) {
       const upperMode = getUpperMode();
-      if (upperMode === "typeA" || upperMode === "typeB") {
+      if (
+        upperMode === "typeA" ||
+        upperMode === "typeB" ||
+        upperMode === "either"
+      ) {
         // Require exactly 4 notes pressed
         if (activeKeys.length !== 4) return;
 
@@ -329,46 +332,19 @@ function checkChord() {
         if (targetSet !== playedSet) return; // wrong pitch classes
 
         const asc = [...activeKeys].sort((a, b) => a - b);
-        const order =
-          upperMode === "typeA"
-            ? [third, seventh, ninth, fifth]
-            : [seventh, third, fifth, ninth];
-        for (let i = 0; i < 4; i++) {
-          if (asc[i] % 12 !== order[i] % 12) return; // wrong keyboard order
-        }
+        const orderA = [third, seventh, ninth, fifth];
+        const orderB = [seventh, third, fifth, ninth];
+        const matchesA = asc.every((n, i) => n % 12 === orderA[i] % 12);
+        const matchesB = asc.every((n, i) => n % 12 === orderB[i] % 12);
+        if (upperMode === "typeA" && !matchesA) return;
+        if (upperMode === "typeB" && !matchesB) return;
+        if (upperMode === "either" && !(matchesA || matchesB)) return;
         // If we got here, the voicing is correct
         awaitingKeyRelease = true;
         document.getElementById("chordDisplay").classList.remove("incorrect");
         document.getElementById("chordDisplay").classList.add("correct");
         if (modeIsChords()) {
-          if (scheduledRepeatFlag) {
-            let entry = spacedQueue[scheduledEntryIndex];
-            if (isIncorrect) {
-              entry.interval = 1;
-              entry.successStreak = 0;
-            } else {
-              entry.successStreak++;
-              entry.interval *= 2;
-            }
-            entry.counter = entry.interval;
-            if (entry.successStreak >= getMasteryThreshold()) {
-              spacedQueue.splice(scheduledEntryIndex, 1);
-            }
-            scheduledRepeatFlag = false;
-            scheduledEntryIndex = null;
-          } else if (isIncorrect) {
-            if (
-              !spacedQueue.find((e) => e.chord === currentChordInternalName)
-            ) {
-              spacedQueue.push({
-                chord: currentChordInternalName,
-                interval: 1,
-                counter: 1,
-                successStreak: 0,
-              });
-            }
-          }
-
+          spacedRepHandleResult("chord", currentChordInternalName, isIncorrect);
           if (isIncorrect) {
             cntChordsIncorrect.textContent =
               parseInt(cntChordsIncorrect.textContent) + 1;
@@ -376,7 +352,6 @@ function checkChord() {
             cntChordsCorrect.textContent =
               parseInt(cntChordsCorrect.textContent) + 1;
           }
-
           isIncorrect = false;
         }
         clearTimeout(highlightTimer);
@@ -399,31 +374,7 @@ function checkChord() {
     document.getElementById("chordDisplay").classList.add("correct");
 
     if (modeIsChords()) {
-      if (scheduledRepeatFlag) {
-        let entry = spacedQueue[scheduledEntryIndex];
-        if (isIncorrect) {
-          entry.interval = 1;
-          entry.successStreak = 0;
-        } else {
-          entry.successStreak++;
-          entry.interval *= 2;
-        }
-        entry.counter = entry.interval;
-        if (entry.successStreak >= getMasteryThreshold()) {
-          spacedQueue.splice(scheduledEntryIndex, 1);
-        }
-        scheduledRepeatFlag = false;
-        scheduledEntryIndex = null;
-      } else if (isIncorrect) {
-        if (!spacedQueue.find((e) => e.chord === currentChordInternalName)) {
-          spacedQueue.push({
-            chord: currentChordInternalName,
-            interval: 1,
-            counter: 1,
-            successStreak: 0,
-          });
-        }
-      }
+      spacedRepHandleResult("chord", currentChordInternalName, isIncorrect);
 
       if (isIncorrect) {
         cntChordsIncorrect.textContent =
@@ -485,6 +436,67 @@ function onMIDISuccess(midiAccessResult) {
 
   renderMidiDeviceTables();
   refreshMidiListeners();
+}
+
+// Spaced Repetition helpers
+function spacedRepHandleResult(kind, key, wasIncorrect) {
+  // Only handle spaced repetition when chords or jazz bricks are in play
+  const idx =
+    scheduledRepeat && scheduledRepeat.kind === kind
+      ? scheduledRepeat.index
+      : -1;
+  if (idx >= 0) {
+    const entry = spacedQueueAll[idx];
+    if (wasIncorrect) {
+      entry.interval = 1;
+      entry.successStreak = 0;
+    } else {
+      entry.successStreak++;
+      entry.interval *= 2;
+    }
+    entry.counter = entry.interval;
+    if (entry.successStreak >= getMasteryThreshold()) {
+      spacedQueueAll.splice(idx, 1);
+    }
+    scheduledRepeat = null;
+    spacedRepRenderList();
+  } else if (wasIncorrect) {
+    // Add new entry if not present
+    if (
+      !spacedQueueAll.find((e) => e.kind === kind && (e.key || e.chord) === key)
+    ) {
+      spacedQueueAll.push({
+        kind,
+        key,
+        chord: key, // for backward compatibility with earlier code
+        interval: 1,
+        counter: 1,
+        successStreak: 0,
+      });
+      spacedRepRenderList();
+    }
+  }
+}
+
+function spacedRepRenderList() {
+  const container = document.getElementById("spacedRepList");
+  if (!container) return;
+  if (!spacedQueueAll.length) {
+    container.innerHTML = "<em>No failed items scheduled.</em>";
+    return;
+  }
+  const rows = spacedQueueAll.map((e) => {
+    const type = e.kind === "brick" ? "Brick" : "Chord";
+    const name = e.key || e.chord;
+    return `<tr><td>${type}</td><td>${name}</td><td>${e.successStreak}/${getMasteryThreshold()}</td></tr>`;
+  });
+  container.innerHTML = `<table><thead><tr><th>Type</th><th>Item</th><th>Streak</th></tr></thead><tbody>${rows.join("")}</tbody></table>`;
+}
+
+function spacedRepClearAll() {
+  spacedQueueAll = [];
+  scheduledRepeat = null;
+  spacedRepRenderList();
 }
 
 function onMIDIFailure(error) {
@@ -637,33 +649,8 @@ function nextChord(skip = false) {
             parseInt(cntProgsCorrect.textContent) + 1;
         }
       } else if (modeIsJazz()) {
-        // handle scheduled repetition entries for Jazz Bricks
-        if (scheduledRepeatFlagBricks) {
-          let entry = spacedQueueBricks[scheduledEntryIndexBricks];
-          if (isIncorrect) {
-            entry.interval = 1;
-            entry.successStreak = 0;
-          } else {
-            entry.successStreak++;
-            entry.interval *= 2;
-          }
-          entry.counter = entry.interval;
-          if (entry.successStreak >= getMasteryThreshold()) {
-            spacedQueueBricks.splice(scheduledEntryIndexBricks, 1);
-          }
-          scheduledRepeatFlagBricks = false;
-          scheduledEntryIndexBricks = null;
-        } else if (isIncorrect) {
-          // schedule failed Jazz Brick cadence for spaced repetition
-          if (!spacedQueueBricks.find((e) => e.chord === selectedProgression)) {
-            spacedQueueBricks.push({
-              chord: selectedProgression,
-              interval: 1,
-              counter: 1,
-              successStreak: 0,
-            });
-          }
-        }
+        // Handle Jazz Brick spaced repetition using unified queue
+        spacedRepHandleResult("brick", selectedProgression, isIncorrect);
         if (isIncorrect) {
           cntBricksIncorrect.textContent =
             parseInt(cntBricksIncorrect.textContent) + 1;
@@ -1004,27 +991,31 @@ function generateProgression() {
     });
 
     // Spaced repetition: schedule due Jazz Brick cadences before random selection
-    if (isSpacedRepetitionEnabled() && spacedQueueBricks.length) {
-      let idx = spacedQueueBricks.reduce(
-        (best, entry, i) =>
+    if (isSpacedRepetitionEnabled() && spacedQueueAll.length) {
+      let idx = spacedQueueAll.reduce((best, entry, i) => {
+        if (entry.kind !== "brick") return best;
+        if (
           entry.counter <= 0 &&
-          (best < 0 || entry.counter < spacedQueueBricks[best].counter)
-            ? i
-            : best,
-        -1,
-      );
+          (best < 0 || entry.counter < spacedQueueAll[best].counter)
+        )
+          return i;
+        return best;
+      }, -1);
       if (idx >= 0) {
-        let entry = spacedQueueBricks[idx];
-        const scheduled = enabledCadences[entry.chord];
+        let entry = spacedQueueAll[idx];
+        const key = entry.key || entry.chord;
+        const scheduled = enabledCadences[key];
         if (scheduled) {
           currentProgression = scheduled;
-          currentProgressionName = enabledNames[entry.chord] || entry.chord;
-          scheduledRepeatFlagBricks = true;
-          scheduledEntryIndexBricks = idx;
+          currentProgressionName = enabledNames[key] || key;
+          scheduledRepeat = { kind: "brick", index: idx };
           return;
         }
       }
-      spacedQueueBricks.forEach((e) => e.counter--);
+      // Tick down only brick entries
+      spacedQueueAll.forEach((e) => {
+        if (e.kind === "brick") e.counter--;
+      });
     }
 
     // Select a random cadence from the enabled list
@@ -1165,9 +1156,15 @@ function applySelectedVoicing(notes) {
   try {
     if (typeof getUpperMode === "function") {
       const upperMode = getUpperMode();
-      if (upperMode === "typeA" || upperMode === "typeB") {
+      if (
+        upperMode === "typeA" ||
+        upperMode === "typeB" ||
+        upperMode === "either"
+      ) {
         const intervals = getTargetUpperIntervals(currentChordInternalName);
-        return buildAscendingVoicingMidi(intervals, upperMode);
+        // For 'either', choose Type A for display/playback, but validation will accept both
+        const modeToRender = upperMode === "either" ? "typeA" : upperMode;
+        return buildAscendingVoicingMidi(intervals, modeToRender);
       }
     }
     return applyShellVoicing(notes);

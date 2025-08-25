@@ -566,6 +566,15 @@ document.addEventListener("DOMContentLoaded", () => {
   initJazzBricks();
   initMIDI();
 
+  // Spaced repetition UI
+  const btnClear = document.getElementById("btnSpacedRepClear");
+  if (btnClear) {
+    btnClear.addEventListener("click", () => {
+      if (typeof spacedRepClearAll === "function") spacedRepClearAll();
+    });
+  }
+  if (typeof spacedRepRenderList === "function") spacedRepRenderList();
+
   // Ensure Keys is the default Options tab on load
   const tabKeys = document.getElementById("tabKeys");
   if (tabKeys) {
