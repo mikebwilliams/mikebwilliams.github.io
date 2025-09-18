@@ -181,15 +181,14 @@ function handleKeyClick(key) {
   checkChord();
 }
 
-function handleKeyPressed(key) {
-  const midiKey = Number(key);
-  if (Number.isNaN(midiKey)) return;
+function handleKeyPressed(midiKey) {
+  if (!Number.isFinite(midiKey)) return;
 
-  let keyElement = document.querySelector(`.key[data-note="${midiKey}"]`);
+  const keyElement = document.querySelector(`.key[data-note="${midiKey}"]`);
 
   activeKeys.push(midiKey);
 
-  if (getSortedAnswerNotes().includes(midiKey % 12)) {
+  if (getSortedAnswerNotes().includes(normalizePitchClass(midiKey))) {
     if (keyElement) keyElement.classList.add("correct");
   } else {
     if (keyElement) keyElement.classList.add("incorrect");
@@ -198,11 +197,10 @@ function handleKeyPressed(key) {
   }
 }
 
-function handleKeyReleased(key) {
-  const midiKey = Number(key);
-  if (Number.isNaN(midiKey)) return;
+function handleKeyReleased(midiKey) {
+  if (!Number.isFinite(midiKey)) return;
 
-  let keyElement = document.querySelector(`.key[data-note="${midiKey}"]`);
+  const keyElement = document.querySelector(`.key[data-note="${midiKey}"]`);
 
   const idx = activeKeys.indexOf(midiKey);
   if (idx !== -1) {
@@ -250,7 +248,7 @@ function sendMidiNote(note, velocity, time) {
 
 // Returns the current chord notes wrapped around the octave and sorted
 function getSortedAnswerNotes() {
-  return [...new Set(currentChordNotes.map((key) => key % 12))].sort(
+  return [...new Set(currentChordNotes.map(normalizePitchClass))].sort(
     (a, b) => a - b,
   );
 }
@@ -316,96 +314,80 @@ function checkChord() {
 
   let sortedCurrentChordNotes = getSortedAnswerNotes();
   // Turn keys into notes 0-11, remove duplicates, sort for matching
-  let sortedActiveNotes = [...new Set(activeKeys.map((key) => key % 12))].sort(
-    (a, b) => a - b,
-  );
+  let sortedActiveNotes = [
+    ...new Set(activeKeys.map(normalizePitchClass)),
+  ].sort((a, b) => a - b);
 
   // If Type A/B upper voicing is selected (any chord-based mode), enforce voicing set and keyboard order
-  try {
-    // One-handed Type A/B (3-note)
-    if (
-      typeof getUpper1Mode === "function" &&
-      (modeIsChords() || modeIsProgressions() || modeIsJazz())
-    ) {
-      const upper1 = getUpper1Mode();
-      if (upper1 === "typeA" || upper1 === "typeB" || upper1 === "either") {
-        if (activeKeys.length !== 3) return;
-        const { third, seventh, ninth, fifth } = getTargetUpperIntervals(
-          currentChordInternalName,
-        );
-        const asc = activeKeys.map((n) => Number(n)).sort((a, b) => a - b);
-        const orderA = [third, seventh, ninth];
-        const orderB = [seventh, third, fifth];
-        const matchesA = matchesVoicingOrderSorted(asc, orderA);
-        const matchesB = matchesVoicingOrderSorted(asc, orderB);
-        if (upper1 === "typeA" && !matchesA) return;
-        if (upper1 === "typeB" && !matchesB) return;
-        if (upper1 === "either" && !(matchesA || matchesB)) return;
+  if (
+    typeof getUpper1Mode === "function" &&
+    (modeIsChords() || modeIsProgressions() || modeIsJazz())
+  ) {
+    const upper1 = getUpper1Mode();
+    if (upper1 === "typeA" || upper1 === "typeB" || upper1 === "either") {
+      const { third, seventh, ninth, fifth } = getTargetUpperIntervals(
+        currentChordInternalName,
+      );
+      const orderA = [third, seventh, ninth];
+      const orderB = [seventh, third, fifth];
+      if (!checkTypedVoicing(activeKeys, 3, orderA, orderB, upper1)) return;
 
-        awaitingKeyRelease = true;
-        document.getElementById("chordDisplay").classList.remove("incorrect");
-        document.getElementById("chordDisplay").classList.add("correct");
-        if (modeIsChords()) {
-          spacedRepHandleResult("chord", currentChordInternalName, isIncorrect);
-          if (isIncorrect) {
-            cntChordsIncorrect.textContent =
-              parseInt(cntChordsIncorrect.textContent) + 1;
-          } else {
-            cntChordsCorrect.textContent =
-              parseInt(cntChordsCorrect.textContent) + 1;
-          }
-          isIncorrect = false;
+      awaitingKeyRelease = true;
+      document.getElementById("chordDisplay").classList.remove("incorrect");
+      document.getElementById("chordDisplay").classList.add("correct");
+      if (modeIsChords()) {
+        spacedRepHandleResult("chord", currentChordInternalName, isIncorrect);
+        if (isIncorrect) {
+          cntChordsIncorrect.textContent =
+            parseInt(cntChordsIncorrect.textContent) + 1;
+        } else {
+          cntChordsCorrect.textContent =
+            parseInt(cntChordsCorrect.textContent) + 1;
         }
-        clearTimeout(highlightTimer);
-        highlightCorrectKeys();
-        return;
+        isIncorrect = false;
       }
+      clearTimeout(highlightTimer);
+      highlightCorrectKeys();
+      return;
     }
+  }
+  if (
+    typeof getUpperMode === "function" &&
+    (modeIsChords() || modeIsProgressions() || modeIsJazz())
+  ) {
+    const upperMode = getUpperMode();
     if (
-      typeof getUpperMode === "function" &&
-      (modeIsChords() || modeIsProgressions() || modeIsJazz())
+      upperMode === "typeA" ||
+      upperMode === "typeB" ||
+      upperMode === "either"
     ) {
-      const upperMode = getUpperMode();
-      if (
-        upperMode === "typeA" ||
-        upperMode === "typeB" ||
-        upperMode === "either"
-      ) {
-        // Require exactly 4 notes pressed
-        if (activeKeys.length !== 4) return;
+      const { third, seventh, ninth, fifth } = getTargetUpperIntervals(
+        currentChordInternalName,
+      );
+      const orderA = [third, seventh, ninth, fifth];
+      const orderB = [seventh, third, fifth, ninth];
+      if (!checkTypedVoicing(activeKeys, 4, orderA, orderB, upperMode)) return;
 
-        const { third, seventh, ninth, fifth } = getTargetUpperIntervals(
-          currentChordInternalName,
-        );
-        const asc = activeKeys.map((n) => Number(n)).sort((a, b) => a - b);
-        const orderA = [third, seventh, ninth, fifth];
-        const orderB = [seventh, third, fifth, ninth];
-        const matchesA = matchesVoicingOrderSorted(asc, orderA);
-        const matchesB = matchesVoicingOrderSorted(asc, orderB);
-        if (upperMode === "typeA" && !matchesA) return;
-        if (upperMode === "typeB" && !matchesB) return;
-        if (upperMode === "either" && !(matchesA || matchesB)) return;
-        // If we got here, the voicing is correct
-        awaitingKeyRelease = true;
-        document.getElementById("chordDisplay").classList.remove("incorrect");
-        document.getElementById("chordDisplay").classList.add("correct");
-        if (modeIsChords()) {
-          spacedRepHandleResult("chord", currentChordInternalName, isIncorrect);
-          if (isIncorrect) {
-            cntChordsIncorrect.textContent =
-              parseInt(cntChordsIncorrect.textContent) + 1;
-          } else {
-            cntChordsCorrect.textContent =
-              parseInt(cntChordsCorrect.textContent) + 1;
-          }
-          isIncorrect = false;
+      // If we got here, the voicing is correct
+      awaitingKeyRelease = true;
+      document.getElementById("chordDisplay").classList.remove("incorrect");
+      document.getElementById("chordDisplay").classList.add("correct");
+      if (modeIsChords()) {
+        spacedRepHandleResult("chord", currentChordInternalName, isIncorrect);
+        if (isIncorrect) {
+          cntChordsIncorrect.textContent =
+            parseInt(cntChordsIncorrect.textContent) + 1;
+        } else {
+          cntChordsCorrect.textContent =
+            parseInt(cntChordsCorrect.textContent) + 1;
         }
-        clearTimeout(highlightTimer);
-        highlightCorrectKeys();
-        return;
+        isIncorrect = false;
       }
+      clearTimeout(highlightTimer);
+      highlightCorrectKeys();
+      return;
     }
-  } catch (_) {}
+  }
 
   // Check if every element in sortedCurrentChordNotes is in sortedActiveNotes and both arrays have the same length
   // This makes sure we disallow extra notes in the chord
@@ -1132,7 +1114,7 @@ function getTargetUpperIntervals(chordInternalName) {
 
   // Third: major unless minor/diminished
   const isMinorish = /(^m(?!aj)|m(?!aj)|dim|ø)/.test(chordType);
-  const third = (rootVal + (isMinorish ? 3 : 4)) % 12;
+  const third = normalizePitchClass(rootVal + (isMinorish ? 3 : 4));
 
   // Seventh: major for M7/mM7, diminished for dim7, flat7 by default (infer b7) or when minorish/dom present
   let seventhInterval;
@@ -1142,13 +1124,13 @@ function getTargetUpperIntervals(chordInternalName) {
     seventhInterval = 9; // use 6th in place of 7th for 6/m6
   else if (/7/.test(chordType) || isMinorish) seventhInterval = 10;
   else seventhInterval = 10; // infer b7 for chords without explicit 7th
-  const seventh = (rootVal + seventhInterval) % 12;
+  const seventh = normalizePitchClass(rootVal + seventhInterval);
 
   // Fifth: adjust for diminished/augmented
   let fifthInterval = 7;
   if (/aug/.test(chordType)) fifthInterval = 8;
   if (/m7b5|dim/.test(chordType)) fifthInterval = 6; // handles dim and half-diminished
-  const fifth = (rootVal + fifthInterval) % 12;
+  const fifth = normalizePitchClass(rootVal + fifthInterval);
 
   // Ninth: honor b9/#9 if present in internal name; otherwise natural 9
   const hasSharp9 = /(\+9|#9)/.test(chordType);
@@ -1159,7 +1141,7 @@ function getTargetUpperIntervals(chordInternalName) {
   if (hasSharp9)
     ninthInterval = 15; // #9
   else if (hasFlat9) ninthInterval = 13; // b9
-  const ninth = (rootVal + ninthInterval) % 12;
+  const ninth = normalizePitchClass(rootVal + ninthInterval);
 
   return { third, seventh, ninth, fifth };
 }
@@ -1170,44 +1152,24 @@ function buildAscendingVoicingMidi({ third, seventh, ninth, fifth }, type) {
     type === "typeA"
       ? [third, seventh, ninth, fifth]
       : [seventh, third, fifth, ninth];
-  const start = 48; // C3
-  const end = 72; // up to C5 inclusive (keys available up to 72)
-  const notes = [];
-  let prev = start - 1;
-  for (let i = 0; i < order.length; i++) {
-    const pc = order[i] % 12;
-    // Find the smallest midi > prev with this pc
-    let midi = prev + 1;
-    while (midi % 12 !== pc) midi++;
-    // If too low (first tone), ensure at least start
-    if (midi < start) {
-      midi += Math.ceil((start - midi) / 12) * 12;
-    }
-    // Ensure strictly ascending
-    if (midi <= prev) midi += Math.ceil((prev + 1 - midi) / 12) * 12;
-    // Clamp within keyboard; if exceeds, still store (will just not highlight if out-of-range)
-    notes.push(midi);
-    prev = midi;
-  }
-  // Convert to offsets used by the UI (absolute midi minus 48)
-  return notes.map((m) => m - 48);
+  return buildAscendingMidiSequence(order).map((m) => m - 48);
 }
 
 // Build ascending voicing from explicit pitch-class order (0–11)
 function buildAscendingVoicingFromOrder(order) {
-  const start = 48; // C3
+  return buildAscendingMidiSequence(order).map((m) => m - 48);
+}
+
+function buildAscendingMidiSequence(order, start = 48) {
+  const normalized = order.map(normalizePitchClass);
   const notes = [];
   let prev = start - 1;
-  for (let i = 0; i < order.length; i++) {
-    const pc = order[i] % 12;
-    let midi = prev + 1;
-    while (midi % 12 !== pc) midi++;
-    if (midi < start) midi += Math.ceil((start - midi) / 12) * 12;
-    if (midi <= prev) midi += Math.ceil((prev + 1 - midi) / 12) * 12;
-    notes.push(midi);
-    prev = midi;
+  for (let i = 0; i < normalized.length; i++) {
+    const next = nextPitchClassAbove(prev, normalized[i]);
+    notes.push(next);
+    prev = next;
   }
-  return notes.map((m) => m - 48);
+  return notes;
 }
 
 function normalizePitchClass(value) {
@@ -1237,6 +1199,18 @@ function matchesVoicingOrderSorted(ascendingNotes, order) {
     prev = note;
   }
   return true;
+}
+
+function checkTypedVoicing(activeNotes, requiredLength, orderA, orderB, mode) {
+  if (activeNotes.length !== requiredLength) return false;
+  const sorted = activeNotes.map(Number).sort((a, b) => a - b);
+  const matchesA = matchesVoicingOrderSorted(sorted, orderA);
+  const matchesB = matchesVoicingOrderSorted(sorted, orderB);
+
+  if (mode === "typeA") return matchesA;
+  if (mode === "typeB") return matchesB;
+  if (mode === "either") return matchesA || matchesB;
+  return false;
 }
 
 // Apply selected voicing (Upper Type A/B takes precedence over Shell)
