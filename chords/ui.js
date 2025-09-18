@@ -42,6 +42,88 @@ function getUpperMode() {
   return "off";
 }
 
+function getUpper1Mode() {
+  const v = getVoicingMode();
+  if (v.startsWith("upper1:")) return v.split(":")[1];
+  return "off";
+}
+
+// Disable chord types that have fewer than 4 notes (triads/sus)
+// whenever a non-default voicing is selected. Re-enable for default,
+// restoring their prior checked state.
+let _prevTriadCheckedState = null;
+let _lastVoicingMode = null;
+function enforceVoicingChordConstraints() {
+  const currentMode = getVoicingMode();
+  const isDefault = currentMode === "default";
+  const triadIds = [
+    "majorChord",
+    "minorChord",
+    "augmentedChord",
+    "diminishedChord",
+    "suspendedSecondChord",
+    "suspendedFourthChord",
+  ];
+
+  // Capture prior checked state when leaving default mode
+  if (_lastVoicingMode === "default" && !isDefault) {
+    _prevTriadCheckedState = {};
+    triadIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) _prevTriadCheckedState[id] = !!el.checked;
+    });
+  }
+
+  triadIds.forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (isDefault) {
+      el.disabled = false;
+      // Restore previous checked state if we have it
+      if (_prevTriadCheckedState && id in _prevTriadCheckedState) {
+        el.checked = _prevTriadCheckedState[id];
+      }
+    } else {
+      el.checked = false; // exclude from selection pool
+      el.disabled = true; // visually disable
+    }
+  });
+
+  if (!isDefault) {
+    // Ensure at least one 4+ note chord type is selected
+    const fourPlusIds = [
+      "sixthChord",
+      "minorSixthChord",
+      "seventhChord",
+      "minorSeventhChord",
+      "majorSeventhChord",
+      "minorMajorSeventhChord",
+      "halfDiminishedSeventhChord",
+      "diminishedSeventhChord",
+      "augmentedSeventhChord",
+      "augmentedMajorSeventhChord",
+    ];
+    const anyChecked = fourPlusIds.some((id) => {
+      const el = document.getElementById(id);
+      return el && el.checked;
+    });
+    if (!anyChecked) {
+      // Sensible defaults: dominant, minor, major, half-diminished 7ths
+      [
+        "seventhChord",
+        "minorSeventhChord",
+        "majorSeventhChord",
+        "halfDiminishedSeventhChord",
+      ].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.checked = true;
+      });
+    }
+  }
+
+  _lastVoicingMode = currentMode;
+}
+
 function noKeys() {
   allNotes.forEach((key) => {
     document.getElementById(key).checked = false;
@@ -358,6 +440,15 @@ document.querySelectorAll("input[name='options']").forEach((input) => {
 });
 // Initialize options tab visibility
 optionsChange();
+
+// Apply constraints based on current voicing selection on load
+_lastVoicingMode = getVoicingMode();
+enforceVoicingChordConstraints();
+
+// Update constraints whenever voicing mode changes
+document
+  .querySelectorAll("input[name='voicingMode']")
+  .forEach((r) => r.addEventListener("change", enforceVoicingChordConstraints));
 
 // Get every div that has a data-note element form 48 to 70 and add a click handler
 document.querySelectorAll("div[data-note]").forEach((div) => {

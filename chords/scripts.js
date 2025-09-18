@@ -16,6 +16,7 @@ let currentProgressionName = "";
 let currentIndex = 0;
 let keyIndex = 0;
 let keys = [];
+let selectedProgression = "";
 
 let highlightTimer;
 
@@ -96,6 +97,8 @@ function setRandomChord() {
       const baseNotes = generateNotesFromChordName(entry.chord);
       currentChordNotes = applySelectedVoicing(baseNotes);
       currentChordName = generateChordName(root, chordType);
+      // Prevent immediate reselection if user skips; push next due by at least one step
+      entry.counter = Math.max(entry.interval, 1);
       scheduledRepeat = { kind: "chord", index: idx };
       return;
     }
@@ -307,6 +310,59 @@ function checkChord() {
 
   // If Type A/B upper voicing is selected (any chord-based mode), enforce voicing set and keyboard order
   try {
+    // One-handed Type A/B (3-note)
+    if (
+      typeof getUpper1Mode === "function" &&
+      (modeIsChords() || modeIsProgressions() || modeIsJazz())
+    ) {
+      const upper1 = getUpper1Mode();
+      if (upper1 === "typeA" || upper1 === "typeB" || upper1 === "either") {
+        if (activeKeys.length !== 3) return;
+        const { third, seventh, ninth, fifth } = getTargetUpperIntervals(
+          currentChordInternalName,
+        );
+        const setA = [third % 12, seventh % 12, ninth % 12]
+          .sort((a, b) => a - b)
+          .join(",");
+        const setB = [seventh % 12, third % 12, fifth % 12]
+          .sort((a, b) => a - b)
+          .join(",");
+        const playedSet = [...new Set(activeKeys.map((n) => n % 12))]
+          .sort((a, b) => a - b)
+          .join(",");
+        if (upper1 === "typeA" && playedSet !== setA) return;
+        if (upper1 === "typeB" && playedSet !== setB) return;
+        if (upper1 === "either" && !(playedSet === setA || playedSet === setB))
+          return;
+
+        const asc = [...activeKeys].sort((a, b) => a - b);
+        const orderA = [third, seventh, ninth];
+        const orderB = [seventh, third, fifth];
+        const matchesA = asc.every((n, i) => n % 12 === orderA[i] % 12);
+        const matchesB = asc.every((n, i) => n % 12 === orderB[i] % 12);
+        if (upper1 === "typeA" && !matchesA) return;
+        if (upper1 === "typeB" && !matchesB) return;
+        if (upper1 === "either" && !(matchesA || matchesB)) return;
+
+        awaitingKeyRelease = true;
+        document.getElementById("chordDisplay").classList.remove("incorrect");
+        document.getElementById("chordDisplay").classList.add("correct");
+        if (modeIsChords()) {
+          spacedRepHandleResult("chord", currentChordInternalName, isIncorrect);
+          if (isIncorrect) {
+            cntChordsIncorrect.textContent =
+              parseInt(cntChordsIncorrect.textContent) + 1;
+          } else {
+            cntChordsCorrect.textContent =
+              parseInt(cntChordsCorrect.textContent) + 1;
+          }
+          isIncorrect = false;
+        }
+        clearTimeout(highlightTimer);
+        highlightCorrectKeys();
+        return;
+      }
+    }
     if (
       typeof getUpperMode === "function" &&
       (modeIsChords() || modeIsProgressions() || modeIsJazz())
@@ -813,23 +869,21 @@ function getIntervalChordNotesAndName(key, degree, wrap = true) {
 
   // Get the extension (7th, 9th, etc.) — capture selected alterations
   // Note: extension variable was unused; instead, detect specific alterations.
-  const hasSharp9 = /(\+9|#9)/.test(currentProgression[currentIndex]);
-  const hasFlat9 = /b9/.test(currentProgression[currentIndex]);
-  const hasSharp11 = /(\+11|#11)/.test(currentProgression[currentIndex]);
+  const hasSharp9 = /(\+9|#9)/.test(degree);
+  const hasFlat9 = /b9/.test(degree);
+  const hasSharp11 = /(\+11|#11)/.test(degree);
 
   // Get the augmented — but only if '+' is NOT part of +9/+11/+13
-  let augmented = /\+(?!9|11|13)/.test(currentProgression[currentIndex]);
+  let augmented = /\+(?!9|11|13)/.test(degree);
 
   // Get the diminished
-  let diminished = currentProgression[currentIndex].match(/o/);
+  let diminished = degree.match(/o/);
 
   // Get half-diminished
-  let halfDiminished = currentProgression[currentIndex].match(/ø/);
+  let halfDiminished = degree.match(/ø/);
 
   // Get minor status, by checking for lower case or a dash
-  let minor =
-    bareDegree === bareDegree.toLowerCase() ||
-    currentProgression[currentIndex].match(/-/);
+  let minor = bareDegree === bareDegree.toLowerCase() || degree.match(/-/);
 
   // Convert the degree to a number using romanNumerals
   let degreeValue = romanNumerals[bareDegree.toUpperCase()];
@@ -838,12 +892,8 @@ function getIntervalChordNotesAndName(key, degree, wrap = true) {
   let noteValue = (keyValue + degreeValue) % (wrap ? 12 : 127);
 
   // Get sevenths
-  let majorSeventh =
-    currentProgression[currentIndex].match(/M7/) ||
-    currentProgression[currentIndex].match(/Δ/);
-  let domSeventh =
-    !majorSeventh &&
-    (halfDiminished || currentProgression[currentIndex].match(/7/));
+  let majorSeventh = degree.match(/M7/) || degree.match(/Δ/);
+  let domSeventh = !majorSeventh && (halfDiminished || degree.match(/7/));
 
   // Later fix this to handle key signatures with flats
   if (
@@ -1008,6 +1058,8 @@ function generateProgression() {
         if (scheduled) {
           currentProgression = scheduled;
           currentProgressionName = enabledNames[key] || key;
+          // Prevent immediate reselection if user skips; push next due by at least one step
+          entry.counter = Math.max(entry.interval, 1);
           scheduledRepeat = { kind: "brick", index: idx };
           return;
         }
@@ -1151,9 +1203,45 @@ function buildAscendingVoicingMidi({ third, seventh, ninth, fifth }, type) {
   return notes.map((m) => m - 48);
 }
 
+// Build ascending voicing from explicit pitch-class order (0–11)
+function buildAscendingVoicingFromOrder(order) {
+  const start = 48; // C3
+  const notes = [];
+  let prev = start - 1;
+  for (let i = 0; i < order.length; i++) {
+    const pc = order[i] % 12;
+    let midi = prev + 1;
+    while (midi % 12 !== pc) midi++;
+    if (midi < start) midi += Math.ceil((start - midi) / 12) * 12;
+    if (midi <= prev) midi += Math.ceil((prev + 1 - midi) / 12) * 12;
+    notes.push(midi);
+    prev = midi;
+  }
+  return notes.map((m) => m - 48);
+}
+
 // Apply selected voicing (Upper Type A/B takes precedence over Shell)
 function applySelectedVoicing(notes) {
   try {
+    // One-handed Type A/B (3-note) takes precedence
+    if (typeof getUpper1Mode === "function") {
+      const upper1Mode = getUpper1Mode();
+      if (
+        upper1Mode === "typeA" ||
+        upper1Mode === "typeB" ||
+        upper1Mode === "either"
+      ) {
+        const { third, seventh, ninth, fifth } = getTargetUpperIntervals(
+          currentChordInternalName,
+        );
+        const renderMode = upper1Mode === "either" ? "typeA" : upper1Mode;
+        const order =
+          renderMode === "typeA"
+            ? [third, seventh, ninth]
+            : [seventh, third, fifth];
+        return buildAscendingVoicingFromOrder(order);
+      }
+    }
     if (typeof getUpperMode === "function") {
       const upperMode = getUpperMode();
       if (
@@ -1176,10 +1264,25 @@ function applySelectedVoicing(notes) {
 // React to voicing mode changes immediately
 document.querySelectorAll("input[name='voicingMode']").forEach((r) => {
   r.addEventListener("change", () => {
-    if (currentChordInternalName) {
-      const base = generateNotesFromChordName(currentChordInternalName);
-      currentChordNotes = applySelectedVoicing(base);
-      updateDisplay();
-    }
+    // Ensure UI has disabled/enabled chord-type checkboxes before logic runs
+    try {
+      if (typeof enforceVoicingChordConstraints === "function")
+        enforceVoicingChordConstraints();
+    } catch (_) {}
+
+    if (!currentChordInternalName) return;
+    const base = generateNotesFromChordName(currentChordInternalName);
+    // If switching to any non-default voicing and current chord lacks a 4th tone, skip it
+    try {
+      const voicingMode =
+        typeof getVoicingMode === "function" ? getVoicingMode() : "default";
+      const requiresFour = voicingMode !== "default";
+      if (requiresFour && base.length < 4) {
+        nextChord(true);
+        return;
+      }
+    } catch (_) {}
+    currentChordNotes = applySelectedVoicing(base);
+    updateDisplay();
   });
 });
