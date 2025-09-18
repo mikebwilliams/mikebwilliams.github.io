@@ -108,43 +108,12 @@ function setRandomChord() {
     });
   }
 
-  // Grab the selected chord types
-  let selectedChordTypes = [];
-  if (document.getElementById("majorChord").checked)
-    selectedChordTypes.push("");
-  if (document.getElementById("minorChord").checked)
-    selectedChordTypes.push("m");
-  if (document.getElementById("augmentedChord").checked)
-    selectedChordTypes.push("aug");
-  if (document.getElementById("diminishedChord").checked)
-    selectedChordTypes.push("dim");
-  if (document.getElementById("suspendedSecondChord").checked)
-    selectedChordTypes.push("sus2");
-  if (document.getElementById("suspendedFourthChord").checked)
-    selectedChordTypes.push("sus4");
-
-  if (document.getElementById("sixthChord").checked)
-    selectedChordTypes.push("6");
-  if (document.getElementById("minorSixthChord").checked)
-    selectedChordTypes.push("m6");
-
-  if (document.getElementById("seventhChord").checked)
-    selectedChordTypes.push("7");
-  if (document.getElementById("minorSeventhChord").checked)
-    selectedChordTypes.push("m7");
-  if (document.getElementById("majorSeventhChord").checked)
-    selectedChordTypes.push("M7");
-  if (document.getElementById("minorMajorSeventhChord").checked)
-    selectedChordTypes.push("mM7");
-
-  if (document.getElementById("diminishedSeventhChord").checked)
-    selectedChordTypes.push("dim7");
-  if (document.getElementById("halfDiminishedSeventhChord").checked)
-    selectedChordTypes.push("m7b5");
-  if (document.getElementById("augmentedSeventhChord").checked)
-    selectedChordTypes.push("aug7");
-  if (document.getElementById("augmentedMajorSeventhChord").checked)
-    selectedChordTypes.push("augM7");
+  const selectedChordTypes = chordTypeConfigs
+    .filter(({ id }) => {
+      const el = document.getElementById(id);
+      return el && el.checked;
+    })
+    .map(({ type }) => type);
 
   if (selectedChordTypes.length === 0) {
     alert("Please select at least one chord type!");
@@ -357,58 +326,47 @@ function checkChord() {
     ...new Set(activeKeys.map(normalizePitchClass)),
   ].sort((a, b) => a - b);
 
-  // If Type A/B upper voicing is selected (any chord-based mode), enforce voicing set and keyboard order
-  if (
-    typeof getUpper1Mode === "function" &&
-    (modeIsChords() || modeIsProgressions() || modeIsJazz())
-  ) {
-    const upper1 = getUpper1Mode();
-    if (upper1 === "typeA" || upper1 === "typeB" || upper1 === "either") {
-      const { third, seventh, ninth, fifth } = getTargetUpperIntervals(
-        currentChordInternalName,
-      );
-      const orderA = [third, seventh, ninth];
-      const orderB = [seventh, third, fifth];
-      if (!checkTypedVoicing(activeKeys, 3, orderA, orderB, upper1)) return;
-
-      awaitingKeyRelease = true;
-      document.getElementById("chordDisplay").classList.remove("incorrect");
-      document.getElementById("chordDisplay").classList.add("correct");
-      if (modeIsChords()) {
-        recordChordCompletion();
+  if (modeIsChords() || modeIsProgressions() || modeIsJazz()) {
+    let cachedIntervals = null;
+    const ensureIntervals = () => {
+      if (!cachedIntervals) {
+        cachedIntervals = getTargetUpperIntervals(currentChordInternalName);
       }
-      clearTimeout(highlightTimer);
-      highlightCorrectKeys();
-      return;
+      return cachedIntervals;
+    };
+
+    if (typeof getUpper1Mode === "function") {
+      const upper1Mode = getUpper1Mode();
+      if (
+        upper1Mode === "typeA" ||
+        upper1Mode === "typeB" ||
+        upper1Mode === "either"
+      ) {
+        const outcome = enforceTypedVoicing(
+          activeKeys,
+          upper1Mode,
+          3,
+          ensureIntervals(),
+        );
+        if (outcome === "waiting" || outcome === "handled") return;
+      }
     }
-  }
-  if (
-    typeof getUpperMode === "function" &&
-    (modeIsChords() || modeIsProgressions() || modeIsJazz())
-  ) {
-    const upperMode = getUpperMode();
-    if (
-      upperMode === "typeA" ||
-      upperMode === "typeB" ||
-      upperMode === "either"
-    ) {
-      const { third, seventh, ninth, fifth } = getTargetUpperIntervals(
-        currentChordInternalName,
-      );
-      const orderA = [third, seventh, ninth, fifth];
-      const orderB = [seventh, third, fifth, ninth];
-      if (!checkTypedVoicing(activeKeys, 4, orderA, orderB, upperMode)) return;
 
-      // If we got here, the voicing is correct
-      awaitingKeyRelease = true;
-      document.getElementById("chordDisplay").classList.remove("incorrect");
-      document.getElementById("chordDisplay").classList.add("correct");
-      if (modeIsChords()) {
-        recordChordCompletion();
+    if (typeof getUpperMode === "function") {
+      const upperMode = getUpperMode();
+      if (
+        upperMode === "typeA" ||
+        upperMode === "typeB" ||
+        upperMode === "either"
+      ) {
+        const outcome = enforceTypedVoicing(
+          activeKeys,
+          upperMode,
+          4,
+          ensureIntervals(),
+        );
+        if (outcome === "waiting" || outcome === "handled") return;
       }
-      clearTimeout(highlightTimer);
-      highlightCorrectKeys();
-      return;
     }
   }
 
@@ -1201,6 +1159,53 @@ function matchesVoicingOrderSorted(ascendingNotes, order) {
     prev = note;
   }
   return true;
+}
+
+function handleTypedVoicingSuccess() {
+  awaitingKeyRelease = true;
+  const display = document.getElementById("chordDisplay");
+  if (display) {
+    display.classList.remove("incorrect");
+    display.classList.add("correct");
+  }
+  if (modeIsChords()) {
+    recordChordCompletion();
+  }
+  clearTimeout(highlightTimer);
+  highlightCorrectKeys();
+}
+
+function buildVoicingOrders(intervals, requiredLength) {
+  if (requiredLength === 3) {
+    return {
+      orderA: [intervals.third, intervals.seventh, intervals.ninth],
+      orderB: [intervals.seventh, intervals.third, intervals.fifth],
+    };
+  }
+  return {
+    orderA: [
+      intervals.third,
+      intervals.seventh,
+      intervals.ninth,
+      intervals.fifth,
+    ],
+    orderB: [
+      intervals.seventh,
+      intervals.third,
+      intervals.fifth,
+      intervals.ninth,
+    ],
+  };
+}
+
+function enforceTypedVoicing(activeNotes, mode, requiredLength, intervals) {
+  if (mode !== "typeA" && mode !== "typeB" && mode !== "either") return "none";
+  const { orderA, orderB } = buildVoicingOrders(intervals, requiredLength);
+  if (!checkTypedVoicing(activeNotes, requiredLength, orderA, orderB, mode)) {
+    return "waiting";
+  }
+  handleTypedVoicingSuccess();
+  return "handled";
 }
 
 function checkTypedVoicing(activeNotes, requiredLength, orderA, orderB, mode) {

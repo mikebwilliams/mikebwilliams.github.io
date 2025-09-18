@@ -244,6 +244,43 @@ const chords = [
   "Bm",
 ];
 
+const chordTypeConfigs = [
+  { id: "majorChord", type: "", groups: ["triads", "major"] },
+  { id: "minorChord", type: "m", groups: ["triads", "minor"] },
+  { id: "augmentedChord", type: "aug", groups: ["triads", "major"] },
+  { id: "diminishedChord", type: "dim", groups: ["triads", "minor"] },
+  { id: "suspendedFourthChord", type: "sus4", groups: ["triads", "major"] },
+  { id: "suspendedSecondChord", type: "sus2", groups: ["triads", "minor"] },
+  { id: "sixthChord", type: "6", groups: ["sixths", "major"] },
+  { id: "minorSixthChord", type: "m6", groups: ["sixths", "minor"] },
+  { id: "seventhChord", type: "7", groups: ["sevenths", "major"] },
+  { id: "minorSeventhChord", type: "m7", groups: ["sevenths", "minor"] },
+  { id: "majorSeventhChord", type: "M7", groups: ["sevenths", "major"] },
+  { id: "minorMajorSeventhChord", type: "mM7", groups: ["sevenths", "minor"] },
+  { id: "augmentedSeventhChord", type: "aug7", groups: ["sevenths", "major"] },
+  {
+    id: "halfDiminishedSeventhChord",
+    type: "m7b5",
+    groups: ["sevenths", "minor"],
+  },
+  {
+    id: "augmentedMajorSeventhChord",
+    type: "augM7",
+    groups: ["sevenths", "major"],
+  },
+  { id: "diminishedSeventhChord", type: "dim7", groups: ["sevenths", "minor"] },
+];
+
+const chordTypeGroups = chordTypeConfigs.reduce((result, config) => {
+  config.groups.forEach((group) => {
+    if (!result[group]) result[group] = [];
+    result[group].push(config.id);
+  });
+  return result;
+}, {});
+
+const chordTypeIds = chordTypeConfigs.map((config) => config.id);
+
 const chordStructures = {
   "": [0, 4, 7], // Major
   m: [0, 3, 7], // Minor

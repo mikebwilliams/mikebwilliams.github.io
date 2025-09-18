@@ -24,6 +24,17 @@ const cntScalesIncorrect = document.getElementById("cntScalesIncorrect");
 const cntDegreesIncorrect = document.getElementById("cntDegreesIncorrect");
 const cntBricksIncorrect = document.getElementById("cntBricksIncorrect");
 
+function getChordGroupIds(group) {
+  return chordTypeGroups[group] || [];
+}
+
+const fourNoteChordIds = chordTypeConfigs
+  .filter((config) => {
+    const structure = chordStructures[config.type];
+    return Array.isArray(structure) && structure.length >= 4;
+  })
+  .map((config) => config.id);
+
 // Unified voicing selection: one radio group for all modes
 function getVoicingMode() {
   const sel = document.querySelector("input[name='voicingMode']:checked");
@@ -56,14 +67,7 @@ let _lastVoicingMode = null;
 function enforceVoicingChordConstraints() {
   const currentMode = getVoicingMode();
   const isDefault = currentMode === "default";
-  const triadIds = [
-    "majorChord",
-    "minorChord",
-    "augmentedChord",
-    "diminishedChord",
-    "suspendedSecondChord",
-    "suspendedFourthChord",
-  ];
+  const triadIds = getChordGroupIds("triads");
 
   // Capture prior checked state when leaving default mode
   if (_lastVoicingMode === "default" && !isDefault) {
@@ -91,19 +95,7 @@ function enforceVoicingChordConstraints() {
 
   if (!isDefault) {
     // Ensure at least one 4+ note chord type is selected
-    const fourPlusIds = [
-      "sixthChord",
-      "minorSixthChord",
-      "seventhChord",
-      "minorSeventhChord",
-      "majorSeventhChord",
-      "minorMajorSeventhChord",
-      "halfDiminishedSeventhChord",
-      "diminishedSeventhChord",
-      "augmentedSeventhChord",
-      "augmentedMajorSeventhChord",
-    ];
-    const anyChecked = fourPlusIds.some((id) => {
+    const anyChecked = fourNoteChordIds.some((id) => {
       const el = document.getElementById(id);
       return el && el.checked;
     });
@@ -215,32 +207,13 @@ function modeIsJazz() {
   );
 }
 
-function optionsIsKeys() {
-  const sel = document.querySelector('input[name="options"]:checked');
-  return sel && sel.value === "tabKeys";
+function getSelectedOptionsTab() {
+  const sel = document.querySelector("input[name='options']:checked");
+  return sel ? sel.value : null;
 }
 
-function optionsIsDisplay() {
-  const sel = document.querySelector('input[name="options"]:checked');
-  return sel && sel.value === "tabDisplay";
-}
-
-function optionsIsMidi() {
-  const sel = document.querySelector('input[name="options"]:checked');
-  return sel && sel.value === "tabMidi";
-}
-
-function optionsIsSpacedRep() {
-  const sel = document.querySelector('input[name="options"]:checked');
-  return sel && sel.value === "tabSpacedRep";
-}
-function optionsIsVoicings() {
-  const sel = document.querySelector('input[name="options"]:checked');
-  return sel && sel.value === "tabVoicings";
-}
-function optionsIsEar() {
-  const sel = document.querySelector('input[name="options"]:checked');
-  return sel && sel.value === "tabEar";
+function optionsIs(tabValue) {
+  return getSelectedOptionsTab() === tabValue;
 }
 
 function optionsChange() {
@@ -252,12 +225,12 @@ function optionsChange() {
   const ear = document.getElementById("earOptions");
   const voicings = document.getElementById("voicingsOptions");
   if (!keys || !disp || !midi || !spaced || !ear || !voicings) return;
-  keys.style.display = optionsIsKeys() ? "block" : "none";
-  disp.style.display = optionsIsDisplay() ? "block" : "none";
-  midi.style.display = optionsIsMidi() ? "block" : "none";
-  spaced.style.display = optionsIsSpacedRep() ? "block" : "none";
-  ear.style.display = optionsIsEar() ? "block" : "none";
-  voicings.style.display = optionsIsVoicings() ? "block" : "none";
+  keys.style.display = optionsIs("tabKeys") ? "block" : "none";
+  disp.style.display = optionsIs("tabDisplay") ? "block" : "none";
+  midi.style.display = optionsIs("tabMidi") ? "block" : "none";
+  spaced.style.display = optionsIs("tabSpacedRep") ? "block" : "none";
+  ear.style.display = optionsIs("tabEar") ? "block" : "none";
+  voicings.style.display = optionsIs("tabVoicings") ? "block" : "none";
 }
 
 document.getElementById("noKeys").addEventListener("click", noKeys);
@@ -270,109 +243,52 @@ document.getElementById("whiteKeys").addEventListener("click", whiteKeys);
 
 // Handler functions for preset buttons
 
-const toggleAllChords = (state) => {
-  const checkboxes = document.querySelectorAll(
-    "#chordOptions input[type='checkbox']",
-  );
-  checkboxes.forEach((chk) => (chk.checked = state));
+function setChordCheckboxes(ids, state) {
+  ids.forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.checked = state;
+  });
+}
+
+const toggleAllChords = (state) => setChordCheckboxes(chordTypeIds, state);
+const toggleTriadChords = (state) =>
+  setChordCheckboxes(getChordGroupIds("triads"), state);
+const toggleSixthChords = (state) =>
+  setChordCheckboxes(getChordGroupIds("sixths"), state);
+const toggleSeventhChords = (state) =>
+  setChordCheckboxes(getChordGroupIds("sevenths"), state);
+const toggleMajorChords = (state) =>
+  setChordCheckboxes(getChordGroupIds("major"), state);
+const toggleMinorChords = (state) =>
+  setChordCheckboxes(getChordGroupIds("minor"), state);
+
+const modeSectionsByTab = {
+  tabChords: ["chordOptions"],
+  tabProgressions: ["progressionOptions"],
+  tabDegrees: ["progressionOptions", "degreesOptions"],
+  tabScales: ["scalesOptions"],
+  tabJazz: ["jazzOptions"],
 };
 
-const toggleTriadChords = (state) => {
-  const triads = [
-    "majorChord",
-    "minorChord",
-    "augmentedChord",
-    "diminishedChord",
-    "suspendedSecondChord",
-    "suspendedFourthChord",
-  ];
-  triads.forEach((id) => (document.getElementById(id).checked = state));
-};
+const modeSectionIds = Array.from(
+  Object.values(modeSectionsByTab).reduce((acc, ids) => {
+    ids.forEach((id) => acc.add(id));
+    return acc;
+  }, new Set()),
+);
 
-const toggleSixthChords = (state) => {
-  const sixths = ["sixthChord", "minorSixthChord"];
-  sixths.forEach((id) => (document.getElementById(id).checked = state));
-};
-
-const toggleSeventhChords = (state) => {
-  const sevenths = [
-    "seventhChord",
-    "minorSeventhChord",
-    "majorSeventhChord",
-    "minorMajorSeventhChord",
-    "halfDiminishedSeventhChord",
-    "diminishedSeventhChord",
-    "augmentedSeventhChord",
-    "augmentedMajorSeventhChord",
-  ];
-  sevenths.forEach((id) => (document.getElementById(id).checked = state));
-};
-
-const toggleMajorChords = (state) => {
-  const majors = [
-    "majorChord",
-    "augmentedChord",
-    "suspendedFourthChord",
-    "sixthChord",
-    "seventhChord",
-    "majorSeventhChord",
-    "augmentedSeventhChord",
-    "augmentedMajorSeventhChord",
-  ];
-  majors.forEach((id) => (document.getElementById(id).checked = state));
-};
-
-const toggleMinorChords = (state) => {
-  const minors = [
-    "minorChord",
-    "diminishedChord",
-    "suspendedSecondChord",
-    "minorSixthChord",
-    "minorSeventhChord",
-    "minorMajorSeventhChord",
-    "halfDiminishedSeventhChord",
-    "diminishedSeventhChord",
-  ];
-  minors.forEach((id) => (document.getElementById(id).checked = state));
-};
+function applyModeVisibility(selectedTab) {
+  const visibleSections = modeSectionsByTab[selectedTab] || [];
+  modeSectionIds.forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = visibleSections.includes(id) ? "block" : "none";
+  });
+}
 
 function modeChange() {
-  // Three options: chords, progressions, and scale degrees
-  if (modeIsChords()) {
-    // Show the chord options
-    document.getElementById("chordOptions").style.display = "block";
-    document.getElementById("progressionOptions").style.display = "none";
-    document.getElementById("degreesOptions").style.display = "none";
-    document.getElementById("scalesOptions").style.display = "none";
-    document.getElementById("jazzOptions").style.display = "none";
-  } else if (modeIsProgressions()) {
-    // Show the progression options
-    document.getElementById("chordOptions").style.display = "none";
-    document.getElementById("progressionOptions").style.display = "block";
-    document.getElementById("degreesOptions").style.display = "none";
-    document.getElementById("scalesOptions").style.display = "none";
-    document.getElementById("jazzOptions").style.display = "none";
-  } else if (modeIsDegrees()) {
-    // Show the scale degree options
-    document.getElementById("chordOptions").style.display = "none";
-    document.getElementById("progressionOptions").style.display = "block";
-    document.getElementById("degreesOptions").style.display = "block";
-    document.getElementById("scalesOptions").style.display = "none";
-    document.getElementById("jazzOptions").style.display = "none";
-  } else if (modeIsScales()) {
-    document.getElementById("chordOptions").style.display = "none";
-    document.getElementById("progressionOptions").style.display = "none";
-    document.getElementById("degreesOptions").style.display = "none";
-    document.getElementById("scalesOptions").style.display = "block";
-    document.getElementById("jazzOptions").style.display = "none";
-  } else if (modeIsJazz()) {
-    document.getElementById("chordOptions").style.display = "none";
-    document.getElementById("progressionOptions").style.display = "none";
-    document.getElementById("degreesOptions").style.display = "none";
-    document.getElementById("scalesOptions").style.display = "none";
-    document.getElementById("jazzOptions").style.display = "block";
-  }
-
+  const selected = document.querySelector("input[name='mode']:checked");
+  applyModeVisibility(selected ? selected.value : "tabChords");
   nextProgression();
 }
 
@@ -388,47 +304,23 @@ document
   .getElementById("progressionSelect")
   .addEventListener("change", () => nextProgression());
 
-document
-  .getElementById("chordsOn")
-  .addEventListener("click", () => toggleAllChords(true));
-document
-  .getElementById("chordsOff")
-  .addEventListener("click", () => toggleAllChords(false));
-
-document
-  .getElementById("triadChordsOn")
-  .addEventListener("click", () => toggleTriadChords(true));
-document
-  .getElementById("triadChordsOff")
-  .addEventListener("click", () => toggleTriadChords(false));
-
-document
-  .getElementById("sixthChordsOn")
-  .addEventListener("click", () => toggleSixthChords(true));
-document
-  .getElementById("sixthChordsOff")
-  .addEventListener("click", () => toggleSixthChords(false));
-
-document
-  .getElementById("seventhChordsOn")
-  .addEventListener("click", () => toggleSeventhChords(true));
-document
-  .getElementById("seventhChordsOff")
-  .addEventListener("click", () => toggleSeventhChords(false));
-
-document
-  .getElementById("majorChordsOn")
-  .addEventListener("click", () => toggleMajorChords(true));
-document
-  .getElementById("majorChordsOff")
-  .addEventListener("click", () => toggleMajorChords(false));
-
-document
-  .getElementById("minorChordsOn")
-  .addEventListener("click", () => toggleMinorChords(true));
-document
-  .getElementById("minorChordsOff")
-  .addEventListener("click", () => toggleMinorChords(false));
+[
+  { id: "chordsOn", handler: () => toggleAllChords(true) },
+  { id: "chordsOff", handler: () => toggleAllChords(false) },
+  { id: "triadChordsOn", handler: () => toggleTriadChords(true) },
+  { id: "triadChordsOff", handler: () => toggleTriadChords(false) },
+  { id: "sixthChordsOn", handler: () => toggleSixthChords(true) },
+  { id: "sixthChordsOff", handler: () => toggleSixthChords(false) },
+  { id: "seventhChordsOn", handler: () => toggleSeventhChords(true) },
+  { id: "seventhChordsOff", handler: () => toggleSeventhChords(false) },
+  { id: "majorChordsOn", handler: () => toggleMajorChords(true) },
+  { id: "majorChordsOff", handler: () => toggleMajorChords(false) },
+  { id: "minorChordsOn", handler: () => toggleMinorChords(true) },
+  { id: "minorChordsOff", handler: () => toggleMinorChords(false) },
+].forEach(({ id, handler }) => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener("click", handler);
+});
 
 document.querySelectorAll("input[name='mode']").forEach((input) => {
   input.addEventListener("change", modeChange);
