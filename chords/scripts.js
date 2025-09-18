@@ -25,12 +25,14 @@ let highlightTimer;
 let spacedQueueAll = [];
 let scheduledRepeat = null; // { kind, index }
 
+const dom = window.domElements;
+
 function isSpacedRepetitionEnabled() {
-  return document.getElementById("enableSpacedRepetition").checked;
+  return dom.enableSpacedRepetition.checked;
 }
 
 function getMasteryThreshold() {
-  const t = parseInt(document.getElementById("spacedRepThreshold").value, 10);
+  const t = parseInt(dom.spacedRepThreshold.value, 10);
   return isNaN(t) || t < 1 ? 1 : t;
 }
 
@@ -62,7 +64,7 @@ function generateNotesFromChordName(chordName) {
 }
 
 function generateChordName(root, chordType) {
-  if (document.getElementById("randomizeSpellings").checked) {
+  if (dom.randomizeSpellings.checked) {
     if (chordStructureNames.hasOwnProperty(chordType)) {
       chordType =
         chordStructureNames[chordType][
@@ -109,10 +111,7 @@ function setRandomChord() {
   }
 
   const selectedChordTypes = chordTypeConfigs
-    .filter(({ id }) => {
-      const el = document.getElementById(id);
-      return el && el.checked;
-    })
+    .filter(({ id }) => dom.chordCheckboxes[id].checked)
     .map(({ type }) => type);
 
   if (selectedChordTypes.length === 0) {
@@ -180,7 +179,6 @@ function handleKeyReleased(midiKey) {
 }
 
 function incrementTextContent(element) {
-  if (!element) return;
   const current = parseInt(element.textContent, 10);
   const base = Number.isNaN(current) ? 0 : current;
   element.textContent = String(base + 1);
@@ -203,8 +201,8 @@ function recordChordCompletion() {
   spacedRepHandleResult("chord", currentChordInternalName, isIncorrect);
   updateResultCounters({
     wasIncorrect: isIncorrect,
-    correctElement: cntChordsCorrect,
-    incorrectElement: cntChordsIncorrect,
+    correctElement: dom.cntChordsCorrect,
+    incorrectElement: dom.cntChordsIncorrect,
   });
   isIncorrect = false;
 }
@@ -212,8 +210,8 @@ function recordChordCompletion() {
 function recordDegreeCompletion() {
   updateResultCounters({
     wasIncorrect: isIncorrect,
-    correctElement: cntDegreesCorrect,
-    incorrectElement: cntDegreesIncorrect,
+    correctElement: dom.cntDegreesCorrect,
+    incorrectElement: dom.cntDegreesIncorrect,
   });
   isIncorrect = false;
 }
@@ -315,8 +313,8 @@ function checkChord() {
     }
 
     awaitingKeyRelease = false;
-    document.getElementById("chordDisplay").classList.remove("correct");
-    document.getElementById("chordDisplay").classList.remove("incorrect");
+    dom.chordDisplay.classList.remove("correct");
+    dom.chordDisplay.classList.remove("incorrect");
     nextChord();
   }
 
@@ -379,8 +377,8 @@ function checkChord() {
     )
   ) {
     awaitingKeyRelease = true;
-    document.getElementById("chordDisplay").classList.remove("incorrect");
-    document.getElementById("chordDisplay").classList.add("correct");
+    dom.chordDisplay.classList.remove("incorrect");
+    dom.chordDisplay.classList.add("correct");
 
     if (modeIsChords()) {
       recordChordCompletion();
@@ -402,7 +400,7 @@ function highlightCorrectKeys() {
 
   highlightTimer = setTimeout(() => {
     // Highlight the keys in the current chord if box is checked
-    if (!document.getElementById("highlightCorrectKeys").checked) {
+    if (!dom.highlightCorrectKeys.checked) {
       return;
     }
 
@@ -418,12 +416,12 @@ function onMIDISuccess(midiAccessResult) {
 
   // If there are no inputs, notify the user.
   if (!midiAccess.inputs.size) {
-    document.getElementById("midiStatusText").textContent =
+    dom.midiStatusText.textContent =
       "No MIDI inputs detected. Please connect a MIDI device.";
     return;
   }
 
-  document.getElementById("midiStatusText").textContent = "MIDI connected.";
+  dom.midiStatusText.textContent = "MIDI connected.";
 
   renderMidiDeviceTables();
   refreshMidiListeners();
@@ -470,7 +468,7 @@ function spacedRepHandleResult(kind, key, wasIncorrect) {
 }
 
 function spacedRepRenderList() {
-  const container = document.getElementById("spacedRepList");
+  const container = dom.spacedRepList;
   if (!container) return;
   if (!spacedQueueAll.length) {
     container.innerHTML = "<em>No failed items scheduled.</em>";
@@ -491,8 +489,7 @@ function spacedRepClearAll() {
 }
 
 function onMIDIFailure(error) {
-  document.getElementById("midiStatusText").textContent =
-    "Failed to get MIDI access. Error: " + error;
+  dom.midiStatusText.textContent = "Failed to get MIDI access. Error: " + error;
 }
 
 function initMIDI() {
@@ -500,14 +497,14 @@ function initMIDI() {
   if (navigator.requestMIDIAccess)
     navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
   else
-    document.getElementById("midiStatusText").textContent =
+    dom.midiStatusText.textContent =
       "Your browser does not support MIDI access. Please ensure you are using a browser that supports WebMIDI, and that you are accessing this site from HTTPS, as some browsers require secure connections for WebMIDI.";
 }
 
 function renderMidiDeviceTables() {
   if (!midiAccess) return;
-  const inputsTable = document.getElementById("midiInputs");
-  const outputsTable = document.getElementById("midiOutputs");
+  const inputsTable = dom.midiInputs;
+  const outputsTable = dom.midiOutputs;
   if (!inputsTable || !outputsTable) return;
 
   const inputs = Array.from(midiAccess.inputs.values()).filter(
@@ -583,7 +580,7 @@ function refreshMidiListeners() {
 }
 
 function updateAvailableKeys() {
-  const flow = flowSelect.value;
+  const flow = dom.flowSelect.value;
 
   if (flow === "circleOfFourths") {
     keys = circleOfFourths;
@@ -591,7 +588,7 @@ function updateAvailableKeys() {
     keys = circleOfFifths;
   } else {
     keys = Object.keys(noteValues).filter(
-      (root) => document.getElementById(root).checked,
+      (root) => dom.keyCheckboxes[root].checked,
     );
     if (keys.length === 0) {
       alert("Please select at least one root key!");
@@ -602,7 +599,7 @@ function updateAvailableKeys() {
 
 function nextKey() {
   updateAvailableKeys();
-  const flow = flowSelect.value;
+  const flow = dom.flowSelect.value;
 
   if (flow === "circleOfFourths" || flow === "circleOfFifths") {
     keyIndex++;
@@ -635,8 +632,8 @@ function nextChord(skip = false) {
         updateResultCounters({
           wasIncorrect: isIncorrect,
           skipCorrect: skip,
-          correctElement: cntProgsCorrect,
-          incorrectElement: cntProgsIncorrect,
+          correctElement: dom.cntProgsCorrect,
+          incorrectElement: dom.cntProgsIncorrect,
         });
       } else if (modeIsJazz()) {
         // Handle Jazz Brick spaced repetition using unified queue
@@ -644,15 +641,15 @@ function nextChord(skip = false) {
         updateResultCounters({
           wasIncorrect: isIncorrect,
           skipCorrect: skip,
-          correctElement: cntBricksCorrect,
-          incorrectElement: cntBricksIncorrect,
+          correctElement: dom.cntBricksCorrect,
+          incorrectElement: dom.cntBricksIncorrect,
         });
       } else if (modeIsScales()) {
         updateResultCounters({
           wasIncorrect: isIncorrect,
           skipCorrect: skip,
-          correctElement: cntScalesCorrect,
-          incorrectElement: cntScalesIncorrect,
+          correctElement: dom.cntScalesCorrect,
+          incorrectElement: dom.cntScalesIncorrect,
         });
       }
 
@@ -661,7 +658,7 @@ function nextChord(skip = false) {
       nextKey();
       generateProgression();
 
-      if (document.getElementById("sendMidiNotes").checked) {
+      if (dom.sendMidiNotes.checked) {
         setTimeout(playAnswerNotes, 200);
       }
     }
@@ -696,7 +693,7 @@ function nextChord(skip = false) {
     nextKey();
     setRandomChord();
 
-    if (document.getElementById("sendMidiNotes").checked) {
+    if (dom.sendMidiNotes.checked) {
       setTimeout(playAnswerNotes, 200);
     }
   }
@@ -705,26 +702,26 @@ function nextChord(skip = false) {
 }
 
 function updateDisplay() {
-  let hideChordName = hideProgressionChordNamesCheckbox.checked;
-  let hideNumerals = hideProgressionChordNumeralsCheckbox.checked;
+  let hideChordName = dom.hideProgressionChordNames.checked;
+  let hideNumerals = dom.hideProgressionChordNumerals.checked;
 
   if (modeIsChords()) {
     // When we are in chord mode with hidden chords we are probably doing ear training
     // for chord quality so at least show the key
     if (hideChordName) {
-      document.getElementById("currentKey").style.display = "block";
-      document.getElementById("chordDisplay").style.display = "none";
+      dom.currentKey.style.display = "block";
+      dom.chordDisplay.style.display = "none";
     } else {
-      document.getElementById("currentKey").style.display = "none";
-      document.getElementById("chordDisplay").style.display = "block";
+      dom.currentKey.style.display = "none";
+      dom.chordDisplay.style.display = "block";
     }
-    document.getElementById("progressionDisplay").style.display = "none";
-    document.getElementById("cadenceDisplay").style.display = "none";
+    dom.progressionDisplay.style.display = "none";
+    dom.cadenceDisplay.style.display = "none";
   } else {
-    document.getElementById("chordDisplay").style.display = "none";
-    document.getElementById("currentKey").style.display = "inline";
-    document.getElementById("cadenceDisplay").style.display = "inline";
-    document.getElementById("progressionDisplay").style.display = "block";
+    dom.chordDisplay.style.display = "none";
+    dom.currentKey.style.display = "inline";
+    dom.cadenceDisplay.style.display = "inline";
+    dom.progressionDisplay.style.display = "block";
   }
 
   let text = currentChordName;
@@ -733,35 +730,35 @@ function updateDisplay() {
   text = text.replace(/#/g, "♯");
   text = text.replace(/b/g, "♭");
 
-  chordDisplay.textContent = text;
-  chordDisplay.title = "";
+  dom.chordDisplay.textContent = text;
+  dom.chordDisplay.title = "";
 
   if (isIncorrect) {
-    chordDisplay.classList.add("incorrect");
+    dom.chordDisplay.classList.add("incorrect");
   } else {
-    chordDisplay.classList.remove("incorrect");
+    dom.chordDisplay.classList.remove("incorrect");
   }
 
-  currentKeySpan.textContent = keys[keyIndex];
+  dom.currentKey.textContent = keys[keyIndex];
 
   if (Array.isArray(currentProgression)) {
     if (hideNumerals) {
-      progressionDisplay.innerHTML = currentProgression
+      dom.progressionDisplay.innerHTML = currentProgression
         .map((chord) => `<span class="chord" title="${chord}">?</span>`)
         .join(" - ");
     } else {
-      progressionDisplay.innerHTML = currentProgression
+      dom.progressionDisplay.innerHTML = currentProgression
         .map((chord) => `<span class="chord">${chord}</span>`)
         .join(" - ");
     }
   } else {
-    progressionDisplay.innerHTML = "";
+    dom.progressionDisplay.innerHTML = "";
   }
 
   if (hideChordName) {
-    cadenceDisplay.innerHTML = " ?";
+    dom.cadenceDisplay.innerHTML = " ?";
   } else {
-    cadenceDisplay.innerHTML = " " + currentProgressionName;
+    dom.cadenceDisplay.innerHTML = " " + currentProgressionName;
   }
 
   // Add event listeners to chords to track user input
@@ -884,23 +881,21 @@ function getIntervalChordNotesAndName(key, degree, wrap = true) {
 }
 
 function generateProgression() {
-  currentKeySpan.textContent = keys[keyIndex];
+  dom.currentKey.textContent = keys[keyIndex];
 
   currentIndex = 0;
 
   if (modeIsProgressions() || modeIsDegrees()) {
-    if (progressionSelect.value === "custom") {
-      currentProgression = document
-        .getElementById("customProgression")
-        .value.split("-");
-    } else if (progressionSelect.value === "random") {
+    if (dom.progressionSelect.value === "custom") {
+      currentProgression = dom.customProgressionInput.value.split("-");
+    } else if (dom.progressionSelect.value === "random") {
       // Get count from randomProgression input
-      let count = document.getElementById("randomProgression").value;
+      let count = dom.randomProgressionCount.value;
 
       enabledNumerals = {};
       if (modeIsDegrees()) {
         Object.keys(romanNumerals).forEach((numeral) => {
-          const checkbox = document.getElementById(numeral); // Adjust the ID retrieval method if necessary
+          const checkbox = dom.degreeCheckboxes[numeral];
           if (checkbox && checkbox.checked) {
             enabledNumerals[numeral] = romanNumerals[numeral];
           }
@@ -919,10 +914,10 @@ function generateProgression() {
         );
       }
     } else {
-      currentProgression = progressionSelect.value.split("-");
+      currentProgression = dom.progressionSelect.value.split("-");
     }
 
-    currentProgressionName = progressionSelect.value;
+    currentProgressionName = dom.progressionSelect.value;
   } else if (modeIsScales()) {
     // Get list of all enabled scales
     enabledScales = {};
@@ -1017,14 +1012,14 @@ function generateProgression() {
   }
 }
 
-hideProgressionChordNamesCheckbox.addEventListener("change", updateDisplay);
-hideProgressionChordNumeralsCheckbox.addEventListener("change", updateDisplay);
+dom.hideProgressionChordNames.addEventListener("change", updateDisplay);
+dom.hideProgressionChordNumerals.addEventListener("change", updateDisplay);
 
 function nextProgression() {
   nextChord(true);
 }
 
-flowSelect.addEventListener("change", generateProgression);
+dom.flowSelect.addEventListener("change", generateProgression);
 
 nextKey();
 setRandomChord();
@@ -1107,14 +1102,6 @@ function getTargetUpperIntervals(chordInternalName) {
 }
 
 // Build an ascending keyboard voicing inside the displayed keyboard for highlighting/playback
-function buildAscendingVoicingMidi({ third, seventh, ninth, fifth }, type) {
-  const order =
-    type === "typeA"
-      ? [third, seventh, ninth, fifth]
-      : [seventh, third, fifth, ninth];
-  return buildAscendingMidiSequence(order).map((m) => m - 48);
-}
-
 // Build ascending voicing from explicit pitch-class order (0–11)
 function buildAscendingVoicingFromOrder(order) {
   return buildAscendingMidiSequence(order).map((m) => m - 48);
@@ -1163,11 +1150,8 @@ function matchesVoicingOrderSorted(ascendingNotes, order) {
 
 function handleTypedVoicingSuccess() {
   awaitingKeyRelease = true;
-  const display = document.getElementById("chordDisplay");
-  if (display) {
-    display.classList.remove("incorrect");
-    display.classList.add("correct");
-  }
+  dom.chordDisplay.classList.remove("incorrect");
+  dom.chordDisplay.classList.add("correct");
   if (modeIsChords()) {
     recordChordCompletion();
   }
@@ -1198,6 +1182,18 @@ function buildVoicingOrders(intervals, requiredLength) {
   };
 }
 
+function resolveUpperVoicing(mode, requiredLength, intervalsOrProvider) {
+  if (mode !== "typeA" && mode !== "typeB" && mode !== "either") return null;
+  const intervals =
+    typeof intervalsOrProvider === "function"
+      ? intervalsOrProvider()
+      : intervalsOrProvider;
+  if (!intervals) return null;
+  const { orderA, orderB } = buildVoicingOrders(intervals, requiredLength);
+  const renderOrder = mode === "typeB" ? orderB : orderA;
+  return buildAscendingVoicingFromOrder(renderOrder);
+}
+
 function enforceTypedVoicing(activeNotes, mode, requiredLength, intervals) {
   if (mode !== "typeA" && mode !== "typeB" && mode !== "either") return "none";
   const { orderA, orderB } = buildVoicingOrders(intervals, requiredLength);
@@ -1223,37 +1219,22 @@ function checkTypedVoicing(activeNotes, requiredLength, orderA, orderB, mode) {
 // Apply selected voicing (Upper Type A/B takes precedence over Shell)
 function applySelectedVoicing(notes) {
   try {
-    // One-handed Type A/B (3-note) takes precedence
+    let intervalsCache = null;
+    const ensureIntervals = () => {
+      if (!intervalsCache)
+        intervalsCache = getTargetUpperIntervals(currentChordInternalName);
+      return intervalsCache;
+    };
+
     if (typeof getUpper1Mode === "function") {
       const upper1Mode = getUpper1Mode();
-      if (
-        upper1Mode === "typeA" ||
-        upper1Mode === "typeB" ||
-        upper1Mode === "either"
-      ) {
-        const { third, seventh, ninth, fifth } = getTargetUpperIntervals(
-          currentChordInternalName,
-        );
-        const renderMode = upper1Mode === "either" ? "typeA" : upper1Mode;
-        const order =
-          renderMode === "typeA"
-            ? [third, seventh, ninth]
-            : [seventh, third, fifth];
-        return buildAscendingVoicingFromOrder(order);
-      }
+      const resolved = resolveUpperVoicing(upper1Mode, 3, ensureIntervals);
+      if (resolved) return resolved;
     }
     if (typeof getUpperMode === "function") {
       const upperMode = getUpperMode();
-      if (
-        upperMode === "typeA" ||
-        upperMode === "typeB" ||
-        upperMode === "either"
-      ) {
-        const intervals = getTargetUpperIntervals(currentChordInternalName);
-        // For 'either', choose Type A for display/playback, but validation will accept both
-        const modeToRender = upperMode === "either" ? "typeA" : upperMode;
-        return buildAscendingVoicingMidi(intervals, modeToRender);
-      }
+      const resolved = resolveUpperVoicing(upperMode, 4, ensureIntervals);
+      if (resolved) return resolved;
     }
     return applyShellVoicing(notes);
   } catch (_) {

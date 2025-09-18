@@ -281,6 +281,134 @@ const chordTypeGroups = chordTypeConfigs.reduce((result, config) => {
 
 const chordTypeIds = chordTypeConfigs.map((config) => config.id);
 
+function requireElement(id) {
+  const el = document.getElementById(id);
+  if (!el) {
+    throw new Error(`Expected element with id '${id}'`);
+  }
+  return el;
+}
+
+const chordCheckboxes = chordTypeConfigs.reduce((acc, { id }) => {
+  acc[id] = requireElement(id);
+  return acc;
+}, {});
+
+const keyCheckboxes = allNotes.reduce((acc, note) => {
+  acc[note] = requireElement(note);
+  return acc;
+}, {});
+
+const chordToggleButtons = {
+  allOn: requireElement("chordsOn"),
+  allOff: requireElement("chordsOff"),
+  triadsOn: requireElement("triadChordsOn"),
+  triadsOff: requireElement("triadChordsOff"),
+  sixthsOn: requireElement("sixthChordsOn"),
+  sixthsOff: requireElement("sixthChordsOff"),
+  seventhsOn: requireElement("seventhChordsOn"),
+  seventhsOff: requireElement("seventhChordsOff"),
+  majorsOn: requireElement("majorChordsOn"),
+  majorsOff: requireElement("majorChordsOff"),
+  minorsOn: requireElement("minorChordsOn"),
+  minorsOff: requireElement("minorChordsOff"),
+};
+
+const keyPresetButtons = {
+  normal: requireElement("normalKeys"),
+  white: requireElement("whiteKeys"),
+  black: requireElement("blackKeys"),
+  sharps: requireElement("sharpKeys"),
+  flats: requireElement("flatKeys"),
+  none: requireElement("noKeys"),
+  all: requireElement("allKeys"),
+};
+
+const optionsPanels = {
+  tabKeys: requireElement("keysOptions"),
+  tabDisplay: requireElement("displayOptions"),
+  tabMidi: requireElement("midiOptions"),
+  tabSpacedRep: requireElement("spacedRepOptions"),
+  tabEar: requireElement("earOptions"),
+  tabVoicings: requireElement("voicingsOptions"),
+};
+
+const modeSections = {
+  chordOptions: requireElement("chordOptions"),
+  progressionOptions: requireElement("progressionOptions"),
+  degreesOptions: requireElement("degreesOptions"),
+  scalesOptions: requireElement("scalesOptions"),
+  jazzOptions: requireElement("jazzOptions"),
+};
+
+const jazzBrickButtons = {
+  basic: requireElement("btnJazzBricksBasic"),
+  intermediate: requireElement("btnJazzBricksIntermediate"),
+  turnarounds: requireElement("btnJazzBricksTurnarounds"),
+  metabricks: requireElement("btnJazzBricksMetabricks"),
+  dropbacks: requireElement("btnJazzBricksDropbacks"),
+  all: requireElement("btnJazzBricksAll"),
+  none: requireElement("btnJazzBricksNone"),
+};
+
+const degreeCheckboxes = Array.from(
+  document.querySelectorAll("#degreesOptions input[type='checkbox']"),
+).reduce((acc, el) => {
+  acc[el.id] = el;
+  return acc;
+}, {});
+
+window.domElements = {
+  hideProgressionChordNames: requireElement("hideProgressionChordNames"),
+  hideProgressionChordNumerals: requireElement("hideProgressionChordNumerals"),
+  progressionOptions: requireElement("progressionOptions"),
+  progressionSelect: requireElement("progressionSelect"),
+  flowSelect: requireElement("flowSelect"),
+  currentKey: requireElement("currentKey"),
+  progressionDisplay: requireElement("progressionDisplay"),
+  cadenceDisplay: requireElement("cadenceDisplay"),
+  chordDisplay: requireElement("chordDisplay"),
+  cntChordsCorrect: requireElement("cntChordsCorrect"),
+  cntProgsCorrect: requireElement("cntProgsCorrect"),
+  cntScalesCorrect: requireElement("cntScalesCorrect"),
+  cntDegreesCorrect: requireElement("cntDegreesCorrect"),
+  cntBricksCorrect: requireElement("cntBricksCorrect"),
+  cntChordsIncorrect: requireElement("cntChordsIncorrect"),
+  cntProgsIncorrect: requireElement("cntProgsIncorrect"),
+  cntScalesIncorrect: requireElement("cntScalesIncorrect"),
+  cntDegreesIncorrect: requireElement("cntDegreesIncorrect"),
+  cntBricksIncorrect: requireElement("cntBricksIncorrect"),
+  resetStatsButton: requireElement("btnResetStats"),
+  optionsPanels,
+  modeSections,
+  jazzBrickButtons,
+  degreeCheckboxes,
+  piano: requireElement("piano"),
+  showKeyboardToggle: requireElement("showKeyboard"),
+  skipButton: requireElement("skip"),
+  playAnswerButton: requireElement("playAnswer"),
+  spacedRepClearButton: requireElement("btnSpacedRepClear"),
+  optionsTabKeys: requireElement("tabKeys"),
+  enableSpacedRepetition: requireElement("enableSpacedRepetition"),
+  spacedRepThreshold: requireElement("spacedRepThreshold"),
+  randomizeSpellings: requireElement("randomizeSpellings"),
+  highlightCorrectKeys: requireElement("highlightCorrectKeys"),
+  spacedRepList: requireElement("spacedRepList"),
+  customProgressionInput: requireElement("customProgression"),
+  randomProgressionCount: requireElement("randomProgression"),
+  sendMidiNotes: requireElement("sendMidiNotes"),
+  midiStatusText: requireElement("midiStatusText"),
+  midiInputs: requireElement("midiInputs"),
+  midiOutputs: requireElement("midiOutputs"),
+  scalesButtons: requireElement("scalesButtons"),
+  scalesSelected: requireElement("scalesSelected"),
+  scaleCheckboxes: {},
+  chordCheckboxes,
+  chordToggleButtons,
+  keyCheckboxes,
+  keyPresetButtons,
+};
+
 const chordStructures = {
   "": [0, 4, 7], // Major
   m: [0, 3, 7], // Minor
