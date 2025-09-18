@@ -210,6 +210,45 @@ function handleKeyReleased(midiKey) {
   if (keyElement) keyElement.classList.remove("correct", "incorrect");
 }
 
+function incrementTextContent(element) {
+  if (!element) return;
+  const current = parseInt(element.textContent, 10);
+  const base = Number.isNaN(current) ? 0 : current;
+  element.textContent = String(base + 1);
+}
+
+function updateResultCounters({
+  wasIncorrect,
+  skipCorrect = false,
+  correctElement,
+  incorrectElement,
+}) {
+  if (wasIncorrect) {
+    incrementTextContent(incorrectElement);
+  } else if (!skipCorrect) {
+    incrementTextContent(correctElement);
+  }
+}
+
+function recordChordCompletion() {
+  spacedRepHandleResult("chord", currentChordInternalName, isIncorrect);
+  updateResultCounters({
+    wasIncorrect: isIncorrect,
+    correctElement: cntChordsCorrect,
+    incorrectElement: cntChordsIncorrect,
+  });
+  isIncorrect = false;
+}
+
+function recordDegreeCompletion() {
+  updateResultCounters({
+    wasIncorrect: isIncorrect,
+    correctElement: cntDegreesCorrect,
+    incorrectElement: cntDegreesIncorrect,
+  });
+  isIncorrect = false;
+}
+
 function handleMidiMessage(midiMessage) {
   let pressedNotes = midiMessage.data;
   let velocity = pressedNotes[2];
@@ -336,15 +375,7 @@ function checkChord() {
       document.getElementById("chordDisplay").classList.remove("incorrect");
       document.getElementById("chordDisplay").classList.add("correct");
       if (modeIsChords()) {
-        spacedRepHandleResult("chord", currentChordInternalName, isIncorrect);
-        if (isIncorrect) {
-          cntChordsIncorrect.textContent =
-            parseInt(cntChordsIncorrect.textContent) + 1;
-        } else {
-          cntChordsCorrect.textContent =
-            parseInt(cntChordsCorrect.textContent) + 1;
-        }
-        isIncorrect = false;
+        recordChordCompletion();
       }
       clearTimeout(highlightTimer);
       highlightCorrectKeys();
@@ -373,15 +404,7 @@ function checkChord() {
       document.getElementById("chordDisplay").classList.remove("incorrect");
       document.getElementById("chordDisplay").classList.add("correct");
       if (modeIsChords()) {
-        spacedRepHandleResult("chord", currentChordInternalName, isIncorrect);
-        if (isIncorrect) {
-          cntChordsIncorrect.textContent =
-            parseInt(cntChordsIncorrect.textContent) + 1;
-        } else {
-          cntChordsCorrect.textContent =
-            parseInt(cntChordsCorrect.textContent) + 1;
-        }
-        isIncorrect = false;
+        recordChordCompletion();
       }
       clearTimeout(highlightTimer);
       highlightCorrectKeys();
@@ -402,27 +425,9 @@ function checkChord() {
     document.getElementById("chordDisplay").classList.add("correct");
 
     if (modeIsChords()) {
-      spacedRepHandleResult("chord", currentChordInternalName, isIncorrect);
-
-      if (isIncorrect) {
-        cntChordsIncorrect.textContent =
-          parseInt(cntChordsIncorrect.textContent) + 1;
-      } else {
-        cntChordsCorrect.textContent =
-          parseInt(cntChordsCorrect.textContent) + 1;
-      }
-
-      isIncorrect = false;
+      recordChordCompletion();
     } else if (modeIsDegrees()) {
-      if (isIncorrect) {
-        cntDegreesIncorrect.textContent =
-          parseInt(cntDegreesIncorrect.textContent) + 1;
-      } else {
-        cntDegreesCorrect.textContent =
-          parseInt(cntDegreesCorrect.textContent) + 1;
-      }
-
-      isIncorrect = false;
+      recordDegreeCompletion();
     }
 
     clearTimeout(highlightTimer);
@@ -669,31 +674,28 @@ function nextChord(skip = false) {
       currentIndex >= (currentProgression ? currentProgression.length : 0)
     ) {
       if (modeIsProgressions()) {
-        if (isIncorrect) {
-          cntProgsIncorrect.textContent =
-            parseInt(cntProgsIncorrect.textContent) + 1;
-        } else if (!skip) {
-          cntProgsCorrect.textContent =
-            parseInt(cntProgsCorrect.textContent) + 1;
-        }
+        updateResultCounters({
+          wasIncorrect: isIncorrect,
+          skipCorrect: skip,
+          correctElement: cntProgsCorrect,
+          incorrectElement: cntProgsIncorrect,
+        });
       } else if (modeIsJazz()) {
         // Handle Jazz Brick spaced repetition using unified queue
         spacedRepHandleResult("brick", selectedProgression, isIncorrect);
-        if (isIncorrect) {
-          cntBricksIncorrect.textContent =
-            parseInt(cntBricksIncorrect.textContent) + 1;
-        } else if (!skip) {
-          cntBricksCorrect.textContent =
-            parseInt(cntBricksCorrect.textContent) + 1;
-        }
+        updateResultCounters({
+          wasIncorrect: isIncorrect,
+          skipCorrect: skip,
+          correctElement: cntBricksCorrect,
+          incorrectElement: cntBricksIncorrect,
+        });
       } else if (modeIsScales()) {
-        if (isIncorrect) {
-          cntScalesIncorrect.textContent =
-            parseInt(cntScalesIncorrect.textContent) + 1;
-        } else if (!skip) {
-          cntScalesCorrect.textContent =
-            parseInt(cntScalesCorrect.textContent) + 1;
-        }
+        updateResultCounters({
+          wasIncorrect: isIncorrect,
+          skipCorrect: skip,
+          correctElement: cntScalesCorrect,
+          incorrectElement: cntScalesIncorrect,
+        });
       }
 
       isIncorrect = false;
