@@ -46,7 +46,7 @@ p {
   font-size: 24px;
 }
 
-#piano {
+#panelPiano {
   width: 1050px;
   height: 240px; /* Adjusted height */
   margin: 20px auto;
@@ -144,12 +144,12 @@ label {
 }
 
 /* Style for the key checkboxes to align in a row */
-#keyOptions {
+#panelKeyChecklist {
   flex-wrap: wrap;
   gap: 10px; /* Add some gap between checkbox-label pairs */
 }
 
-#presetButtons {
+#panelKeyPresets {
   justify-content: space-between;
   flex-wrap: wrap;
   margin-bottom: 15px;
@@ -174,7 +174,7 @@ button:active {
   transform: scale(0.95);
 }
 
-#chordTable button {
+#tableChordSelections button {
   width: 80%;
 }
 
@@ -202,11 +202,11 @@ details[open] summary {
   border-bottom: 1px solid #aaa;
 }
 
-#chordOptions label {
+#panelModeChords label {
   margin-bottom: 10px;
 }
 
-#chordOptions input[type="checkbox"] {
+#panelModeChords input[type="checkbox"] {
   margin-right: 5px;
 }
 

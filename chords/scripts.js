@@ -25,8 +25,6 @@ let highlightTimer;
 let spacedQueueAll = [];
 let scheduledRepeat = null; // { kind, index }
 
-const dom = window.domElements;
-
 function isSpacedRepetitionEnabled() {
   return dom.enableSpacedRepetition.checked;
 }

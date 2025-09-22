@@ -75,10 +75,10 @@ function enforceVoicingChordConstraints() {
     if (!anyChecked) {
       // Sensible defaults: dominant, minor, major, half-diminished 7ths
       [
-        "seventhChord",
-        "minorSeventhChord",
-        "majorSeventhChord",
-        "halfDiminishedSeventhChord",
+        "chkChordSeventh",
+        "chkChordMinorSeventh",
+        "chkChordMajorSeventh",
+        "chkChordHalfDiminishedSeventh",
       ].forEach((id) => {
         dom.chordCheckboxes[id].checked = true;
       });
@@ -386,7 +386,7 @@ function initScales() {
 }
 
 function initJazzBricks() {
-  const tbody = document.querySelector("#jazzBricks tbody");
+  const tbody = document.querySelector("#tableJazzBricks tbody");
 
   jazzCadences.forEach((cadence) => {
     const tr = document.createElement("tr");
