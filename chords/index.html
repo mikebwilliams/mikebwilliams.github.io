@@ -314,8 +314,7 @@
               type="number"
               id="inputSpacedRepThreshold"
               value="3"
-              min="1"
-              style="width: 3em" /></label
+              min="1" /></label
           ><br />
           <div id="panelSpacedRepListContainer">
             <h4>Failed Items</h4>
@@ -678,52 +677,65 @@
           </label>
 
           <div id="panelModeDegrees">
-            <table>
-              <tr>
-                <td><label>Random Intervals</label></td>
-                <td>
-                  <label><input type="checkbox" id="I" checked /> I</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="BII" /> ♭II</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="II" checked /> II</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="BIII" /> ♭III</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="III" checked /> III</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="IV" checked /> IV</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="BV" /> ♭V</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="V" checked /> V</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="BVI" /> ♭VI</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="VI" checked /> VI</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="BVII" /> ♭VII</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="VII" checked /> VII</label>
-                </td>
-                <td>
-                  <label
-                    ><input type="checkbox" id="VIII" checked /> VIII</label
-                  >
-                </td>
-              </tr>
-            </table>
+            <p class="intervalTitle">Random Intervals</p>
+            <div class="intervalKeyboard">
+              <div class="intervalRow intervalRow--upper">
+                <label class="intervalKey intervalKey--black intervalCol-2">
+                  <input type="checkbox" id="BII" />
+                  <span>♭II</span>
+                </label>
+                <label class="intervalKey intervalKey--black intervalCol-3">
+                  <input type="checkbox" id="BIII" />
+                  <span>♭III</span>
+                </label>
+                <label class="intervalKey intervalKey--black intervalCol-5">
+                  <input type="checkbox" id="BV" />
+                  <span>♭V</span>
+                </label>
+                <label class="intervalKey intervalKey--black intervalCol-6">
+                  <input type="checkbox" id="BVI" />
+                  <span>♭VI</span>
+                </label>
+                <label class="intervalKey intervalKey--black intervalCol-7">
+                  <input type="checkbox" id="BVII" />
+                  <span>♭VII</span>
+                </label>
+              </div>
+              <div class="intervalRow intervalRow--lower">
+                <label class="intervalKey intervalKey--white">
+                  <input type="checkbox" id="I" checked />
+                  <span>I</span>
+                </label>
+                <label class="intervalKey intervalKey--white">
+                  <input type="checkbox" id="II" checked />
+                  <span>II</span>
+                </label>
+                <label class="intervalKey intervalKey--white">
+                  <input type="checkbox" id="III" checked />
+                  <span>III</span>
+                </label>
+                <label class="intervalKey intervalKey--white">
+                  <input type="checkbox" id="IV" checked />
+                  <span>IV</span>
+                </label>
+                <label class="intervalKey intervalKey--white">
+                  <input type="checkbox" id="V" checked />
+                  <span>V</span>
+                </label>
+                <label class="intervalKey intervalKey--white">
+                  <input type="checkbox" id="VI" checked />
+                  <span>VI</span>
+                </label>
+                <label class="intervalKey intervalKey--white">
+                  <input type="checkbox" id="VII" checked />
+                  <span>VII</span>
+                </label>
+                <label class="intervalKey intervalKey--white">
+                  <input type="checkbox" id="VIII" checked />
+                  <span>VIII</span>
+                </label>
+              </div>
+            </div>
           </div>
         </div>
 

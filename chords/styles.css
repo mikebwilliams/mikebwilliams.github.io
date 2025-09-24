@@ -202,6 +202,7 @@ main.page {
 .white {
   flex: 0 0 calc(70px * var(--piano-scale));
   position: relative;
+  background-color: #fdfdfd;
   background: linear-gradient(180deg, #fdfdfd, #d9d9d9 90%);
 }
 
@@ -210,7 +211,8 @@ main.page {
 }
 
 .black {
-  background: linear-gradient(180deg, #26262a, #050507 88%);
+  background-color: #050507;
+  background-image: linear-gradient(180deg, #26262a, #050507 88%);
   width: calc(40px * var(--piano-scale));
   height: calc(155px * var(--piano-scale));
   position: absolute;
@@ -500,6 +502,7 @@ input[type="textbox"] {
   border-radius: var(--radius-sm);
   padding: 0.45rem 0.65rem;
   font-size: 0.95rem;
+  min-width: 4.25rem;
   transition:
     border var(--transition),
     box-shadow var(--transition);
@@ -581,25 +584,25 @@ input[type="textbox"]:focus {
 }
 
 .intervalKeyboard {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  --interval-gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(15, minmax(0, 1fr));
+  column-gap: var(--interval-gap);
+  row-gap: 12px;
   max-width: 640px;
+  justify-items: stretch;
 }
 
 .intervalRow {
-  display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: 8px;
+  display: contents;
 }
 
-.intervalRow--upper {
-  align-items: end;
-  min-height: 72px;
+.intervalRow--upper .intervalKey {
+  grid-row: 1;
 }
 
-.intervalRow--lower {
-  align-items: stretch;
+.intervalRow--lower .intervalKey {
+  grid-row: 2;
 }
 
 .intervalKey {
@@ -618,6 +621,7 @@ input[type="textbox"]:focus {
     border var(--transition),
     box-shadow var(--transition);
   text-align: center;
+  min-height: 108px;
 }
 
 .intervalKey:hover {
@@ -642,7 +646,6 @@ input[type="textbox"]:focus {
     rgba(255, 255, 255, 0.04)
   );
   color: var(--text-primary);
-  height: 120px;
   justify-content: flex-end;
   padding-bottom: 16px;
 }
@@ -654,30 +657,60 @@ input[type="textbox"]:focus {
     rgba(5, 7, 18, 0.92)
   );
   color: var(--text-primary);
-  height: 74px;
-  justify-self: center;
-  width: 72%;
+  justify-content: center;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-.intervalCol-2 {
+.intervalRow--upper .intervalKey:nth-child(1) {
   grid-column: 2;
 }
 
-.intervalCol-3 {
+.intervalRow--upper .intervalKey:nth-child(2) {
+  grid-column: 4;
+}
+
+.intervalRow--upper .intervalKey:nth-child(3) {
+  grid-column: 8;
+}
+
+.intervalRow--upper .intervalKey:nth-child(4) {
+  grid-column: 10;
+}
+
+.intervalRow--upper .intervalKey:nth-child(5) {
+  grid-column: 12;
+}
+
+.intervalRow--lower .intervalKey:nth-child(1) {
+  grid-column: 1;
+}
+
+.intervalRow--lower .intervalKey:nth-child(2) {
   grid-column: 3;
 }
 
-.intervalCol-5 {
+.intervalRow--lower .intervalKey:nth-child(3) {
   grid-column: 5;
 }
 
-.intervalCol-6 {
-  grid-column: 6;
+.intervalRow--lower .intervalKey:nth-child(4) {
+  grid-column: 7;
 }
 
-.intervalCol-7 {
-  grid-column: 7;
+.intervalRow--lower .intervalKey:nth-child(5) {
+  grid-column: 9;
+}
+
+.intervalRow--lower .intervalKey:nth-child(6) {
+  grid-column: 11;
+}
+
+.intervalRow--lower .intervalKey:nth-child(7) {
+  grid-column: 13;
+}
+
+.intervalRow--lower .intervalKey:nth-child(8) {
+  grid-column: 15;
 }
 
 .intervalKey input[type="checkbox"] {
@@ -686,20 +719,12 @@ input[type="textbox"]:focus {
 
 @media (max-width: 640px) {
   .intervalKeyboard {
+    --interval-gap: 6px;
     max-width: none;
   }
 
-  .intervalRow {
-    gap: 6px;
-  }
-
-  .intervalKey--white {
-    height: 104px;
-  }
-
-  .intervalKey--black {
-    height: 64px;
-    width: 80%;
+  .intervalKey {
+    min-height: 96px;
   }
 }
 
