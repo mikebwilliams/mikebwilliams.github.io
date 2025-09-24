@@ -45,37 +45,71 @@
       <div class="key black" data-note="70"></div>
     </div>
 
-    <div><button id="btnSkip">Skip</button></div>
-    <div><button id="btnPlayAnswer">Play Answer</button></div>
+    <div class="controlsRow">
+      <button id="btnSkip">Skip</button>
+      <button id="btnPlayAnswer">Play Answer</button>
+      <button id="btnStatsReset">Reset Stats</button>
+    </div>
 
-    <details open>
+    <details class="statsPanel" open>
       <summary>Stats</summary>
-      <table>
-        <tr>
-          <th>Chords</th>
-          <th>Progressions</th>
-          <th>Degrees</th>
-          <th>Scales</th>
-          <th>Bricks</th>
-        </tr>
-        <tr>
-          <td>Correct</td>
-          <td id="txtChordsCorrect">0</td>
-          <td id="txtProgressionsCorrect">0</td>
-          <td id="txtDegreesCorrect">0</td>
-          <td id="txtScalesCorrect">0</td>
-          <td id="txtBricksCorrect">0</td>
-        </tr>
-        <tr>
-          <td>Incorrect</td>
-          <td id="txtChordsIncorrect">0</td>
-          <td id="txtProgressionsIncorrect">0</td>
-          <td id="txtDegreesIncorrect">0</td>
-          <td id="txtScalesIncorrect">0</td>
-          <td id="txtBricksIncorrect">0</td>
-        </tr>
-      </table>
-      <button id="btnStatsReset">Reset</button>
+      <div class="statsGrid">
+        <div class="statCard">
+          <h4>Chords</h4>
+          <p>
+            <span class="statLabel">Correct</span
+            ><span id="txtChordsCorrect">0</span>
+          </p>
+          <p>
+            <span class="statLabel">Incorrect</span
+            ><span id="txtChordsIncorrect">0</span>
+          </p>
+        </div>
+        <div class="statCard">
+          <h4>Progressions</h4>
+          <p>
+            <span class="statLabel">Correct</span
+            ><span id="txtProgressionsCorrect">0</span>
+          </p>
+          <p>
+            <span class="statLabel">Incorrect</span
+            ><span id="txtProgressionsIncorrect">0</span>
+          </p>
+        </div>
+        <div class="statCard">
+          <h4>Degrees</h4>
+          <p>
+            <span class="statLabel">Correct</span
+            ><span id="txtDegreesCorrect">0</span>
+          </p>
+          <p>
+            <span class="statLabel">Incorrect</span
+            ><span id="txtDegreesIncorrect">0</span>
+          </p>
+        </div>
+        <div class="statCard">
+          <h4>Scales</h4>
+          <p>
+            <span class="statLabel">Correct</span
+            ><span id="txtScalesCorrect">0</span>
+          </p>
+          <p>
+            <span class="statLabel">Incorrect</span
+            ><span id="txtScalesIncorrect">0</span>
+          </p>
+        </div>
+        <div class="statCard">
+          <h4>Bricks</h4>
+          <p>
+            <span class="statLabel">Correct</span
+            ><span id="txtBricksCorrect">0</span>
+          </p>
+          <p>
+            <span class="statLabel">Incorrect</span
+            ><span id="txtBricksIncorrect">0</span>
+          </p>
+        </div>
+      </div>
     </details>
 
     <h3>Options</h3>
