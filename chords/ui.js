@@ -246,7 +246,7 @@ function applyModeVisibility(selectedTab) {
 
 function modeChange() {
   applyModeVisibility(getSelectedMode());
-  nextProgression();
+  resetFlow();
 }
 
 // Attach the handlers

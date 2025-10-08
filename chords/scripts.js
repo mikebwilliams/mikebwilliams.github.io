@@ -18,6 +18,81 @@ let keyIndex = 0;
 let keys = [];
 let selectedProgression = "";
 
+const DEFAULT_START_KEY = "C";
+
+function resolveStartValue(startKey) {
+  if (startKey && Object.prototype.hasOwnProperty.call(noteValues, startKey)) {
+    return noteValues[startKey];
+  }
+  return noteValues[DEFAULT_START_KEY];
+}
+
+function preferAccidentalFor(startKey, fallback) {
+  if (startKey && startKey.includes("b")) return "flat";
+  if (startKey && startKey.includes("#")) return "sharp";
+  return fallback;
+}
+
+function rotateSequenceToStart(sequence, startKey) {
+  if (!Array.isArray(sequence) || !sequence.length) return [];
+  if (!startKey) return sequence.slice();
+  let idx = sequence.indexOf(startKey);
+  if (idx < 0 && Object.prototype.hasOwnProperty.call(noteValues, startKey)) {
+    const target = noteValues[startKey];
+    idx = sequence.findIndex((name) => noteValues[name] === target);
+  }
+  if (idx <= 0) return sequence.slice();
+  return sequence.slice(idx).concat(sequence.slice(0, idx));
+}
+
+const flowPresetMap = {
+  circleOfFourths: (startKey) =>
+    rotateSequenceToStart(circleOfFourths, startKey),
+  circleOfFifths: (startKey) => rotateSequenceToStart(circleOfFifths, startKey),
+  ascendingWholeSteps: (startKey) =>
+    buildIntervalFlow(
+      resolveStartValue(startKey),
+      2,
+      preferAccidentalFor(startKey, "sharp"),
+      startKey,
+    ),
+  descendingWholeSteps: (startKey) =>
+    buildIntervalFlow(
+      resolveStartValue(startKey),
+      -2,
+      preferAccidentalFor(startKey, "flat"),
+      startKey,
+    ),
+  ascendingHalfSteps: (startKey) =>
+    buildIntervalFlow(
+      resolveStartValue(startKey),
+      1,
+      preferAccidentalFor(startKey, "sharp"),
+      startKey,
+    ),
+  descendingHalfSteps: (startKey) =>
+    buildIntervalFlow(
+      resolveStartValue(startKey),
+      -1,
+      preferAccidentalFor(startKey, "flat"),
+      startKey,
+    ),
+  ascendingMinorThirds: (startKey) =>
+    buildIntervalFlow(
+      resolveStartValue(startKey),
+      3,
+      preferAccidentalFor(startKey, "sharp"),
+      startKey,
+    ),
+  descendingMinorThirds: (startKey) =>
+    buildIntervalFlow(
+      resolveStartValue(startKey),
+      -3,
+      preferAccidentalFor(startKey, "flat"),
+      startKey,
+    ),
+};
+
 let highlightTimer;
 const DEFAULT_HIGHLIGHT_DELAY_MS = 3000;
 
@@ -610,33 +685,165 @@ function refreshMidiListeners() {
 
 function updateAvailableKeys() {
   const flow = dom.flowSelect.value;
+  const startKey = dom.flowStartSelect
+    ? dom.flowStartSelect.value || DEFAULT_START_KEY
+    : DEFAULT_START_KEY;
 
-  if (flow === "circleOfFourths") {
-    keys = circleOfFourths;
-  } else if (flow === "circleOfFifths") {
-    keys = circleOfFifths;
-  } else {
-    keys = Object.keys(noteValues).filter(
-      (root) => dom.keyCheckboxes[root].checked,
-    );
-    if (keys.length === 0) {
-      alert("Please select at least one root key!");
+  if (typeof flowPresetMap[flow] === "function") {
+    const generated = flowPresetMap[flow](startKey);
+    keys = Array.isArray(generated) ? generated.slice() : [];
+    if (!keys.length) {
+      alert("This flow does not have any keys to practice.");
       return null;
     }
+    return keys;
   }
+
+  keys = Object.keys(noteValues).filter(
+    (root) => dom.keyCheckboxes[root].checked,
+  );
+  if (keys.length === 0) {
+    alert("Please select at least one root key!");
+    return null;
+  }
+  return keys;
 }
 
 function nextKey() {
-  updateAvailableKeys();
+  const available = updateAvailableKeys();
+  if (!available || !available.length) return;
   const flow = dom.flowSelect.value;
 
-  if (flow === "circleOfFourths" || flow === "circleOfFifths") {
+  if (typeof flowPresetMap[flow] === "function") {
     keyIndex++;
   } else {
     keyIndex = Math.floor(Math.random() * keys.length);
   }
 
   keyIndex %= keys.length;
+}
+
+function loadCurrentProgressionChord() {
+  if (!Array.isArray(currentProgression) || !currentProgression.length) {
+    setRandomChord();
+    return;
+  }
+
+  if (!keys.length) {
+    const available = updateAvailableKeys();
+    if (!available || !available.length) {
+      setRandomChord();
+      return;
+    }
+  }
+
+  if (currentIndex < 0) currentIndex = 0;
+  if (currentIndex >= currentProgression.length) {
+    currentIndex = currentProgression.length - 1;
+  }
+
+  const entry = currentProgression[currentIndex];
+  if (!entry) {
+    setRandomChord();
+    return;
+  }
+
+  if (isIntervalChord(entry)) {
+    [currentChordName, currentChordNotes] = getIntervalChordNotesAndName(
+      keys[keyIndex],
+      entry,
+    );
+    currentChordNotes = applySelectedVoicing(currentChordNotes);
+    return;
+  }
+
+  if (isNamedChord(entry)) {
+    currentChordName = generateChordName(entry, "");
+    currentChordNotes = generateNotesFromChordName(entry);
+    currentChordInternalName = entry;
+    currentChordNotes = applySelectedVoicing(currentChordNotes);
+    return;
+  }
+
+  setRandomChord();
+}
+
+function resetFlow() {
+  clearTimeout(highlightTimer);
+  highlightTimer = null;
+  awaitingKeyRelease = false;
+  isIncorrect = false;
+  activeKeys = [];
+
+  if (dom.chordDisplay) {
+    dom.chordDisplay.classList.remove("correct");
+    dom.chordDisplay.classList.remove("incorrect");
+  }
+
+  const available = updateAvailableKeys();
+  if (!available || !available.length) return;
+
+  const flow = dom.flowSelect.value;
+  const startKey = dom.flowStartSelect
+    ? dom.flowStartSelect.value || DEFAULT_START_KEY
+    : DEFAULT_START_KEY;
+
+  if (typeof flowPresetMap[flow] === "function") {
+    keyIndex = 0;
+  } else {
+    let startIndex = available.indexOf(startKey);
+    if (startIndex < 0) startIndex = 0;
+    keyIndex = startIndex;
+  }
+
+  if (!Number.isFinite(keyIndex) || keyIndex < 0 || keyIndex >= keys.length) {
+    keyIndex = 0;
+  }
+
+  currentIndex = 0;
+  currentProgression = [];
+  currentProgressionName = "";
+  selectedProgression = "";
+  scheduledRepeat = null;
+  isIncorrect = false;
+
+  if (
+    modeIsProgressions() ||
+    modeIsScales() ||
+    modeIsDegrees() ||
+    modeIsJazz()
+  ) {
+    generateProgression();
+    loadCurrentProgressionChord();
+  } else {
+    setRandomChord();
+  }
+
+  highlightCorrectKeys();
+  updateDisplay();
+}
+
+function populateStartingKeyOptions() {
+  const select = dom.flowStartSelect;
+  if (!select || typeof normalNotes === "undefined") return;
+
+  const previous = select.value;
+  const seen = new Set();
+  select.innerHTML = "";
+
+  normalNotes.forEach((note) => {
+    if (seen.has(note)) return;
+    seen.add(note);
+    const option = document.createElement("option");
+    option.value = note;
+    option.textContent = note;
+    select.appendChild(option);
+  });
+
+  const preferred =
+    previous && seen.has(previous) ? previous : DEFAULT_START_KEY;
+  if (seen.has(preferred)) select.value = preferred;
+  else if (select.options.length) select.value = select.options[0].value;
 }
 
 function nextChord(skip = false) {
@@ -692,32 +899,7 @@ function nextChord(skip = false) {
       }
     }
 
-    // Safety: guard against missing progression entries
-    if (Array.isArray(currentProgression) && currentProgression[currentIndex]) {
-      if (isIntervalChord(currentProgression[currentIndex])) {
-        [currentChordName, currentChordNotes] = getIntervalChordNotesAndName(
-          keys[keyIndex],
-          currentProgression[currentIndex],
-        );
-        // Voicing for progressions/jazz
-        currentChordNotes = applySelectedVoicing(currentChordNotes);
-      } else if (isNamedChord(currentProgression[currentIndex])) {
-        currentChordName = generateChordName(
-          currentProgression[currentIndex],
-          "",
-        );
-        currentChordNotes = generateNotesFromChordName(
-          currentProgression[currentIndex],
-        );
-        currentChordInternalName = currentProgression[currentIndex];
-        currentChordNotes = applySelectedVoicing(currentChordNotes);
-      } else {
-        setRandomChord();
-      }
-    } else {
-      // Fallback for unexpected undefined progression
-      setRandomChord();
-    }
+    loadCurrentProgressionChord();
   } else {
     nextKey();
     setRandomChord();
@@ -1049,12 +1231,15 @@ function nextProgression() {
   nextChord(true);
 }
 
-dom.flowSelect.addEventListener("change", generateProgression);
+dom.flowSelect.addEventListener("change", resetFlow);
+if (dom.flowStartSelect) {
+  dom.flowStartSelect.addEventListener("change", resetFlow);
+}
+if (dom.flowResetButton) {
+  dom.flowResetButton.addEventListener("click", resetFlow);
+}
 
-nextKey();
-setRandomChord();
-highlightCorrectKeys();
-updateDisplay();
+populateStartingKeyOptions();
 modeChange();
 // Apply shell voicing according to selected mode (all chord-based modes)
 function applyShellVoicing(notes) {

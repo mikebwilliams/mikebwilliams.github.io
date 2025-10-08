@@ -80,6 +80,41 @@ const valuesToNotesFlat = {
   11: "B",
 };
 
+function gcd(a, b) {
+  let x = Math.abs(a);
+  let y = Math.abs(b);
+
+  while (y !== 0) {
+    const temp = y;
+    y = x % y;
+    x = temp;
+  }
+
+  return x === 0 ? 1 : x;
+}
+
+function buildIntervalFlow(startValue, step, prefer = "sharp", startLabel) {
+  const map = prefer === "flat" ? valuesToNotesFlat : valuesToNotesSharp;
+  const normalizedStart = ((startValue % 12) + 12) % 12;
+  const stepSize = Math.abs(step) % 12;
+
+  if (stepSize === 0) {
+    return [startLabel || map[normalizedStart]];
+  }
+
+  const cycleLength = 12 / gcd(12, stepSize);
+  const sequence = [];
+  let current = normalizedStart;
+
+  for (let i = 0; i < cycleLength; i++) {
+    if (i === 0 && startLabel) sequence.push(startLabel);
+    else sequence.push(map[current]);
+    current = (((current + step) % 12) + 12) % 12;
+  }
+
+  return sequence;
+}
+
 const stepsToNames = {
   0: {
     interval: "Unison",
@@ -203,7 +238,6 @@ const circleOfFifths = [
   "A#",
   "F",
 ];
-
 const majorScaleIntervals = [0, 2, 4, 5, 7, 9, 11];
 const minorScaleIntervals = [0, 2, 3, 5, 7, 8, 10];
 
@@ -386,6 +420,8 @@ window.domElements = {
   progressionOptions: requireElement("panelModeProgressions"),
   progressionSelect: requireElement("selectProgression"),
   flowSelect: requireElement("selectFlow"),
+  flowResetButton: requireElement("btnFlowReset"),
+  flowStartSelect: requireElement("selectFlowStart"),
   currentKey: requireElement("txtCurrentKey"),
   progressionDisplay: requireElement("txtProgression"),
   cadenceDisplay: requireElement("txtCadence"),

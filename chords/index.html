@@ -172,15 +172,30 @@
 
         <div class="tabContent" id="panelOptionsKeys">
           <div id="panelFlowOptions">
-            Flow:
+            <label for="selectFlow">Flow:</label>
             <select id="selectFlow">
               <option value="random">Random</option>
               <option value="circleOfFourths">Circle of Fourths</option>
               <option value="circleOfFifths">Circle of Fifths</option>
+              <option value="ascendingWholeSteps">Ascending Whole Steps</option>
+              <option value="descendingWholeSteps">
+                Descending Whole Steps
+              </option>
+              <option value="ascendingHalfSteps">Ascending Half Steps</option>
+              <option value="descendingHalfSteps">Descending Half Steps</option>
+              <option value="ascendingMinorThirds">
+                Ascending Minor Thirds
+              </option>
+              <option value="descendingMinorThirds">
+                Descending Minor Thirds
+              </option>
             </select>
-            <br />
-            <br />
+            <label for="selectFlowStart">Starting Key:</label>
+            <select id="selectFlowStart"></select>
+            <button id="btnFlowReset" type="button">Reset Flow</button>
           </div>
+          <hr />
+          <br />
           <div id="panelKeyPresets">
             <button id="btnKeysNormal">Normal</button>
             <button id="btnKeysWhite">White</button>

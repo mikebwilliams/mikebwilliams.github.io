@@ -485,6 +485,24 @@ label {
   margin: 6px 14px 6px 0;
 }
 
+#panelFlowOptions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+#panelFlowOptions label {
+  margin: 0;
+  gap: 6px;
+}
+
+#panelFlowOptions select,
+#panelFlowOptions button {
+  margin: 0;
+}
+
 input[type="checkbox"],
 input[type="radio"] {
   width: 18px;
