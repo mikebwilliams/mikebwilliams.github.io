@@ -415,6 +415,7 @@ window.domElements = {
   spacedRepThreshold: requireElement("inputSpacedRepThreshold"),
   randomizeSpellings: requireElement("chkDisplayRandomizeSpellings"),
   highlightCorrectKeys: requireElement("chkDisplayHighlightKeys"),
+  highlightDelay: requireElement("inputDisplayHighlightDelay"),
   spacedRepList: requireElement("panelSpacedRepList"),
   customProgressionInput: requireElement("inputProgressionCustom"),
   randomProgressionCount: requireElement("inputProgressionRandomCount"),

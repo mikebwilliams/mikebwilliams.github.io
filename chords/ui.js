@@ -304,6 +304,14 @@ dom.showKeyboardToggle.addEventListener("click", () => {
   dom.piano.style.display = dom.showKeyboardToggle.checked ? "block" : "none";
 });
 
+dom.highlightCorrectKeys.addEventListener("change", () => {
+  highlightCorrectKeys();
+});
+
+dom.highlightDelay.addEventListener("input", () => {
+  highlightCorrectKeys();
+});
+
 function generateScalesTable() {
   const container = dom.scalesSelected;
 

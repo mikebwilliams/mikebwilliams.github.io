@@ -283,10 +283,19 @@
             ><input type="checkbox" id="chkDisplayShowKeyboard" checked />Show
             Keyboard</label
           ><br />
-          <label
-            ><input type="checkbox" id="chkDisplayHighlightKeys" />Show Correct
-            Keys After 3s</label
-          ><br />
+          <label>
+            <input type="checkbox" id="chkDisplayHighlightKeys" />Show Correct
+            Keys After
+            <input
+              type="number"
+              id="inputDisplayHighlightDelay"
+              min="0"
+              step="0.1"
+              value="3"
+            />
+            s
+          </label>
+          <br />
           <label
             ><input type="checkbox" id="chkDisplayHideProgressionNames" />Hide
             Progression Chord Names</label

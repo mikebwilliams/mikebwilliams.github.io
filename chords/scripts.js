@@ -19,6 +19,7 @@ let keys = [];
 let selectedProgression = "";
 
 let highlightTimer;
+const DEFAULT_HIGHLIGHT_DELAY_MS = 3000;
 
 /* Unified Spaced Repetition queue */
 // Entry: { kind: 'chord'|'brick', key: string, interval: number, counter: number, successStreak: number }
@@ -390,23 +391,53 @@ function checkChord() {
   }
 }
 
+function getHighlightDelayMs() {
+  if (!dom.highlightDelay) return DEFAULT_HIGHLIGHT_DELAY_MS;
+  const rawSeconds = parseFloat(dom.highlightDelay.value);
+  if (Number.isNaN(rawSeconds)) {
+    dom.highlightDelay.value = DEFAULT_HIGHLIGHT_DELAY_MS / 1000;
+    return DEFAULT_HIGHLIGHT_DELAY_MS;
+  }
+  const clamped = Math.max(0, rawSeconds);
+  if (clamped !== rawSeconds) {
+    dom.highlightDelay.value = clamped;
+  }
+  return clamped * 1000;
+}
+
 function highlightCorrectKeys() {
+  clearTimeout(highlightTimer);
+
   // Clear previous highlights
   document
     .querySelectorAll(".key.highlight")
     .forEach((key) => key.classList.remove("highlight"));
 
-  highlightTimer = setTimeout(() => {
-    // Highlight the keys in the current chord if box is checked
+  if (!dom.highlightCorrectKeys.checked) {
+    return;
+  }
+
+  const applyHighlight = () => {
     if (!dom.highlightCorrectKeys.checked) {
       return;
     }
 
     currentChordNotes.forEach((note) => {
-      let keyElement = document.querySelector(`.key[data-note="${note + 48}"]`);
+      const keyElement = document.querySelector(
+        `.key[data-note="${note + 48}"]`,
+      );
       if (keyElement) keyElement.classList.add("highlight");
     });
-  }, 3000); // 3 seconds
+  };
+
+  const delay = getHighlightDelayMs();
+  if (delay <= 0) {
+    applyHighlight();
+    highlightTimer = null;
+    return;
+  }
+
+  highlightTimer = setTimeout(applyHighlight, delay);
 }
 
 function onMIDISuccess(midiAccessResult) {
@@ -696,6 +727,7 @@ function nextChord(skip = false) {
     }
   }
 
+  highlightCorrectKeys();
   updateDisplay();
 }
 
