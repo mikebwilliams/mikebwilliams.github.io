@@ -741,19 +741,25 @@ function computeShellVoicing(notes, chordInternalName, mode) {
     return { notes: notes.slice(), alternates: null };
   }
 
+  const { chordType } = splitChordInternalName(chordInternalName || "");
+  const isPureSixChord = /^m?6$/.test(chordType);
   const root = notes[0];
   const thirdCandidate = notes.length > 1 ? notes[1] : undefined;
   let seventhCandidate = notes.length > 3 ? notes[3] : undefined;
+  let sixthCandidate;
 
   if (typeof seventhCandidate === "number") {
     const intervalToFourth = normalizePitchClass(seventhCandidate - root);
-    const { chordType } = splitChordInternalName(chordInternalName || "");
-    const isPureSixChord = /^m?6$/.test(chordType);
-    const qualifiesAsSeventh =
-      intervalToFourth === 10 ||
-      intervalToFourth === 11 ||
-      (intervalToFourth === 9 && !isPureSixChord);
-    if (!qualifiesAsSeventh) seventhCandidate = undefined;
+    if (intervalToFourth === 9 && isPureSixChord) {
+      sixthCandidate = seventhCandidate;
+      seventhCandidate = undefined;
+    } else {
+      const qualifiesAsSeventh =
+        intervalToFourth === 10 ||
+        intervalToFourth === 11 ||
+        intervalToFourth === 9;
+      if (!qualifiesAsSeventh) seventhCandidate = undefined;
+    }
   }
 
   if (mode === "r37") {
@@ -773,6 +779,7 @@ function computeShellVoicing(notes, chordInternalName, mode) {
     const combos = [];
     if (thirdCandidate !== undefined) combos.push([root, thirdCandidate]);
     if (seventhCandidate !== undefined) combos.push([root, seventhCandidate]);
+    if (sixthCandidate !== undefined) combos.push([root, sixthCandidate]);
 
     if (combos.length === 0) {
       return { notes: [root], alternates: null };
@@ -782,8 +789,15 @@ function computeShellVoicing(notes, chordInternalName, mode) {
     }
 
     const result = [root];
-    if (!result.includes(thirdCandidate)) result.push(thirdCandidate);
-    if (!result.includes(seventhCandidate)) result.push(seventhCandidate);
+    if (thirdCandidate !== undefined && !result.includes(thirdCandidate)) {
+      result.push(thirdCandidate);
+    }
+    if (seventhCandidate !== undefined && !result.includes(seventhCandidate)) {
+      result.push(seventhCandidate);
+    }
+    if (sixthCandidate !== undefined && !result.includes(sixthCandidate)) {
+      result.push(sixthCandidate);
+    }
     return { notes: result, alternates: combos };
   }
 

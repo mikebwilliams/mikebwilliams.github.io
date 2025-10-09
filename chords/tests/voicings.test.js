@@ -146,9 +146,9 @@ seventhChordTypes.forEach((suffix) => {
 });
 
 sixthChordTypes.forEach((suffix) => {
-  const { third } = expectedUpperIntervals[suffix];
+  const { third, seventh } = expectedUpperIntervals[suffix];
   test(`shell r3or7 handles ${suffix}`, () => {
-    expectR3Or7(suffix, third);
+    expectR3Or7(suffix, third, seventh);
   });
 });
 
