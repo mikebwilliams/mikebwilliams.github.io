@@ -2,8 +2,15 @@ const assert = require("assert");
 const data = require("../data.js");
 
 const { voicingUtils, noteValues } = data;
-const { buildIntervalFlow, buildAscendingMidiSequence, buildVoicingOrders } =
-  voicingUtils;
+const {
+  buildIntervalFlow,
+  buildAscendingMidiSequence,
+  buildVoicingOrders,
+  matchesVoicingOrderSorted,
+  computeShellVoicing,
+  generateNotesFromChordName,
+  normalizePitchClass,
+} = voicingUtils;
 
 const tests = [];
 function test(name, fn) {
@@ -104,6 +111,116 @@ test("buildVoicingOrders yields four-note orders when requested", () => {
     orders.orderB,
     [intervals.seventh, intervals.third, intervals.fifth, intervals.ninth],
     "orderB should shift to seventh-first ordering for four-note voicings",
+  );
+});
+
+test("matchesVoicingOrderSorted validates a correctly spaced type A voicing", () => {
+  const order = [4, 10, 2, 7];
+  const ascending = buildAscendingMidiSequence(order);
+  assert(
+    matchesVoicingOrderSorted(ascending, order),
+    "matching ascending voicing should pass for orderA",
+  );
+});
+
+test("matchesVoicingOrderSorted rejects mismatched lengths", () => {
+  const order = [4, 10, 2, 7];
+  const ascending = buildAscendingMidiSequence(order);
+  assert.strictEqual(
+    matchesVoicingOrderSorted(ascending.slice(0, 3), order),
+    false,
+    "shorter ascending list should fail",
+  );
+});
+
+test("matchesVoicingOrderSorted enforces proper spacing for repeated pitch classes", () => {
+  const order = [0, 0, 0];
+  const valid = buildAscendingMidiSequence(order);
+  assert(
+    matchesVoicingOrderSorted(valid, order),
+    "stacked voicing should pass when octaves ascend",
+  );
+
+  const invalid = [48, 57, 60]; // middle tone too low for the next C
+  assert.strictEqual(
+    matchesVoicingOrderSorted(invalid, order),
+    false,
+    "insufficient spacing between repeated pitch classes should fail",
+  );
+});
+
+function normalizeNotes(notes) {
+  return notes.map((n) => normalizePitchClass(n));
+}
+
+test("computeShellVoicing promotes sixths in pure 6 chords for r3or7 mode", () => {
+  const base = generateNotesFromChordName("C6");
+  const result = computeShellVoicing(base, "C6", "r3or7");
+  assertSequenceEqual(
+    normalizeNotes(result.notes),
+    [0, 4, 9],
+    "result should include root, third, and sixth pitch classes",
+  );
+  assertSequenceEqual(
+    result.alternates.map(normalizeNotes),
+    [
+      [0, 4],
+      [0, 9],
+    ],
+    "alternates should include both R-3 and R-6 pairs",
+  );
+});
+
+test("computeShellVoicing keeps sixths out of r37 mode", () => {
+  const base = generateNotesFromChordName("C6");
+  const result = computeShellVoicing(base, "C6", "r37");
+  assertSequenceEqual(
+    normalizeNotes(result.notes),
+    [0, 4],
+    "r37 mode should ignore the sixth when no seventh is present",
+  );
+});
+
+test("computeShellVoicing handles minor sixth chords", () => {
+  const base = generateNotesFromChordName("Cm6");
+  const result = computeShellVoicing(base, "Cm6", "r3or7");
+  assertSequenceEqual(
+    normalizeNotes(result.notes),
+    [0, 3, 9],
+    "minor sixth shell should include the minor third and sixth",
+  );
+  assertSequenceEqual(
+    result.alternates.map(normalizeNotes),
+    [
+      [0, 3],
+      [0, 9],
+    ],
+    "minor sixth alternates should provide R-3 and R-6",
+  );
+});
+
+test("computeShellVoicing respects sus chords in r3or7 mode", () => {
+  const base = generateNotesFromChordName("Csus4");
+  const result = computeShellVoicing(base, "Csus4", "r3or7");
+  assertSequenceEqual(
+    normalizeNotes(result.notes),
+    [0, 5],
+    "sus voicing should include root and suspension tone",
+  );
+  assertSequenceEqual(
+    result.alternates.map(normalizeNotes),
+    [[0, 5]],
+    "sus voicing should expose a single alternate pair",
+  );
+});
+
+test("computeShellVoicing 37 mode preserves third when seventh absent", () => {
+  const base = generateNotesFromChordName("C6");
+  const result = computeShellVoicing(base, "C6", "37");
+  assertSequenceEqual(
+    normalizeNotes(result.notes),
+    [4],
+    "37 mode should fall back to the third alone when no seventh present",
   );
 });
 
