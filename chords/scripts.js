@@ -17,6 +17,7 @@ let currentIndex = 0;
 let keyIndex = 0;
 let keys = [];
 let selectedProgression = "";
+let currentShellVoicingAlternates = null;
 
 const DEFAULT_START_KEY = "C";
 
@@ -397,6 +398,21 @@ function checkChord() {
   let sortedActiveNotes = [
     ...new Set(activeKeys.map(normalizePitchClass)),
   ].sort((a, b) => a - b);
+  const markChordCorrect = () => {
+    awaitingKeyRelease = true;
+    dom.chordDisplay.classList.remove("incorrect");
+    dom.chordDisplay.classList.add("correct");
+
+    if (modeIsChords()) {
+      recordChordCompletion();
+    } else if (modeIsDegrees()) {
+      recordDegreeCompletion();
+    }
+
+    clearTimeout(highlightTimer);
+
+    highlightCorrectKeys();
+  };
 
   if (modeIsChords() || modeIsProgressions() || modeIsJazz()) {
     let cachedIntervals = null;
@@ -442,6 +458,26 @@ function checkChord() {
     }
   }
 
+  if (
+    Array.isArray(currentShellVoicingAlternates) &&
+    currentShellVoicingAlternates.length > 0
+  ) {
+    const matchesAlternate = currentShellVoicingAlternates.some((combo) => {
+      if (!Array.isArray(combo)) return false;
+      const normalizedCombo = [...new Set(combo.map(normalizePitchClass))].sort(
+        (a, b) => a - b,
+      );
+      if (normalizedCombo.length !== sortedActiveNotes.length) return false;
+      return normalizedCombo.every(
+        (note, index) => note === sortedActiveNotes[index],
+      );
+    });
+    if (matchesAlternate) {
+      markChordCorrect();
+      return;
+    }
+  }
+
   // Check if every element in sortedCurrentChordNotes is in sortedActiveNotes and both arrays have the same length
   // This makes sure we disallow extra notes in the chord
   if (
@@ -450,19 +486,7 @@ function checkChord() {
       (chordNote, index) => chordNote === sortedActiveNotes[index],
     )
   ) {
-    awaitingKeyRelease = true;
-    dom.chordDisplay.classList.remove("incorrect");
-    dom.chordDisplay.classList.add("correct");
-
-    if (modeIsChords()) {
-      recordChordCompletion();
-    } else if (modeIsDegrees()) {
-      recordDegreeCompletion();
-    }
-
-    clearTimeout(highlightTimer);
-
-    highlightCorrectKeys();
+    markChordCorrect();
   }
 }
 
@@ -1254,18 +1278,60 @@ function applyShellVoicing(notes) {
 
     // New simplified indexing approach to support sus/6th/etc.
     // Use the 2nd and 4th elements when present.
+    currentShellVoicingAlternates = null;
+
     const root = notes[0];
-    const second = notes.length > 1 ? notes[1] : undefined;
-    const fourth = notes.length > 3 ? notes[3] : undefined;
+    if (typeof root !== "number") return notes;
+    const thirdCandidate = notes.length > 1 ? notes[1] : undefined;
+    let seventhCandidate = notes.length > 3 ? notes[3] : undefined;
+
+    if (typeof seventhCandidate === "number") {
+      const intervalToFourth = normalizePitchClass(seventhCandidate - root);
+      let chordType = "";
+      if (
+        typeof currentChordInternalName === "string" &&
+        currentChordInternalName.length
+      ) {
+        const rootMatch = currentChordInternalName.match(/^[A-G](#|b)?/);
+        chordType = currentChordInternalName.slice(
+          rootMatch ? rootMatch[0].length : 0,
+        );
+      }
+      const isPureSixChord = /^m?6$/.test(chordType);
+      const qualifiesAsSeventh =
+        intervalToFourth === 10 ||
+        intervalToFourth === 11 ||
+        (intervalToFourth === 9 && !isPureSixChord);
+      if (!qualifiesAsSeventh) seventhCandidate = undefined;
+    }
 
     if (mode === "r37") {
-      if (second !== undefined && fourth !== undefined)
-        return [root, second, fourth];
-      if (second !== undefined) return [root, second];
+      currentShellVoicingAlternates = null;
+      if (thirdCandidate !== undefined && seventhCandidate !== undefined)
+        return [root, thirdCandidate, seventhCandidate];
+      if (thirdCandidate !== undefined) return [root, thirdCandidate];
       return [root];
+    } else if (mode === "r3or7") {
+      const combos = [];
+      if (thirdCandidate !== undefined) combos.push([root, thirdCandidate]);
+      if (seventhCandidate !== undefined) combos.push([root, seventhCandidate]);
+
+      if (combos.length === 0) return [root];
+      if (combos.length === 1) {
+        currentShellVoicingAlternates = combos;
+        return combos[0];
+      }
+
+      currentShellVoicingAlternates = combos;
+      const result = [root];
+      if (!result.includes(thirdCandidate)) result.push(thirdCandidate);
+      if (!result.includes(seventhCandidate)) result.push(seventhCandidate);
+      return result;
     } else if (mode === "37") {
-      if (second !== undefined && fourth !== undefined) return [second, fourth];
-      if (second !== undefined) return [second];
+      currentShellVoicingAlternates = null;
+      if (thirdCandidate !== undefined && seventhCandidate !== undefined)
+        return [thirdCandidate, seventhCandidate];
+      if (thirdCandidate !== undefined) return [thirdCandidate];
       return notes; // fallback
     }
     return notes;
@@ -1434,6 +1500,7 @@ function checkTypedVoicing(activeNotes, requiredLength, orderA, orderB, mode) {
 // Apply selected voicing (Upper Type A/B takes precedence over Shell)
 function applySelectedVoicing(notes) {
   try {
+    currentShellVoicingAlternates = null;
     let intervalsCache = null;
     const ensureIntervals = () => {
       if (!intervalsCache)
