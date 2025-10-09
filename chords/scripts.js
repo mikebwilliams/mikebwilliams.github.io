@@ -1216,7 +1216,7 @@ function generateProgression() {
 
     // Select a random cadence from the enabled list
     if (Object.keys(enabledCadences).length === 0) {
-      enabledCadences["Regular"] = ["ii", "V7", "IΔ"];
+      enabledCadences["Regular"] = ["ii7", "V7", "IΔ"];
       enabledNames["Regular"] = "Regular";
     }
 
