@@ -119,25 +119,6 @@ function isNamedChord(chord) {
   return chord.match(/^[A-G](#|b)?/);
 }
 
-function generateNotesFromChordName(chordName) {
-  let rootNotePattern = /^[A-G](#|b)?/; // Matches the root note
-  let rootNoteName = chordName.match(rootNotePattern)[0];
-
-  let rootValue = noteValues[rootNoteName];
-
-  let chordType = chordName.replace(rootNotePattern, ""); // Get everything after the root note
-
-  // Search all chord structure names for a matching type
-  for (let key in chordStructureNames) {
-    if (chordStructureNames[key].includes(chordType)) {
-      return chordStructures[key].map((interval) => rootValue + interval);
-    }
-  }
-
-  console.error("Unknown chord type:", chordType);
-  return [];
-}
-
 function generateChordName(root, chordType) {
   if (dom.randomizeSpellings.checked) {
     if (chordStructureNames.hasOwnProperty(chordType)) {
@@ -1267,166 +1248,18 @@ populateStartingKeyOptions();
 modeChange();
 // Apply shell voicing according to selected mode (all chord-based modes)
 function applyShellVoicing(notes) {
-  // Only alter notes in chord practice mode
   try {
     if (!Array.isArray(notes)) return notes;
     if (typeof getShellMode !== "function") return notes;
-    // Apply in chords, progressions, and jazz modes
     if (!(modeIsChords() || modeIsProgressions() || modeIsJazz())) return notes;
     const mode = getShellMode();
     if (mode === "off") return notes;
-
-    // New simplified indexing approach to support sus/6th/etc.
-    // Use the 2nd and 4th elements when present.
-    currentShellVoicingAlternates = null;
-
-    const root = notes[0];
-    if (typeof root !== "number") return notes;
-    const thirdCandidate = notes.length > 1 ? notes[1] : undefined;
-    let seventhCandidate = notes.length > 3 ? notes[3] : undefined;
-
-    if (typeof seventhCandidate === "number") {
-      const intervalToFourth = normalizePitchClass(seventhCandidate - root);
-      let chordType = "";
-      if (
-        typeof currentChordInternalName === "string" &&
-        currentChordInternalName.length
-      ) {
-        const rootMatch = currentChordInternalName.match(/^[A-G](#|b)?/);
-        chordType = currentChordInternalName.slice(
-          rootMatch ? rootMatch[0].length : 0,
-        );
-      }
-      const isPureSixChord = /^m?6$/.test(chordType);
-      const qualifiesAsSeventh =
-        intervalToFourth === 10 ||
-        intervalToFourth === 11 ||
-        (intervalToFourth === 9 && !isPureSixChord);
-      if (!qualifiesAsSeventh) seventhCandidate = undefined;
-    }
-
-    if (mode === "r37") {
-      currentShellVoicingAlternates = null;
-      if (thirdCandidate !== undefined && seventhCandidate !== undefined)
-        return [root, thirdCandidate, seventhCandidate];
-      if (thirdCandidate !== undefined) return [root, thirdCandidate];
-      return [root];
-    } else if (mode === "r3or7") {
-      const combos = [];
-      if (thirdCandidate !== undefined) combos.push([root, thirdCandidate]);
-      if (seventhCandidate !== undefined) combos.push([root, seventhCandidate]);
-
-      if (combos.length === 0) return [root];
-      if (combos.length === 1) {
-        currentShellVoicingAlternates = combos;
-        return combos[0];
-      }
-
-      currentShellVoicingAlternates = combos;
-      const result = [root];
-      if (!result.includes(thirdCandidate)) result.push(thirdCandidate);
-      if (!result.includes(seventhCandidate)) result.push(seventhCandidate);
-      return result;
-    } else if (mode === "37") {
-      currentShellVoicingAlternates = null;
-      if (thirdCandidate !== undefined && seventhCandidate !== undefined)
-        return [thirdCandidate, seventhCandidate];
-      if (thirdCandidate !== undefined) return [thirdCandidate];
-      return notes; // fallback
-    }
-    return notes;
+    const result = computeShellVoicing(notes, currentChordInternalName, mode);
+    currentShellVoicingAlternates = result.alternates;
+    return Array.isArray(result.notes) ? result.notes : notes;
   } catch (_) {
     return notes;
   }
-}
-
-// Compute 3rd/7th/9th/5th for current chord type
-function getTargetUpperIntervals(chordInternalName) {
-  // Parse root and chord type
-  const m = chordInternalName.match(/^[A-G](#|b)?/);
-  const rootName = m ? m[0] : "C";
-  const rootVal = noteValues[rootName];
-  const chordType = chordInternalName.slice(rootName.length);
-
-  // Third: major unless minor/diminished
-  const isMinorish = /(^m(?!aj)|m(?!aj)|dim|ø)/.test(chordType);
-  const third = normalizePitchClass(rootVal + (isMinorish ? 3 : 4));
-
-  // Seventh: major for M7/mM7, diminished for dim7, flat7 by default (infer b7) or when minorish/dom present
-  let seventhInterval;
-  if (/M7/.test(chordType)) seventhInterval = 11;
-  else if (/dim7/.test(chordType)) seventhInterval = 9;
-  else if (chordType === "6" || chordType === "m6")
-    seventhInterval = 9; // use 6th in place of 7th for 6/m6
-  else if (/7/.test(chordType) || isMinorish) seventhInterval = 10;
-  else seventhInterval = 10; // infer b7 for chords without explicit 7th
-  const seventh = normalizePitchClass(rootVal + seventhInterval);
-
-  // Fifth: adjust for diminished/augmented
-  let fifthInterval = 7;
-  if (/aug/.test(chordType)) fifthInterval = 8;
-  if (/m7b5|dim/.test(chordType)) fifthInterval = 6; // handles dim and half-diminished
-  const fifth = normalizePitchClass(rootVal + fifthInterval);
-
-  // Ninth: honor b9/#9 if present in internal name; otherwise natural 9
-  const hasSharp9 = /(\+9|#9)/.test(chordType);
-  const hasFlat9 = /b9/.test(chordType);
-  let ninthInterval = 14; // natural 9
-  // For diminished 7th chords, use the root instead of the 9th
-  if (/dim7/.test(chordType)) ninthInterval = 0;
-  if (hasSharp9)
-    ninthInterval = 15; // #9
-  else if (hasFlat9) ninthInterval = 13; // b9
-  const ninth = normalizePitchClass(rootVal + ninthInterval);
-
-  return { third, seventh, ninth, fifth };
-}
-
-// Build an ascending keyboard voicing inside the displayed keyboard for highlighting/playback
-// Build ascending voicing from explicit pitch-class order (0–11)
-function buildAscendingVoicingFromOrder(order) {
-  return buildAscendingMidiSequence(order).map((m) => m - 48);
-}
-
-function buildAscendingMidiSequence(order, start = 48) {
-  const normalized = order.map(normalizePitchClass);
-  const notes = [];
-  let prev = start - 1;
-  for (let i = 0; i < normalized.length; i++) {
-    const next = nextPitchClassAbove(prev, normalized[i]);
-    notes.push(next);
-    prev = next;
-  }
-  return notes;
-}
-
-function normalizePitchClass(value) {
-  const mod = value % 12;
-  return mod < 0 ? mod + 12 : mod;
-}
-
-function nextPitchClassAbove(previous, targetPc) {
-  const start = previous + 1;
-  const offset = (targetPc - (start % 12) + 12) % 12;
-  return start + offset;
-}
-
-function matchesVoicingOrderSorted(ascendingNotes, order) {
-  if (ascendingNotes.length !== order.length) return false;
-  const normalizedOrder = order.map(normalizePitchClass);
-  const notes = ascendingNotes.map((n) => Number(n));
-  if (notes.some(Number.isNaN)) return false;
-  if (normalizePitchClass(notes[0]) !== normalizedOrder[0]) return false;
-
-  let prev = notes[0];
-  for (let i = 1; i < normalizedOrder.length; i++) {
-    const note = notes[i];
-    const expectedPc = normalizedOrder[i];
-    if (normalizePitchClass(note) !== expectedPc) return false;
-    if (note < nextPitchClassAbove(prev, expectedPc)) return false;
-    prev = note;
-  }
-  return true;
 }
 
 function handleTypedVoicingSuccess() {
@@ -1438,41 +1271,6 @@ function handleTypedVoicingSuccess() {
   }
   clearTimeout(highlightTimer);
   highlightCorrectKeys();
-}
-
-function buildVoicingOrders(intervals, requiredLength) {
-  if (requiredLength === 3) {
-    return {
-      orderA: [intervals.third, intervals.seventh, intervals.ninth],
-      orderB: [intervals.seventh, intervals.third, intervals.fifth],
-    };
-  }
-  return {
-    orderA: [
-      intervals.third,
-      intervals.seventh,
-      intervals.ninth,
-      intervals.fifth,
-    ],
-    orderB: [
-      intervals.seventh,
-      intervals.third,
-      intervals.fifth,
-      intervals.ninth,
-    ],
-  };
-}
-
-function resolveUpperVoicing(mode, requiredLength, intervalsOrProvider) {
-  if (mode !== "typeA" && mode !== "typeB" && mode !== "either") return null;
-  const intervals =
-    typeof intervalsOrProvider === "function"
-      ? intervalsOrProvider()
-      : intervalsOrProvider;
-  if (!intervals) return null;
-  const { orderA, orderB } = buildVoicingOrders(intervals, requiredLength);
-  const renderOrder = mode === "typeB" ? orderB : orderA;
-  return buildAscendingVoicingFromOrder(renderOrder);
 }
 
 function enforceTypedVoicing(activeNotes, mode, requiredLength, intervals) {

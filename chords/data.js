@@ -80,6 +80,47 @@ const valuesToNotesFlat = {
   11: "B",
 };
 
+const rootScope = typeof window !== "undefined" ? window : globalThis;
+const hasDocument = typeof document !== "undefined";
+
+function createClassListStub() {
+  return {
+    add() {},
+    remove() {},
+    toggle() {},
+    contains() {
+      return false;
+    },
+  };
+}
+
+function createElementStub(id) {
+  return {
+    id,
+    style: {},
+    classList: createClassListStub(),
+    addEventListener() {},
+    removeEventListener() {},
+    querySelectorAll() {
+      return [];
+    },
+    querySelector() {
+      return null;
+    },
+    set textContent(value) {
+      this._textContent = value;
+    },
+    get textContent() {
+      return this._textContent || "";
+    },
+    value: "",
+    checked: false,
+    disabled: false,
+  };
+}
+
+const elementStubs = {};
+
 function gcd(a, b) {
   let x = Math.abs(a);
   let y = Math.abs(b);
@@ -336,11 +377,17 @@ const chordTypeGroups = chordTypeConfigs.reduce((result, config) => {
 const chordTypeIds = chordTypeConfigs.map((config) => config.id);
 
 function requireElement(id) {
-  const el = document.getElementById(id);
-  if (!el) {
-    throw new Error(`Expected element with id '${id}'`);
+  if (hasDocument) {
+    const el = document.getElementById(id);
+    if (!el) {
+      throw new Error(`Expected element with id '${id}'`);
+    }
+    return el;
   }
-  return el;
+  if (!elementStubs[id]) {
+    elementStubs[id] = createElementStub(id);
+  }
+  return elementStubs[id];
 }
 
 const chordCheckboxes = chordTypeConfigs.reduce((acc, { id }) => {
@@ -405,14 +452,16 @@ const jazzBrickButtons = {
   none: requireElement("btnJazzBricksNone"),
 };
 
-const degreeCheckboxes = Array.from(
-  document.querySelectorAll("#panelModeDegrees input[type='checkbox']"),
-).reduce((acc, el) => {
-  acc[el.id] = el;
-  return acc;
-}, {});
+const degreeCheckboxes = hasDocument
+  ? Array.from(
+      document.querySelectorAll("#panelModeDegrees input[type='checkbox']"),
+    ).reduce((acc, el) => {
+      acc[el.id] = el;
+      return acc;
+    }, {})
+  : {};
 
-window.domElements = {
+const domElements = {
   hideProgressionChordNames: requireElement("chkDisplayHideProgressionNames"),
   hideProgressionChordNumerals: requireElement(
     "chkDisplayHideProgressionNumerals",
@@ -467,6 +516,8 @@ window.domElements = {
   keyCheckboxes,
   keyPresetButtons,
 };
+
+rootScope.domElements = domElements;
 
 const chordStructures = {
   "": [0, 4, 7], // Major
@@ -544,6 +595,272 @@ const chordStructureNames = {
   "7#9": ["7#9", "7+9"],
   "7#11": ["7#11", "7+11"],
 };
+
+function splitChordInternalName(chordInternalName) {
+  const match = chordInternalName
+    ? chordInternalName.match(/^[A-G](#|b)?/)
+    : null;
+  const rootName = match ? match[0] : "C";
+  const chordType = chordInternalName
+    ? chordInternalName.slice(rootName.length)
+    : "";
+  return { rootName, chordType };
+}
+
+function generateNotesFromChordName(chordName) {
+  const rootMatch = chordName ? chordName.match(/^[A-G](#|b)?/) : null;
+  if (!rootMatch) return [];
+  const rootValue = noteValues[rootMatch[0]];
+  const chordType = chordName.replace(rootMatch[0], "");
+  for (const key in chordStructureNames) {
+    if (chordStructureNames[key].includes(chordType)) {
+      return chordStructures[key].map((interval) => rootValue + interval);
+    }
+  }
+  if (typeof console !== "undefined" && console.error) {
+    console.error("Unknown chord type:", chordType);
+  }
+  return [];
+}
+
+function normalizePitchClass(value) {
+  const mod = value % 12;
+  return mod < 0 ? mod + 12 : mod;
+}
+
+function nextPitchClassAbove(previous, targetPc) {
+  const start = previous + 1;
+  const offset = (targetPc - (start % 12) + 12) % 12;
+  return start + offset;
+}
+
+function buildAscendingMidiSequence(order, start = 48) {
+  const normalized = order.map(normalizePitchClass);
+  const notes = [];
+  let prev = start - 1;
+  for (let i = 0; i < normalized.length; i++) {
+    const next = nextPitchClassAbove(prev, normalized[i]);
+    notes.push(next);
+    prev = next;
+  }
+  return notes;
+}
+
+function buildAscendingVoicingFromOrder(order) {
+  return buildAscendingMidiSequence(order).map((m) => m - 48);
+}
+
+function buildVoicingOrders(intervals, requiredLength) {
+  if (requiredLength === 3) {
+    return {
+      orderA: [intervals.third, intervals.seventh, intervals.ninth],
+      orderB: [intervals.seventh, intervals.third, intervals.fifth],
+    };
+  }
+  return {
+    orderA: [
+      intervals.third,
+      intervals.seventh,
+      intervals.ninth,
+      intervals.fifth,
+    ],
+    orderB: [
+      intervals.seventh,
+      intervals.third,
+      intervals.fifth,
+      intervals.ninth,
+    ],
+  };
+}
+
+function getTargetUpperIntervals(chordInternalName) {
+  const { rootName, chordType } = splitChordInternalName(chordInternalName);
+  const rootVal = noteValues[rootName];
+  const isMinorish = /(^m(?!aj)|m(?!aj)|dim|ø)/.test(chordType);
+  const third = normalizePitchClass(rootVal + (isMinorish ? 3 : 4));
+
+  let seventhInterval;
+  if (/M7/.test(chordType)) seventhInterval = 11;
+  else if (/dim7/.test(chordType)) seventhInterval = 9;
+  else if (chordType === "6" || chordType === "m6") seventhInterval = 9;
+  else if (/7/.test(chordType) || isMinorish) seventhInterval = 10;
+  else seventhInterval = 10;
+  const seventh = normalizePitchClass(rootVal + seventhInterval);
+
+  let fifthInterval = 7;
+  if (/aug/.test(chordType)) fifthInterval = 8;
+  if (/m7b5|dim/.test(chordType)) fifthInterval = 6;
+  const fifth = normalizePitchClass(rootVal + fifthInterval);
+
+  const hasSharp9 = /(\+9|#9)/.test(chordType);
+  const hasFlat9 = /b9/.test(chordType);
+  let ninthInterval = 14;
+  if (/dim7/.test(chordType)) ninthInterval = 0;
+  if (hasSharp9) ninthInterval = 15;
+  else if (hasFlat9) ninthInterval = 13;
+  const ninth = normalizePitchClass(rootVal + ninthInterval);
+
+  return { third, seventh, ninth, fifth };
+}
+
+function resolveUpperVoicing(mode, requiredLength, intervalsOrProvider) {
+  if (mode !== "typeA" && mode !== "typeB" && mode !== "either") return null;
+  const intervals =
+    typeof intervalsOrProvider === "function"
+      ? intervalsOrProvider()
+      : intervalsOrProvider;
+  if (!intervals) return null;
+  const { orderA, orderB } = buildVoicingOrders(intervals, requiredLength);
+  const renderOrder = mode === "typeB" ? orderB : orderA;
+  return buildAscendingVoicingFromOrder(renderOrder);
+}
+
+function matchesVoicingOrderSorted(ascendingNotes, order) {
+  if (ascendingNotes.length !== order.length) return false;
+  const normalizedOrder = order.map(normalizePitchClass);
+  const notes = ascendingNotes.map((n) => Number(n));
+  if (notes.some(Number.isNaN)) return false;
+  if (normalizePitchClass(notes[0]) !== normalizedOrder[0]) return false;
+
+  let prev = notes[0];
+  for (let i = 1; i < normalizedOrder.length; i++) {
+    const note = notes[i];
+    const expectedPc = normalizedOrder[i];
+    if (normalizePitchClass(note) !== expectedPc) return false;
+    if (note < nextPitchClassAbove(prev, expectedPc)) return false;
+    prev = note;
+  }
+  return true;
+}
+
+function computeShellVoicing(notes, chordInternalName, mode) {
+  if (!Array.isArray(notes) || !notes.length) {
+    return { notes: [], alternates: null };
+  }
+  if (!mode || mode === "off") {
+    return { notes: notes.slice(), alternates: null };
+  }
+
+  const root = notes[0];
+  const thirdCandidate = notes.length > 1 ? notes[1] : undefined;
+  let seventhCandidate = notes.length > 3 ? notes[3] : undefined;
+
+  if (typeof seventhCandidate === "number") {
+    const intervalToFourth = normalizePitchClass(seventhCandidate - root);
+    const { chordType } = splitChordInternalName(chordInternalName || "");
+    const isPureSixChord = /^m?6$/.test(chordType);
+    const qualifiesAsSeventh =
+      intervalToFourth === 10 ||
+      intervalToFourth === 11 ||
+      (intervalToFourth === 9 && !isPureSixChord);
+    if (!qualifiesAsSeventh) seventhCandidate = undefined;
+  }
+
+  if (mode === "r37") {
+    if (thirdCandidate !== undefined && seventhCandidate !== undefined) {
+      return {
+        notes: [root, thirdCandidate, seventhCandidate],
+        alternates: null,
+      };
+    }
+    if (thirdCandidate !== undefined) {
+      return { notes: [root, thirdCandidate], alternates: null };
+    }
+    return { notes: [root], alternates: null };
+  }
+
+  if (mode === "r3or7") {
+    const combos = [];
+    if (thirdCandidate !== undefined) combos.push([root, thirdCandidate]);
+    if (seventhCandidate !== undefined) combos.push([root, seventhCandidate]);
+
+    if (combos.length === 0) {
+      return { notes: [root], alternates: null };
+    }
+    if (combos.length === 1) {
+      return { notes: combos[0], alternates: combos };
+    }
+
+    const result = [root];
+    if (!result.includes(thirdCandidate)) result.push(thirdCandidate);
+    if (!result.includes(seventhCandidate)) result.push(seventhCandidate);
+    return { notes: result, alternates: combos };
+  }
+
+  if (mode === "37") {
+    if (thirdCandidate !== undefined && seventhCandidate !== undefined) {
+      return { notes: [thirdCandidate, seventhCandidate], alternates: null };
+    }
+    if (thirdCandidate !== undefined) {
+      return { notes: [thirdCandidate], alternates: null };
+    }
+    return { notes: notes.slice(), alternates: null };
+  }
+
+  return { notes: notes.slice(), alternates: null };
+}
+
+function computeUpperVoicingForMode(chordInternalName, voicingMode) {
+  if (!voicingMode) return null;
+  const [family, mode] = voicingMode.split(":");
+  if (family !== "upper" && family !== "upper1") return null;
+  const requiredLength = family === "upper1" ? 3 : 4;
+  return resolveUpperVoicing(mode, requiredLength, () =>
+    getTargetUpperIntervals(chordInternalName),
+  );
+}
+
+function applyVoicingToNotes(notes, chordInternalName, voicingMode) {
+  if (!Array.isArray(notes)) {
+    return { notes: [], alternates: null };
+  }
+  if (!voicingMode || voicingMode === "default") {
+    return { notes: notes.slice(), alternates: null };
+  }
+  if (voicingMode.startsWith("upper:")) {
+    const resolved = computeUpperVoicingForMode(chordInternalName, voicingMode);
+    return resolved
+      ? { notes: resolved, alternates: null }
+      : { notes: notes.slice(), alternates: null };
+  }
+  if (voicingMode.startsWith("upper1:")) {
+    const resolved = computeUpperVoicingForMode(chordInternalName, voicingMode);
+    return resolved
+      ? { notes: resolved, alternates: null }
+      : { notes: notes.slice(), alternates: null };
+  }
+  if (voicingMode.startsWith("shell:")) {
+    return computeShellVoicing(
+      notes,
+      chordInternalName,
+      voicingMode.split(":")[1],
+    );
+  }
+  return { notes: notes.slice(), alternates: null };
+}
+
+function applyVoicingMode(chordInternalName, voicingMode) {
+  const base = generateNotesFromChordName(chordInternalName);
+  return applyVoicingToNotes(base, chordInternalName, voicingMode);
+}
+
+const voicingUtils = {
+  generateNotesFromChordName,
+  normalizePitchClass,
+  nextPitchClassAbove,
+  buildAscendingMidiSequence,
+  buildAscendingVoicingFromOrder,
+  buildVoicingOrders,
+  getTargetUpperIntervals,
+  resolveUpperVoicing,
+  matchesVoicingOrderSorted,
+  computeShellVoicing,
+  computeUpperVoicingForMode,
+  applyVoicingToNotes,
+  applyVoicingMode,
+};
+
+rootScope.voicingUtils = voicingUtils;
 
 const scales = {
   scaleIonian: {
@@ -978,3 +1295,38 @@ const jazzCadencesDropbacks = [
   "TINGLe Dropback",
   "TTFA Dropback",
 ];
+
+const dataExports = {
+  allNotes,
+  normalNotes,
+  noteValues,
+  valuesToNotesSharp,
+  valuesToNotesFlat,
+  chords,
+  chordStructures,
+  chordStructureNames,
+  chordTypeConfigs,
+  chordTypeGroups,
+  chordTypeIds,
+  chordToggleButtons,
+  keyPresetButtons,
+  chordCheckboxes,
+  keyCheckboxes,
+  degreeCheckboxes,
+  optionsPanels,
+  modeSections,
+  jazzBrickButtons,
+  scales,
+  scaleGroups,
+  jazzCadences,
+  jazzCadencesBasic,
+  jazzCadencesIntermediate,
+  jazzCadencesTurnarounds,
+  jazzCadencesMetabricks,
+  jazzCadencesDropbacks,
+  voicingUtils,
+};
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = dataExports;
+}
