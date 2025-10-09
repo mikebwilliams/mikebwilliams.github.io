@@ -1,4 +1,11 @@
-const dom = window.domElements;
+const uiRoot =
+  typeof window !== "undefined"
+    ? window
+    : typeof globalThis !== "undefined"
+      ? globalThis
+      : {};
+const uiGlobals = uiRoot.appGlobals || {};
+var dom = uiGlobals.domElements || uiRoot.domElements || uiRoot.dom || {};
 
 function getChordGroupIds(group) {
   return chordTypeGroups[group] || [];

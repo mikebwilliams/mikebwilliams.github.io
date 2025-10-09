@@ -80,8 +80,18 @@ const valuesToNotesFlat = {
   11: "B",
 };
 
-const rootScope = typeof window !== "undefined" ? window : globalThis;
+const globalRoot =
+  typeof window !== "undefined"
+    ? window
+    : typeof globalThis !== "undefined"
+      ? globalThis
+      : {};
+const appGlobals = globalRoot.appGlobals || (globalRoot.appGlobals = {});
+if (!appGlobals.root) {
+  appGlobals.root = globalRoot;
+}
 const hasDocument = typeof document !== "undefined";
+appGlobals.hasDocument = hasDocument;
 
 function createClassListStub() {
   return {
@@ -517,7 +527,12 @@ const domElements = {
   keyPresetButtons,
 };
 
-rootScope.domElements = domElements;
+appGlobals.domElements = domElements;
+appGlobals.dom = domElements;
+if (appGlobals.root) {
+  appGlobals.root.domElements = domElements;
+  appGlobals.root.dom = domElements;
+}
 
 const chordStructures = {
   "": [0, 4, 7], // Major
@@ -875,7 +890,10 @@ const voicingUtils = {
   applyVoicingMode,
 };
 
-rootScope.voicingUtils = voicingUtils;
+appGlobals.voicingUtils = voicingUtils;
+if (appGlobals.root) {
+  appGlobals.root.voicingUtils = voicingUtils;
+}
 
 const scales = {
   scaleIonian: {
