@@ -1314,6 +1314,8 @@ const jazzCadencesDropbacks = [
 const dataExports = {
   allNotes,
   normalNotes,
+  circleOfFourths,
+  circleOfFifths,
   noteValues,
   valuesToNotesSharp,
   valuesToNotesFlat,

@@ -20,6 +20,14 @@ let selectedProgression = "";
 let currentShellVoicingAlternates = null;
 
 const DEFAULT_START_KEY = "C";
+const globalScope =
+  typeof window !== "undefined"
+    ? window
+    : typeof globalThis !== "undefined"
+      ? globalThis
+      : {};
+const domRefs = globalScope.domElements || {};
+const documentAvailable = typeof document !== "undefined";
 
 function resolveStartValue(startKey) {
   if (startKey && Object.prototype.hasOwnProperty.call(noteValues, startKey)) {
@@ -103,11 +111,11 @@ let spacedQueueAll = [];
 let scheduledRepeat = null; // { kind, index }
 
 function isSpacedRepetitionEnabled() {
-  return dom.enableSpacedRepetition.checked;
+  return domRefs.enableSpacedRepetition.checked;
 }
 
 function getMasteryThreshold() {
-  const t = parseInt(dom.spacedRepThreshold.value, 10);
+  const t = parseInt(domRefs.spacedRepThreshold.value, 10);
   return isNaN(t) || t < 1 ? 1 : t;
 }
 
@@ -120,7 +128,7 @@ function isNamedChord(chord) {
 }
 
 function generateChordName(root, chordType) {
-  if (dom.randomizeSpellings.checked) {
+  if (domRefs.randomizeSpellings.checked) {
     if (chordStructureNames.hasOwnProperty(chordType)) {
       chordType =
         chordStructureNames[chordType][
@@ -167,7 +175,7 @@ function setRandomChord() {
   }
 
   const selectedChordTypes = chordTypeConfigs
-    .filter(({ id }) => dom.chordCheckboxes[id].checked)
+    .filter(({ id }) => domRefs.chordCheckboxes[id].checked)
     .map(({ type }) => type);
 
   if (selectedChordTypes.length === 0) {
@@ -257,8 +265,8 @@ function recordChordCompletion() {
   spacedRepHandleResult("chord", currentChordInternalName, isIncorrect);
   updateResultCounters({
     wasIncorrect: isIncorrect,
-    correctElement: dom.cntChordsCorrect,
-    incorrectElement: dom.cntChordsIncorrect,
+    correctElement: domRefs.cntChordsCorrect,
+    incorrectElement: domRefs.cntChordsIncorrect,
   });
   isIncorrect = false;
 }
@@ -266,8 +274,8 @@ function recordChordCompletion() {
 function recordDegreeCompletion() {
   updateResultCounters({
     wasIncorrect: isIncorrect,
-    correctElement: dom.cntDegreesCorrect,
-    incorrectElement: dom.cntDegreesIncorrect,
+    correctElement: domRefs.cntDegreesCorrect,
+    incorrectElement: domRefs.cntDegreesIncorrect,
   });
   isIncorrect = false;
 }
@@ -369,8 +377,8 @@ function checkChord() {
     }
 
     awaitingKeyRelease = false;
-    dom.chordDisplay.classList.remove("correct");
-    dom.chordDisplay.classList.remove("incorrect");
+    domRefs.chordDisplay.classList.remove("correct");
+    domRefs.chordDisplay.classList.remove("incorrect");
     nextChord();
   }
 
@@ -381,8 +389,8 @@ function checkChord() {
   ].sort((a, b) => a - b);
   const markChordCorrect = () => {
     awaitingKeyRelease = true;
-    dom.chordDisplay.classList.remove("incorrect");
-    dom.chordDisplay.classList.add("correct");
+    domRefs.chordDisplay.classList.remove("incorrect");
+    domRefs.chordDisplay.classList.add("correct");
 
     if (modeIsChords()) {
       recordChordCompletion();
@@ -472,15 +480,15 @@ function checkChord() {
 }
 
 function getHighlightDelayMs() {
-  if (!dom.highlightDelay) return DEFAULT_HIGHLIGHT_DELAY_MS;
-  const rawSeconds = parseFloat(dom.highlightDelay.value);
+  if (!domRefs.highlightDelay) return DEFAULT_HIGHLIGHT_DELAY_MS;
+  const rawSeconds = parseFloat(domRefs.highlightDelay.value);
   if (Number.isNaN(rawSeconds)) {
-    dom.highlightDelay.value = DEFAULT_HIGHLIGHT_DELAY_MS / 1000;
+    domRefs.highlightDelay.value = DEFAULT_HIGHLIGHT_DELAY_MS / 1000;
     return DEFAULT_HIGHLIGHT_DELAY_MS;
   }
   const clamped = Math.max(0, rawSeconds);
   if (clamped !== rawSeconds) {
-    dom.highlightDelay.value = clamped;
+    domRefs.highlightDelay.value = clamped;
   }
   return clamped * 1000;
 }
@@ -493,12 +501,12 @@ function highlightCorrectKeys() {
     .querySelectorAll(".key.highlight")
     .forEach((key) => key.classList.remove("highlight"));
 
-  if (!dom.highlightCorrectKeys.checked) {
+  if (!domRefs.highlightCorrectKeys.checked) {
     return;
   }
 
   const applyHighlight = () => {
-    if (!dom.highlightCorrectKeys.checked) {
+    if (!domRefs.highlightCorrectKeys.checked) {
       return;
     }
 
@@ -525,12 +533,12 @@ function onMIDISuccess(midiAccessResult) {
 
   // If there are no inputs, notify the user.
   if (!midiAccess.inputs.size) {
-    dom.midiStatusText.textContent =
+    domRefs.midiStatusText.textContent =
       "No MIDI inputs detected. Please connect a MIDI device.";
     return;
   }
 
-  dom.midiStatusText.textContent = "MIDI connected.";
+  domRefs.midiStatusText.textContent = "MIDI connected.";
 
   renderMidiDeviceTables();
   refreshMidiListeners();
@@ -577,7 +585,7 @@ function spacedRepHandleResult(kind, key, wasIncorrect) {
 }
 
 function spacedRepRenderList() {
-  const container = dom.spacedRepList;
+  const container = domRefs.spacedRepList;
   if (!container) return;
   if (!spacedQueueAll.length) {
     container.innerHTML = "<em>No failed items scheduled.</em>";
@@ -598,7 +606,8 @@ function spacedRepClearAll() {
 }
 
 function onMIDIFailure(error) {
-  dom.midiStatusText.textContent = "Failed to get MIDI access. Error: " + error;
+  domRefs.midiStatusText.textContent =
+    "Failed to get MIDI access. Error: " + error;
 }
 
 function initMIDI() {
@@ -606,14 +615,14 @@ function initMIDI() {
   if (navigator.requestMIDIAccess)
     navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
   else
-    dom.midiStatusText.textContent =
+    domRefs.midiStatusText.textContent =
       "Your browser does not support MIDI access. Please ensure you are using a browser that supports WebMIDI, and that you are accessing this site from HTTPS, as some browsers require secure connections for WebMIDI.";
 }
 
 function renderMidiDeviceTables() {
   if (!midiAccess) return;
-  const inputsTable = dom.midiInputs;
-  const outputsTable = dom.midiOutputs;
+  const inputsTable = domRefs.midiInputs;
+  const outputsTable = domRefs.midiOutputs;
   if (!inputsTable || !outputsTable) return;
 
   const inputs = Array.from(midiAccess.inputs.values()).filter(
@@ -689,9 +698,9 @@ function refreshMidiListeners() {
 }
 
 function updateAvailableKeys() {
-  const flow = dom.flowSelect.value;
-  const startKey = dom.flowStartSelect
-    ? dom.flowStartSelect.value || DEFAULT_START_KEY
+  const flow = domRefs.flowSelect.value;
+  const startKey = domRefs.flowStartSelect
+    ? domRefs.flowStartSelect.value || DEFAULT_START_KEY
     : DEFAULT_START_KEY;
 
   if (typeof flowPresetMap[flow] === "function") {
@@ -705,7 +714,7 @@ function updateAvailableKeys() {
   }
 
   keys = Object.keys(noteValues).filter(
-    (root) => dom.keyCheckboxes[root].checked,
+    (root) => domRefs.keyCheckboxes[root].checked,
   );
   if (keys.length === 0) {
     alert("Please select at least one root key!");
@@ -717,7 +726,7 @@ function updateAvailableKeys() {
 function nextKey() {
   const available = updateAvailableKeys();
   if (!available || !available.length) return;
-  const flow = dom.flowSelect.value;
+  const flow = domRefs.flowSelect.value;
 
   if (typeof flowPresetMap[flow] === "function") {
     keyIndex++;
@@ -780,17 +789,17 @@ function resetFlow() {
   isIncorrect = false;
   activeKeys = [];
 
-  if (dom.chordDisplay) {
-    dom.chordDisplay.classList.remove("correct");
-    dom.chordDisplay.classList.remove("incorrect");
+  if (domRefs.chordDisplay) {
+    domRefs.chordDisplay.classList.remove("correct");
+    domRefs.chordDisplay.classList.remove("incorrect");
   }
 
   const available = updateAvailableKeys();
   if (!available || !available.length) return;
 
-  const flow = dom.flowSelect.value;
-  const startKey = dom.flowStartSelect
-    ? dom.flowStartSelect.value || DEFAULT_START_KEY
+  const flow = domRefs.flowSelect.value;
+  const startKey = domRefs.flowStartSelect
+    ? domRefs.flowStartSelect.value || DEFAULT_START_KEY
     : DEFAULT_START_KEY;
 
   if (typeof flowPresetMap[flow] === "function") {
@@ -829,7 +838,7 @@ function resetFlow() {
 }
 
 function populateStartingKeyOptions() {
-  const select = dom.flowStartSelect;
+  const select = domRefs.flowStartSelect;
   if (!select || typeof normalNotes === "undefined") return;
 
   const previous = select.value;
@@ -873,8 +882,8 @@ function nextChord(skip = false) {
         updateResultCounters({
           wasIncorrect: isIncorrect,
           skipCorrect: skip,
-          correctElement: dom.cntProgsCorrect,
-          incorrectElement: dom.cntProgsIncorrect,
+          correctElement: domRefs.cntProgsCorrect,
+          incorrectElement: domRefs.cntProgsIncorrect,
         });
       } else if (modeIsJazz()) {
         // Handle Jazz Brick spaced repetition using unified queue
@@ -882,15 +891,15 @@ function nextChord(skip = false) {
         updateResultCounters({
           wasIncorrect: isIncorrect,
           skipCorrect: skip,
-          correctElement: dom.cntBricksCorrect,
-          incorrectElement: dom.cntBricksIncorrect,
+          correctElement: domRefs.cntBricksCorrect,
+          incorrectElement: domRefs.cntBricksIncorrect,
         });
       } else if (modeIsScales()) {
         updateResultCounters({
           wasIncorrect: isIncorrect,
           skipCorrect: skip,
-          correctElement: dom.cntScalesCorrect,
-          incorrectElement: dom.cntScalesIncorrect,
+          correctElement: domRefs.cntScalesCorrect,
+          incorrectElement: domRefs.cntScalesIncorrect,
         });
       }
 
@@ -899,7 +908,7 @@ function nextChord(skip = false) {
       nextKey();
       generateProgression();
 
-      if (dom.sendMidiNotes.checked) {
+      if (domRefs.sendMidiNotes.checked) {
         setTimeout(playAnswerNotes, 200);
       }
     }
@@ -909,7 +918,7 @@ function nextChord(skip = false) {
     nextKey();
     setRandomChord();
 
-    if (dom.sendMidiNotes.checked) {
+    if (domRefs.sendMidiNotes.checked) {
       setTimeout(playAnswerNotes, 200);
     }
   }
@@ -919,26 +928,26 @@ function nextChord(skip = false) {
 }
 
 function updateDisplay() {
-  let hideChordName = dom.hideProgressionChordNames.checked;
-  let hideNumerals = dom.hideProgressionChordNumerals.checked;
+  let hideChordName = domRefs.hideProgressionChordNames.checked;
+  let hideNumerals = domRefs.hideProgressionChordNumerals.checked;
 
   if (modeIsChords()) {
     // When we are in chord mode with hidden chords we are probably doing ear training
     // for chord quality so at least show the key
     if (hideChordName) {
-      dom.currentKey.style.display = "block";
-      dom.chordDisplay.style.display = "none";
+      domRefs.currentKey.style.display = "block";
+      domRefs.chordDisplay.style.display = "none";
     } else {
-      dom.currentKey.style.display = "none";
-      dom.chordDisplay.style.display = "block";
+      domRefs.currentKey.style.display = "none";
+      domRefs.chordDisplay.style.display = "block";
     }
-    dom.progressionDisplay.style.display = "none";
-    dom.cadenceDisplay.style.display = "none";
+    domRefs.progressionDisplay.style.display = "none";
+    domRefs.cadenceDisplay.style.display = "none";
   } else {
-    dom.chordDisplay.style.display = "none";
-    dom.currentKey.style.display = "inline";
-    dom.cadenceDisplay.style.display = "inline";
-    dom.progressionDisplay.style.display = "block";
+    domRefs.chordDisplay.style.display = "none";
+    domRefs.currentKey.style.display = "inline";
+    domRefs.cadenceDisplay.style.display = "inline";
+    domRefs.progressionDisplay.style.display = "block";
   }
 
   let text = currentChordName;
@@ -947,35 +956,35 @@ function updateDisplay() {
   text = text.replace(/#/g, "♯");
   text = text.replace(/b/g, "♭");
 
-  dom.chordDisplay.textContent = text;
-  dom.chordDisplay.title = "";
+  domRefs.chordDisplay.textContent = text;
+  domRefs.chordDisplay.title = "";
 
   if (isIncorrect) {
-    dom.chordDisplay.classList.add("incorrect");
+    domRefs.chordDisplay.classList.add("incorrect");
   } else {
-    dom.chordDisplay.classList.remove("incorrect");
+    domRefs.chordDisplay.classList.remove("incorrect");
   }
 
-  dom.currentKey.textContent = keys[keyIndex];
+  domRefs.currentKey.textContent = keys[keyIndex];
 
   if (Array.isArray(currentProgression)) {
     if (hideNumerals) {
-      dom.progressionDisplay.innerHTML = currentProgression
+      domRefs.progressionDisplay.innerHTML = currentProgression
         .map((chord) => `<span class="chord" title="${chord}">?</span>`)
         .join(" - ");
     } else {
-      dom.progressionDisplay.innerHTML = currentProgression
+      domRefs.progressionDisplay.innerHTML = currentProgression
         .map((chord) => `<span class="chord">${chord}</span>`)
         .join(" - ");
     }
   } else {
-    dom.progressionDisplay.innerHTML = "";
+    domRefs.progressionDisplay.innerHTML = "";
   }
 
   if (hideChordName) {
-    dom.cadenceDisplay.innerHTML = " ?";
+    domRefs.cadenceDisplay.innerHTML = " ?";
   } else {
-    dom.cadenceDisplay.innerHTML = " " + currentProgressionName;
+    domRefs.cadenceDisplay.innerHTML = " " + currentProgressionName;
   }
 
   // Add event listeners to chords to track user input
@@ -1098,21 +1107,21 @@ function getIntervalChordNotesAndName(key, degree, wrap = true) {
 }
 
 function generateProgression() {
-  dom.currentKey.textContent = keys[keyIndex];
+  domRefs.currentKey.textContent = keys[keyIndex];
 
   currentIndex = 0;
 
   if (modeIsProgressions() || modeIsDegrees()) {
-    if (dom.progressionSelect.value === "custom") {
-      currentProgression = dom.customProgressionInput.value.split("-");
-    } else if (dom.progressionSelect.value === "random") {
+    if (domRefs.progressionSelect.value === "custom") {
+      currentProgression = domRefs.customProgressionInput.value.split("-");
+    } else if (domRefs.progressionSelect.value === "random") {
       // Get count from randomProgression input
-      let count = dom.randomProgressionCount.value;
+      let count = domRefs.randomProgressionCount.value;
 
       enabledNumerals = {};
       if (modeIsDegrees()) {
         Object.keys(romanNumerals).forEach((numeral) => {
-          const checkbox = dom.degreeCheckboxes[numeral];
+          const checkbox = domRefs.degreeCheckboxes[numeral];
           if (checkbox && checkbox.checked) {
             enabledNumerals[numeral] = romanNumerals[numeral];
           }
@@ -1131,10 +1140,10 @@ function generateProgression() {
         );
       }
     } else {
-      currentProgression = dom.progressionSelect.value.split("-");
+      currentProgression = domRefs.progressionSelect.value.split("-");
     }
 
-    currentProgressionName = dom.progressionSelect.value;
+    currentProgressionName = domRefs.progressionSelect.value;
   } else if (modeIsScales()) {
     // Get list of all enabled scales
     enabledScales = {};
@@ -1229,23 +1238,21 @@ function generateProgression() {
   }
 }
 
-dom.hideProgressionChordNames.addEventListener("change", updateDisplay);
-dom.hideProgressionChordNumerals.addEventListener("change", updateDisplay);
+domRefs.hideProgressionChordNames.addEventListener("change", updateDisplay);
+domRefs.hideProgressionChordNumerals.addEventListener("change", updateDisplay);
 
 function nextProgression() {
   nextChord(true);
 }
 
-dom.flowSelect.addEventListener("change", resetFlow);
-if (dom.flowStartSelect) {
-  dom.flowStartSelect.addEventListener("change", resetFlow);
-}
-if (dom.flowResetButton) {
-  dom.flowResetButton.addEventListener("click", resetFlow);
-}
+domRefs.flowSelect.addEventListener("change", resetFlow);
+domRefs.flowStartSelect.addEventListener("change", resetFlow);
+domRefs.flowResetButton.addEventListener("click", resetFlow);
 
-populateStartingKeyOptions();
-modeChange();
+if (documentAvailable) {
+  populateStartingKeyOptions();
+  modeChange();
+}
 // Apply shell voicing according to selected mode (all chord-based modes)
 function applyShellVoicing(notes) {
   try {
@@ -1264,8 +1271,8 @@ function applyShellVoicing(notes) {
 
 function handleTypedVoicingSuccess() {
   awaitingKeyRelease = true;
-  dom.chordDisplay.classList.remove("incorrect");
-  dom.chordDisplay.classList.add("correct");
+  domRefs.chordDisplay.classList.remove("incorrect");
+  domRefs.chordDisplay.classList.add("correct");
   if (modeIsChords()) {
     recordChordCompletion();
   }
@@ -1323,27 +1330,37 @@ function applySelectedVoicing(notes) {
 }
 
 // React to voicing mode changes immediately
-document.querySelectorAll("input[name='voicingMode']").forEach((r) => {
-  r.addEventListener("change", () => {
-    // Ensure UI has disabled/enabled chord-type checkboxes before logic runs
-    try {
-      if (typeof enforceVoicingChordConstraints === "function")
-        enforceVoicingChordConstraints();
-    } catch (_) {}
+if (documentAvailable) {
+  document.querySelectorAll("input[name='voicingMode']").forEach((r) => {
+    r.addEventListener("change", () => {
+      // Ensure UI has disabled/enabled chord-type checkboxes before logic runs
+      try {
+        if (typeof enforceVoicingChordConstraints === "function")
+          enforceVoicingChordConstraints();
+      } catch (_) {}
 
-    if (!currentChordInternalName) return;
-    const base = generateNotesFromChordName(currentChordInternalName);
-    // If switching to any non-default voicing and current chord lacks a 4th tone, skip it
-    try {
-      const voicingMode =
-        typeof getVoicingMode === "function" ? getVoicingMode() : "default";
-      const requiresFour = voicingMode !== "default";
-      if (requiresFour && base.length < 4) {
-        nextChord(true);
-        return;
-      }
-    } catch (_) {}
-    currentChordNotes = applySelectedVoicing(base);
-    updateDisplay();
+      if (!currentChordInternalName) return;
+      const base = generateNotesFromChordName(currentChordInternalName);
+      // If switching to any non-default voicing and current chord lacks a 4th tone, skip it
+      try {
+        const voicingMode =
+          typeof getVoicingMode === "function" ? getVoicingMode() : "default";
+        const requiresFour = voicingMode !== "default";
+        if (requiresFour && base.length < 4) {
+          nextChord(true);
+          return;
+        }
+      } catch (_) {}
+      currentChordNotes = applySelectedVoicing(base);
+      updateDisplay();
+    });
   });
-});
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    resolveStartValue,
+    rotateSequenceToStart,
+    flowPresetMap,
+  };
+}
