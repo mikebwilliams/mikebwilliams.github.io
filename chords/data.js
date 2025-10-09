@@ -861,6 +861,7 @@ function applyVoicingMode(chordInternalName, voicingMode) {
 const voicingUtils = {
   generateNotesFromChordName,
   normalizePitchClass,
+  buildIntervalFlow,
   nextPitchClassAbove,
   buildAscendingMidiSequence,
   buildAscendingVoicingFromOrder,
