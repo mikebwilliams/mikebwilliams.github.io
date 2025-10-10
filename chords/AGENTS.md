@@ -1,5 +1,9 @@
 Use simple code with zero external dependencies.
+
 HTML/CSS/JS is autoformated by prettier on git commit.
+
+Use `npx playwright test` to run all tests. You can modify the command to capture the output.
+
 I am trying to maintain simple structure for the project:
 
 - Pure data (and maybe very simple transform functions) goes in data.js, UI in ui.js, logic in scripts.js, styling in styles.css, and HTML structure in index.html.
