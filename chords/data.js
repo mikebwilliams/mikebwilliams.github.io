@@ -453,6 +453,53 @@ const modeSections = {
   jazzOptions: requireElement("panelModeJazz"),
 };
 
+const radioGroupSelections = {};
+
+function createRadioGroup(name, specs) {
+  const group = {};
+  let detected = null;
+  specs.forEach(({ id, value, defaultChecked }) => {
+    const el = requireElement(id);
+    if (typeof value !== "undefined") el.value = value;
+    if (el.checked) detected = value;
+    group[value] = el;
+    if (!hasDocument && typeof el.checked === "boolean") {
+      el.checked = !!defaultChecked;
+    }
+  });
+  if (!detected) {
+    const fallback =
+      specs.find((spec) => spec.defaultChecked) || specs[0] || null;
+    detected = fallback ? fallback.value : null;
+  }
+  if (detected !== null && typeof detected !== "undefined") {
+    radioGroupSelections[name] = detected;
+  }
+  return group;
+}
+
+const radioGroups = {
+  mode: createRadioGroup("mode", [
+    { id: "tabModeChords", value: "tabChords", defaultChecked: true },
+    { id: "tabModeProgressions", value: "tabProgressions" },
+    { id: "tabModeScales", value: "tabScales" },
+    { id: "tabModeDegrees", value: "tabDegrees" },
+    { id: "tabModeJazz", value: "tabJazz" },
+  ]),
+  voicingMode: createRadioGroup("voicingMode", [
+    { id: "radVoicingDefault", value: "default", defaultChecked: true },
+    { id: "radVoicingShellR37", value: "shell:r37" },
+    { id: "radVoicingShellR3Or7", value: "shell:r3or7" },
+    { id: "radVoicingShell37", value: "shell:37" },
+    { id: "radVoicingUpperTypeA", value: "upper:typeA" },
+    { id: "radVoicingUpperTypeB", value: "upper:typeB" },
+    { id: "radVoicingUpperEither", value: "upper:either" },
+    { id: "radVoicingUpperOneTypeA", value: "upper1:typeA" },
+    { id: "radVoicingUpperOneTypeB", value: "upper1:typeB" },
+    { id: "radVoicingUpperOneEither", value: "upper1:either" },
+  ]),
+};
+
 const jazzBrickButtons = {
   basic: requireElement("btnJazzBricksBasic"),
   intermediate: requireElement("btnJazzBricksIntermediate"),
@@ -534,6 +581,9 @@ const domElements = {
   chordToggleButtons,
   keyCheckboxes,
   keyPresetButtons,
+  modeRadios: radioGroups.mode,
+  radioGroups,
+  radioSelections: radioGroupSelections,
 };
 
 appGlobals.domElements = domElements;
@@ -1411,18 +1461,49 @@ function applyCheckboxState(collection, state) {
 }
 
 function getRadioValue(name, fallback) {
-  if (!hasDocument) return fallback;
-  const selected = document.querySelector(`input[name='${name}']:checked`);
-  return selected ? selected.value : fallback;
+  if (hasDocument) {
+    const selected = document.querySelector(`input[name='${name}']:checked`);
+    if (selected) return selected.value;
+  }
+  const groups = domElements.radioGroups || {};
+  const selections = domElements.radioSelections || {};
+  const group = groups[name] || null;
+  if (group) {
+    for (const [value, el] of Object.entries(group)) {
+      if (el && el.checked) {
+        selections[name] = value;
+        domElements.radioSelections = selections;
+        return value;
+      }
+    }
+    if (name in selections) return selections[name];
+  } else if (name in selections) {
+    return selections[name];
+  }
+  domElements.radioSelections = selections;
+  return fallback;
 }
 
 function setRadioValue(name, targetValue) {
-  if (!hasDocument) return;
   if (typeof targetValue === "undefined") return;
-  const radios = document.querySelectorAll(`input[name='${name}']`);
-  radios.forEach((radio) => {
-    radio.checked = radio.value === targetValue;
-  });
+  const selections = domElements.radioSelections || {};
+  if (hasDocument) {
+    const radios = document.querySelectorAll(`input[name='${name}']`);
+    radios.forEach((radio) => {
+      radio.checked = radio.value === targetValue;
+    });
+  }
+  const groups = domElements.radioGroups || {};
+  const group = groups[name] || null;
+  if (group) {
+    Object.entries(group).forEach(([value, el]) => {
+      if (el) el.checked = value === targetValue;
+    });
+    selections[name] = targetValue;
+  } else {
+    selections[name] = targetValue;
+  }
+  domElements.radioSelections = selections;
 }
 
 function captureJazzCadenceState() {
@@ -1470,8 +1551,27 @@ function applyScaleState(state) {
   });
 }
 
+function notifyModeChangeApplied() {
+  if (!hasDocument) return;
+  const candidates = [
+    globalRoot && typeof globalRoot.modeChange === "function"
+      ? globalRoot.modeChange
+      : null,
+    appGlobals && typeof appGlobals.modeChange === "function"
+      ? appGlobals.modeChange
+      : null,
+  ];
+  const handler = candidates.find((fn) => typeof fn === "function");
+  if (handler) {
+    try {
+      handler();
+    } catch (_) {}
+  }
+}
+
 function captureSimpleSettings() {
   return {
+    mode: getRadioValue("mode", "tabChords"),
     flow: {
       mode: domElements.flowSelect.value || "random",
       startKey: domElements.flowStartSelect.value || "C",
@@ -1539,6 +1639,11 @@ function createDefaultSettings() {
 
 function applySimpleSettings(settings) {
   if (!settings) return;
+  let appliedMode = null;
+  if (Object.prototype.hasOwnProperty.call(settings, "mode")) {
+    setRadioValue("mode", settings.mode);
+    appliedMode = settings.mode;
+  }
   if (settings.flow) {
     domElements.flowSelect.value = settings.flow.mode;
     domElements.flowStartSelect.value = settings.flow.startKey;
@@ -1570,6 +1675,9 @@ function applySimpleSettings(settings) {
   }
   if (settings.voicing) {
     setRadioValue("voicingMode", settings.voicing.mode);
+  }
+  if (appliedMode !== null) {
+    notifyModeChangeApplied();
   }
 }
 

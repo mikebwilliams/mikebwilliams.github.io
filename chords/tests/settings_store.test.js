@@ -68,8 +68,16 @@ test("settings store saves and loads presets round-trip", () => {
   toggleAlternatingCheckboxes(dom.chordCheckboxes);
   toggleAlternatingCheckboxes(dom.keyCheckboxes);
   toggleAlternatingCheckboxes(dom.degreeCheckboxes);
+  Object.values(dom.modeRadios).forEach((radio) => {
+    radio.checked = radio.value === "tabJazz";
+  });
 
   settingsStore.syncFromDom();
+  assert.strictEqual(
+    settingsStore.getCurrentSnapshot().mode,
+    "tabJazz",
+    "snapshot should capture current mode",
+  );
   settingsStore.savePreset("Spec");
 
   dom.flowSelect.value = "descendingWholeSteps";
@@ -86,6 +94,9 @@ test("settings store saves and loads presets round-trip", () => {
   dom.progressionSelect.value = "random";
   dom.customProgressionInput.value = "ii-V-I";
   dom.randomProgressionCount.value = "2";
+  Object.values(dom.modeRadios).forEach((radio) => {
+    radio.checked = radio.value === "tabScales";
+  });
 
   const loaded = settingsStore.loadPreset("Spec");
   assert.strictEqual(loaded, true, "preset should load successfully");
@@ -101,6 +112,11 @@ test("settings store saves and loads presets round-trip", () => {
   assert.strictEqual(dom.progressionSelect.value, "custom");
   assert.strictEqual(dom.customProgressionInput.value, "I-IV-V-I");
   assert.strictEqual(dom.randomProgressionCount.value, "8");
+  assert.strictEqual(
+    dom.modeRadios.tabJazz.checked,
+    true,
+    "mode should restore from preset",
+  );
 });
 
 test("settings store JSON export reflects current snapshot", () => {
