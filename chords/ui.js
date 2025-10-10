@@ -6,6 +6,17 @@ const uiRoot =
       : {};
 const uiGlobals = uiRoot.appGlobals || {};
 var dom = uiGlobals.domElements || uiRoot.domElements || uiRoot.dom || {};
+const uiSettingsStore =
+  uiGlobals.settingsStore ||
+  uiRoot.settingsStore ||
+  uiRoot.appSettingsStore ||
+  {};
+
+function syncSettingsStore() {
+  if (uiSettingsStore && typeof uiSettingsStore.syncFromDom === "function") {
+    uiSettingsStore.syncFromDom();
+  }
+}
 
 function getChordGroupIds(group) {
   return chordTypeGroups[group] || [];
@@ -336,7 +347,14 @@ function generateScalesTable() {
 
   Object.keys(scales).forEach((key) => {
     const checkbox = container.querySelector(`#${key}`);
-    if (checkbox) dom.scaleCheckboxes[key] = checkbox;
+    if (checkbox) {
+      dom.scaleCheckboxes[key] = checkbox;
+      scales[key].enabled = checkbox.checked;
+      checkbox.addEventListener("change", () => {
+        scales[key].enabled = checkbox.checked;
+        syncSettingsStore();
+      });
+    }
   });
 }
 
@@ -346,9 +364,14 @@ function toggleScales(category) {
   for (let key in scales) {
     if (scales.hasOwnProperty(key)) {
       const checkbox = dom.scaleCheckboxes[key];
-      if (checkbox) checkbox.checked = selectedScales.includes(key);
+      const shouldEnable = selectedScales.includes(key);
+      if (checkbox) checkbox.checked = shouldEnable;
+      if (scales[key]) {
+        scales[key].enabled = shouldEnable;
+      }
     }
   }
+  syncSettingsStore();
 }
 
 function generateScalesButtons() {
@@ -370,8 +393,7 @@ function getEnabledScales() {
 
   for (let key in scales) {
     if (scales.hasOwnProperty(key)) {
-      const checkbox = dom.scaleCheckboxes[key];
-      if (checkbox && checkbox.checked) {
+      if (dom.scaleCheckboxes[key].checked) {
         enabledScales.push(key);
       }
     }
@@ -385,8 +407,7 @@ function getEnabledScaleDetails() {
 
   for (let key in scales) {
     if (scales.hasOwnProperty(key)) {
-      const checkbox = dom.scaleCheckboxes[key];
-      if (checkbox && checkbox.checked) {
+      if (dom.scaleCheckboxes[key].checked) {
         enabledScaleDetails.push(scales[key]);
       }
     }
@@ -413,16 +434,12 @@ function initJazzBricks() {
     tbody.appendChild(tr);
 
     cadence.element = tr.querySelector('input[type="checkbox"]');
-
-    // Event listener to handle changes in checkbox
+    cadence.element.checked = cadence.enabled;
     cadence.element.addEventListener("change", function () {
       cadence.enabled = this.checked;
-      cadence.element = tr.querySelector('input[type="checkbox"]');
-      console.log(`${cadence.name} enabled state is now ${cadence.enabled}`);
+      syncSettingsStore();
     });
   });
-  // initialize by selecting only the basic group by default
-  dom.jazzBrickButtons.basic.click();
 }
 
 // Basic group toggle: turns on/off all basic cadences
@@ -436,6 +453,7 @@ dom.jazzBrickButtons.basic.addEventListener("click", () => {
       c.element.checked = !anyOn;
     }
   });
+  syncSettingsStore();
 });
 
 // Intermediate group toggle: excludes basic group, toggles intermediate-only cadences
@@ -449,6 +467,7 @@ dom.jazzBrickButtons.intermediate.addEventListener("click", () => {
       c.element.checked = !anyOn;
     }
   });
+  syncSettingsStore();
 });
 
 // 'All' button: enable all cadences
@@ -457,6 +476,7 @@ dom.jazzBrickButtons.all.addEventListener("click", () => {
     c.enabled = true;
     c.element.checked = true;
   });
+  syncSettingsStore();
 });
 
 // 'None' button: disable all cadences
@@ -465,6 +485,7 @@ dom.jazzBrickButtons.none.addEventListener("click", () => {
     c.enabled = false;
     c.element.checked = false;
   });
+  syncSettingsStore();
 });
 
 dom.jazzBrickButtons.turnarounds.addEventListener("click", () => {
@@ -477,6 +498,7 @@ dom.jazzBrickButtons.turnarounds.addEventListener("click", () => {
       c.element.checked = !anyOn;
     }
   });
+  syncSettingsStore();
 });
 
 dom.jazzBrickButtons.metabricks.addEventListener("click", () => {
@@ -489,6 +511,7 @@ dom.jazzBrickButtons.metabricks.addEventListener("click", () => {
       c.element.checked = !anyOn;
     }
   });
+  syncSettingsStore();
 });
 
 dom.jazzBrickButtons.dropbacks.addEventListener("click", () => {
@@ -501,28 +524,33 @@ dom.jazzBrickButtons.dropbacks.addEventListener("click", () => {
       c.element.checked = !anyOn;
     }
   });
+  syncSettingsStore();
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-  initScales();
   initJazzBricks();
+  initScales();
+  if (uiSettingsStore && typeof uiSettingsStore.applyToDom === "function") {
+    uiSettingsStore.applyToDom(uiSettingsStore.current);
+  }
+  if (
+    uiSettingsStore &&
+    typeof uiSettingsStore.attachDomListeners === "function"
+  ) {
+    uiSettingsStore.attachDomListeners();
+  }
+  if (uiSettingsStore && typeof uiSettingsStore.syncFromDom === "function") {
+    uiSettingsStore.syncFromDom();
+  }
   initMIDI();
 
-  // Spaced repetition UI
-  const btnClear = dom.spacedRepClearButton;
-  if (btnClear) {
-    btnClear.addEventListener("click", () => {
-      if (typeof spacedRepClearAll === "function") spacedRepClearAll();
-    });
-  }
+  dom.spacedRepClearButton.addEventListener("click", () => {
+    if (typeof spacedRepClearAll === "function") spacedRepClearAll();
+  });
   if (typeof spacedRepRenderList === "function") spacedRepRenderList();
 
-  // Ensure Keys is the default Options tab on load
-  const tabKeys = dom.optionsTabKeys;
-  if (tabKeys) {
-    tabKeys.checked = true;
-    optionsChange();
-  }
+  dom.optionsTabKeys.checked = true;
+  optionsChange();
 });
 
 dom.resetStatsButton.addEventListener("click", () => {

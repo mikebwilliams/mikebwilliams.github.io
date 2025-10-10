@@ -1269,6 +1269,13 @@ const jazzCadences = [
   },
 ];
 
+jazzCadences.forEach((cadence) => {
+  if (!cadence.element) {
+    cadence.element = createElementStub(`jazzCadence:${cadence.name}`);
+  }
+  cadence.element.checked = !!cadence.enabled;
+});
+
 const jazzCadencesBasic = [
   "POT",
   "Dropback",
@@ -1329,6 +1336,410 @@ const jazzCadencesDropbacks = [
   "TTFA Dropback",
 ];
 
+const SETTINGS_STORAGE_KEY = "chordChallenge.settings";
+const SETTINGS_PRESETS_KEY = "chordChallenge.settings.presets";
+
+function getStorageHandle() {
+  try {
+    if (typeof localStorage !== "undefined") return localStorage;
+  } catch (_) {}
+  if (globalRoot && globalRoot.localStorage) return globalRoot.localStorage;
+  return null;
+}
+
+function cloneObject(value) {
+  if (Array.isArray(value)) return value.map((item) => cloneObject(item));
+  if (value && typeof value === "object") {
+    return Object.keys(value).reduce((acc, key) => {
+      acc[key] = cloneObject(value[key]);
+      return acc;
+    }, {});
+  }
+  return value;
+}
+
+function mergeSettings(base, extra) {
+  if (!extra) return cloneObject(base);
+  const result = cloneObject(base);
+  Object.keys(extra).forEach((key) => {
+    const incoming = extra[key];
+    if (
+      incoming &&
+      typeof incoming === "object" &&
+      !Array.isArray(incoming) &&
+      typeof result[key] === "object" &&
+      result[key] !== null &&
+      !Array.isArray(result[key])
+    ) {
+      result[key] = mergeSettings(result[key], incoming);
+    } else {
+      result[key] = cloneObject(incoming);
+    }
+  });
+  return result;
+}
+
+function captureCheckboxState(collection) {
+  const state = {};
+  if (!collection) return state;
+  Object.keys(collection).forEach((key) => {
+    const el = collection[key];
+    if (el && Object.prototype.hasOwnProperty.call(el, "checked")) {
+      state[key] = !!el.checked;
+    }
+  });
+  return state;
+}
+
+function applyCheckboxState(collection, state) {
+  if (!collection || !state) return;
+  Object.keys(state).forEach((key) => {
+    const el = collection[key];
+    if (el && Object.prototype.hasOwnProperty.call(el, "checked")) {
+      el.checked = !!state[key];
+    }
+  });
+}
+
+function getRadioValue(name, fallback) {
+  if (!hasDocument) return fallback;
+  const selected = document.querySelector(`input[name='${name}']:checked`);
+  return selected ? selected.value : fallback;
+}
+
+function setRadioValue(name, targetValue) {
+  if (!hasDocument) return;
+  if (typeof targetValue === "undefined") return;
+  const radios = document.querySelectorAll(`input[name='${name}']`);
+  radios.forEach((radio) => {
+    radio.checked = radio.value === targetValue;
+  });
+}
+
+function captureJazzCadenceState() {
+  const state = {};
+  jazzCadences.forEach((cadence) => {
+    state[cadence.name] = !!cadence.enabled;
+  });
+  return state;
+}
+
+function applyJazzCadenceState(state) {
+  if (!state) return;
+  jazzCadences.forEach((cadence) => {
+    const enabled = !!state[cadence.name];
+    cadence.enabled = enabled;
+    if (!cadence.element) {
+      cadence.element = createElementStub(`jazzCadence:${cadence.name}`);
+    }
+    cadence.element.checked = enabled;
+  });
+}
+
+function captureScaleState() {
+  const state = {};
+  Object.keys(scales).forEach((key) => {
+    const entry = scales[key];
+    if (entry && typeof entry.enabled !== "undefined") {
+      state[key] = !!entry.enabled;
+    }
+  });
+  return state;
+}
+
+function applyScaleState(state) {
+  if (!state) return;
+  Object.keys(scales).forEach((key) => {
+    const enabled = !!state[key];
+    const entry = scales[key];
+    if (entry) entry.enabled = enabled;
+    if (!domElements.scaleCheckboxes[key]) {
+      domElements.scaleCheckboxes[key] = createElementStub(key);
+    }
+    const checkbox = domElements.scaleCheckboxes[key];
+    checkbox.checked = enabled;
+  });
+}
+
+function captureSimpleSettings() {
+  return {
+    flow: {
+      mode: domElements.flowSelect.value || "random",
+      startKey: domElements.flowStartSelect.value || "C",
+    },
+    display: {
+      showKeyboard: !!domElements.showKeyboardToggle.checked,
+      highlightKeys: !!domElements.highlightCorrectKeys.checked,
+      highlightDelay: parseFloat(domElements.highlightDelay.value) || 3,
+      hideProgressionNames: !!domElements.hideProgressionChordNames.checked,
+      hideProgressionNumerals:
+        !!domElements.hideProgressionChordNumerals.checked,
+      randomizeSpellings: !!domElements.randomizeSpellings.checked,
+    },
+    spacedRep: {
+      enabled: !!domElements.enableSpacedRepetition.checked,
+      threshold: parseInt(domElements.spacedRepThreshold.value, 10) || 3,
+    },
+    midi: {
+      sendNotes: !!domElements.sendMidiNotes.checked,
+    },
+    progression: {
+      selection: domElements.progressionSelect.value || "random",
+      custom:
+        domElements.customProgressionInput.value || "I-II-iii-IV-V-vi-viio-I",
+      randomCount: parseInt(domElements.randomProgressionCount.value, 10) || 5,
+    },
+    voicing: {
+      mode: getRadioValue("voicingMode", "default"),
+    },
+  };
+}
+
+function captureSettingsFromDom() {
+  return {
+    ...captureSimpleSettings(),
+    chordTypes: captureCheckboxState(domElements.chordCheckboxes),
+    keyToggles: captureCheckboxState(domElements.keyCheckboxes),
+    degreeToggles: captureCheckboxState(domElements.degreeCheckboxes),
+    scales: captureScaleState(),
+    jazzCadences: captureJazzCadenceState(),
+  };
+}
+
+function createDefaultSettings() {
+  const defaults = captureSettingsFromDom();
+  Object.keys(chordCheckboxes).forEach((key) => {
+    if (typeof defaults.chordTypes[key] === "undefined") {
+      defaults.chordTypes[key] = !!chordCheckboxes[key].checked;
+    }
+  });
+  Object.keys(keyCheckboxes).forEach((key) => {
+    if (typeof defaults.keyToggles[key] === "undefined") {
+      defaults.keyToggles[key] = !!keyCheckboxes[key].checked;
+    }
+  });
+  Object.keys(degreeCheckboxes).forEach((key) => {
+    if (typeof defaults.degreeToggles[key] === "undefined") {
+      defaults.degreeToggles[key] = !!degreeCheckboxes[key].checked;
+    }
+  });
+  defaults.scales = captureScaleState();
+  defaults.jazzCadences = captureJazzCadenceState();
+  return defaults;
+}
+
+function applySimpleSettings(settings) {
+  if (!settings) return;
+  if (settings.flow) {
+    domElements.flowSelect.value = settings.flow.mode;
+    domElements.flowStartSelect.value = settings.flow.startKey;
+  }
+  if (settings.display) {
+    const display = settings.display;
+    domElements.showKeyboardToggle.checked = !!display.showKeyboard;
+    domElements.highlightCorrectKeys.checked = !!display.highlightKeys;
+    domElements.highlightDelay.value = String(display.highlightDelay);
+    domElements.hideProgressionChordNames.checked =
+      !!display.hideProgressionNames;
+    domElements.hideProgressionChordNumerals.checked =
+      !!display.hideProgressionNumerals;
+    domElements.randomizeSpellings.checked = !!display.randomizeSpellings;
+  }
+  if (settings.spacedRep) {
+    domElements.enableSpacedRepetition.checked = !!settings.spacedRep.enabled;
+    domElements.spacedRepThreshold.value = String(settings.spacedRep.threshold);
+  }
+  if (settings.midi) {
+    domElements.sendMidiNotes.checked = !!settings.midi.sendNotes;
+  }
+  if (settings.progression) {
+    domElements.progressionSelect.value = settings.progression.selection;
+    domElements.customProgressionInput.value = settings.progression.custom;
+    domElements.randomProgressionCount.value = String(
+      settings.progression.randomCount,
+    );
+  }
+  if (settings.voicing) {
+    setRadioValue("voicingMode", settings.voicing.mode);
+  }
+}
+
+function applySettingsToDom(settings) {
+  if (!settings) return;
+  applySimpleSettings(settings);
+  applyCheckboxState(domElements.chordCheckboxes, settings.chordTypes);
+  applyCheckboxState(domElements.keyCheckboxes, settings.keyToggles);
+  applyCheckboxState(domElements.degreeCheckboxes, settings.degreeToggles);
+  applyScaleState(settings.scales);
+  applyJazzCadenceState(settings.jazzCadences);
+}
+
+function sanitizeSettings(settings, defaults) {
+  if (!settings) return cloneObject(defaults);
+  return mergeSettings(defaults, settings);
+}
+
+function settingsStoreFactory() {
+  const defaults = createDefaultSettings();
+  const storage = getStorageHandle();
+
+  const store = {
+    defaults,
+    current: cloneObject(defaults),
+    storage,
+    storageKey: SETTINGS_STORAGE_KEY,
+    presetsKey: SETTINGS_PRESETS_KEY,
+    initialized: false,
+    attachedElements: new Set(),
+    load() {
+      if (!this.storage) return null;
+      try {
+        const raw = this.storage.getItem(this.storageKey);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch (_) {
+        return null;
+      }
+    },
+    loadPresets() {
+      if (!this.storage) return {};
+      try {
+        const raw = this.storage.getItem(this.presetsKey);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return typeof parsed === "object" && parsed ? parsed : {};
+      } catch (_) {
+        return {};
+      }
+    },
+    save() {
+      if (!this.storage) return;
+      try {
+        this.storage.setItem(
+          this.storageKey,
+          JSON.stringify(this.current || this.defaults),
+        );
+      } catch (_) {}
+    },
+    savePresets(presets) {
+      if (!this.storage) return;
+      try {
+        this.storage.setItem(this.presetsKey, JSON.stringify(presets));
+      } catch (_) {}
+    },
+    initialize() {
+      const loaded = this.load();
+      this.current = sanitizeSettings(loaded, this.defaults);
+      this.initialized = true;
+    },
+    applyToDom(settings) {
+      const source = settings
+        ? sanitizeSettings(settings, this.defaults)
+        : this.current;
+      this.current = cloneObject(source);
+      applyScaleState(source.scales);
+      applyJazzCadenceState(source.jazzCadences);
+      if (hasDocument) {
+        applySettingsToDom(source);
+      }
+    },
+    syncFromDom({ save = true } = {}) {
+      if (!hasDocument) return;
+      const snapshot = captureSettingsFromDom();
+      this.current = sanitizeSettings(snapshot, this.defaults);
+      applyScaleState(this.current.scales);
+      applyJazzCadenceState(this.current.jazzCadences);
+      if (save) this.save();
+    },
+    savePreset(name) {
+      if (!name) return;
+      const presets = this.loadPresets();
+      presets[name] = cloneObject(this.current);
+      this.savePresets(presets);
+    },
+    loadPreset(name) {
+      if (!name) return false;
+      const presets = this.loadPresets();
+      if (!presets[name]) return false;
+      this.applyToDom(presets[name]);
+      this.save();
+      return true;
+    },
+    deletePreset(name) {
+      if (!name) return;
+      const presets = this.loadPresets();
+      if (presets[name]) {
+        delete presets[name];
+        this.savePresets(presets);
+      }
+    },
+    listPresets() {
+      const presets = this.loadPresets();
+      return Object.keys(presets);
+    },
+    watchElement(el, eventName = "change") {
+      if (!el || !el.addEventListener) return;
+      if (this.attachedElements.has(el)) return;
+      el.addEventListener(eventName, () => this.syncFromDom());
+      this.attachedElements.add(el);
+    },
+    attachDomListeners() {
+      if (!hasDocument) return;
+      this.watchElement(domElements.flowSelect);
+      this.watchElement(domElements.flowStartSelect);
+      this.watchElement(domElements.showKeyboardToggle);
+      this.watchElement(domElements.highlightCorrectKeys);
+      this.watchElement(domElements.highlightDelay, "input");
+      this.watchElement(domElements.hideProgressionChordNames);
+      this.watchElement(domElements.hideProgressionChordNumerals);
+      this.watchElement(domElements.randomizeSpellings);
+      this.watchElement(domElements.enableSpacedRepetition);
+      this.watchElement(domElements.spacedRepThreshold, "input");
+      this.watchElement(domElements.sendMidiNotes);
+      this.watchElement(domElements.progressionSelect);
+      this.watchElement(domElements.customProgressionInput, "input");
+      this.watchElement(domElements.randomProgressionCount, "input");
+
+      Object.values(domElements.chordCheckboxes || {}).forEach((el) =>
+        this.watchElement(el),
+      );
+      Object.values(domElements.keyCheckboxes || {}).forEach((el) =>
+        this.watchElement(el),
+      );
+      Object.values(domElements.degreeCheckboxes || {}).forEach((el) =>
+        this.watchElement(el),
+      );
+      Object.values(domElements.scaleCheckboxes || {}).forEach((el) => {
+        this.watchElement(el);
+      });
+      Object.values(domElements.jazzBrickButtons || {}).forEach((el) => {
+        this.watchElement(el, "click");
+      });
+
+      const voicingRadios = hasDocument
+        ? document.querySelectorAll("input[name='voicingMode']")
+        : [];
+      voicingRadios.forEach((radio) => this.watchElement(radio));
+
+      jazzCadences.forEach((cadence) => {
+        if (cadence.element) {
+          this.watchElement(cadence.element);
+        }
+      });
+    },
+  };
+
+  store.initialize();
+  store.applyToDom(store.current);
+  return store;
+}
+
+const settingsStore = settingsStoreFactory();
+appGlobals.settingsStore = settingsStore;
+if (appGlobals.root) {
+  appGlobals.root.settingsStore = settingsStore;
+}
+
 const dataExports = {
   allNotes,
   normalNotes,
@@ -1360,6 +1771,7 @@ const dataExports = {
   jazzCadencesMetabricks,
   jazzCadencesDropbacks,
   voicingUtils,
+  settingsStore,
 };
 
 if (typeof module !== "undefined" && module.exports) {

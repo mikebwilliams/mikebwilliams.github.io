@@ -29,10 +29,21 @@ const runtimeRoot =
 const sharedGlobals = runtimeRoot.appGlobals || {};
 var dom =
   sharedGlobals.domElements || sharedGlobals.dom || runtimeRoot.dom || {};
+const logicSettingsStore =
+  sharedGlobals.settingsStore || runtimeRoot.settingsStore || null;
 const documentAvailable =
   "hasDocument" in sharedGlobals
     ? !!sharedGlobals.hasDocument
     : typeof document !== "undefined";
+
+function syncSettingsStore() {
+  if (
+    logicSettingsStore &&
+    typeof logicSettingsStore.syncFromDom === "function"
+  ) {
+    logicSettingsStore.syncFromDom();
+  }
+}
 
 function resolveStartValue(startKey) {
   if (startKey && Object.prototype.hasOwnProperty.call(noteValues, startKey)) {
@@ -489,11 +500,13 @@ function getHighlightDelayMs() {
   const rawSeconds = parseFloat(dom.highlightDelay.value);
   if (Number.isNaN(rawSeconds)) {
     dom.highlightDelay.value = DEFAULT_HIGHLIGHT_DELAY_MS / 1000;
+    syncSettingsStore();
     return DEFAULT_HIGHLIGHT_DELAY_MS;
   }
   const clamped = Math.max(0, rawSeconds);
   if (clamped !== rawSeconds) {
     dom.highlightDelay.value = clamped;
+    syncSettingsStore();
   }
   return clamped * 1000;
 }
