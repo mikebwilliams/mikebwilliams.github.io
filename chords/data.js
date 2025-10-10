@@ -519,6 +519,40 @@ const degreeCheckboxes = hasDocument
     }, {})
   : {};
 
+const statCategoryKeys = [
+  "chords",
+  "progressions",
+  "degrees",
+  "scales",
+  "bricks",
+];
+
+const statGoalInputIds = {
+  chords: "inputChordsGoal",
+  progressions: "inputProgressionsGoal",
+  degrees: "inputDegreesGoal",
+  scales: "inputScalesGoal",
+  bricks: "inputBricksGoal",
+};
+
+const statCardIds = {
+  chords: "statCardChords",
+  progressions: "statCardProgressions",
+  degrees: "statCardDegrees",
+  scales: "statCardScales",
+  bricks: "statCardBricks",
+};
+
+const statGoalInputs = statCategoryKeys.reduce((acc, key) => {
+  acc[key] = requireElement(statGoalInputIds[key]);
+  return acc;
+}, {});
+
+const statCardElements = statCategoryKeys.reduce((acc, key) => {
+  acc[key] = requireElement(statCardIds[key]);
+  return acc;
+}, {});
+
 const domElements = {
   hideProgressionChordNames: requireElement("chkDisplayHideProgressionNames"),
   hideProgressionChordNumerals: requireElement(
@@ -544,6 +578,8 @@ const domElements = {
   cntDegreesIncorrect: requireElement("txtDegreesIncorrect"),
   cntBricksIncorrect: requireElement("txtBricksIncorrect"),
   resetStatsButton: requireElement("btnStatsReset"),
+  statGoals: statGoalInputs,
+  statCards: statCardElements,
   optionsPanels,
   modeSections,
   jazzBrickButtons,
@@ -1551,6 +1587,33 @@ function applyScaleState(state) {
   });
 }
 
+function captureStatGoalState() {
+  const goals = {};
+  const inputs = domElements.statGoals || {};
+  statCategoryKeys.forEach((key) => {
+    const el = inputs[key];
+    if (!el) return;
+    const parsed = parseInt(el.value, 10);
+    goals[key] = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  });
+  return goals;
+}
+
+function applyStatGoalState(state) {
+  const inputs = domElements.statGoals || {};
+  statCategoryKeys.forEach((key) => {
+    const el = inputs[key];
+    if (!el) return;
+    const raw =
+      state && Object.prototype.hasOwnProperty.call(state, key)
+        ? state[key]
+        : 0;
+    const parsed = parseInt(raw, 10);
+    const value = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+    el.value = String(value);
+  });
+}
+
 function notifyModeChangeApplied() {
   if (!hasDocument) return;
   const candidates = [
@@ -1559,6 +1622,23 @@ function notifyModeChangeApplied() {
       : null,
     appGlobals && typeof appGlobals.modeChange === "function"
       ? appGlobals.modeChange
+      : null,
+  ];
+  const handler = candidates.find((fn) => typeof fn === "function");
+  if (handler) {
+    try {
+      handler();
+    } catch (_) {}
+  }
+}
+
+function notifyStatGoalsChange() {
+  const candidates = [
+    globalRoot && typeof globalRoot.statGoalsChanged === "function"
+      ? globalRoot.statGoalsChanged
+      : null,
+    appGlobals && typeof appGlobals.statGoalsChanged === "function"
+      ? appGlobals.statGoalsChanged
       : null,
   ];
   const handler = candidates.find((fn) => typeof fn === "function");
@@ -1601,6 +1681,7 @@ function captureSimpleSettings() {
     voicing: {
       mode: getRadioValue("voicingMode", "default"),
     },
+    statsGoals: captureStatGoalState(),
   };
 }
 
@@ -1676,6 +1757,8 @@ function applySimpleSettings(settings) {
   if (settings.voicing) {
     setRadioValue("voicingMode", settings.voicing.mode);
   }
+  applyStatGoalState(settings.statsGoals);
+  notifyStatGoalsChange();
   if (appliedMode !== null) {
     notifyModeChangeApplied();
   }
@@ -1773,6 +1856,7 @@ function settingsStoreFactory() {
       this.current = sanitizeSettings(snapshot, this.defaults);
       applyScaleState(this.current.scales);
       applyJazzCadenceState(this.current.jazzCadences);
+      notifyStatGoalsChange();
       if (save) this.save();
     },
     savePreset(name) {
@@ -1838,6 +1922,9 @@ function settingsStoreFactory() {
       this.watchElement(domElements.progressionSelect);
       this.watchElement(domElements.customProgressionInput, "input");
       this.watchElement(domElements.randomProgressionCount, "input");
+      Object.values(domElements.statGoals || {}).forEach((el) => {
+        this.watchElement(el, "input");
+      });
 
       Object.values(domElements.chordCheckboxes || {}).forEach((el) =>
         this.watchElement(el),
@@ -1901,6 +1988,9 @@ const dataExports = {
   optionsPanels,
   modeSections,
   jazzBrickButtons,
+  statCategoryKeys,
+  statGoals: statGoalInputs,
+  statCards: statCardElements,
   scales,
   scaleGroups,
   jazzCadences,

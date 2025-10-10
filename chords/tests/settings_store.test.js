@@ -65,6 +65,8 @@ test("settings store saves and loads presets round-trip", () => {
   dom.progressionSelect.value = "custom";
   dom.customProgressionInput.value = "I-IV-V-I";
   dom.randomProgressionCount.value = "8";
+  dom.statGoals.chords.value = "7";
+  dom.statGoals.progressions.value = "5";
   toggleAlternatingCheckboxes(dom.chordCheckboxes);
   toggleAlternatingCheckboxes(dom.keyCheckboxes);
   toggleAlternatingCheckboxes(dom.degreeCheckboxes);
@@ -94,6 +96,8 @@ test("settings store saves and loads presets round-trip", () => {
   dom.progressionSelect.value = "random";
   dom.customProgressionInput.value = "ii-V-I";
   dom.randomProgressionCount.value = "2";
+  dom.statGoals.chords.value = "1";
+  dom.statGoals.progressions.value = "0";
   Object.values(dom.modeRadios).forEach((radio) => {
     radio.checked = radio.value === "tabScales";
   });
@@ -112,6 +116,8 @@ test("settings store saves and loads presets round-trip", () => {
   assert.strictEqual(dom.progressionSelect.value, "custom");
   assert.strictEqual(dom.customProgressionInput.value, "I-IV-V-I");
   assert.strictEqual(dom.randomProgressionCount.value, "8");
+  assert.strictEqual(dom.statGoals.chords.value, "7");
+  assert.strictEqual(dom.statGoals.progressions.value, "5");
   assert.strictEqual(
     dom.modeRadios.tabJazz.checked,
     true,

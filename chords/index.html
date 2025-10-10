@@ -59,7 +59,7 @@
       <details class="statsPanel surfaceCard" open>
         <summary>Stats</summary>
         <div class="statsGrid">
-          <div class="statCard">
+          <div class="statCard" id="statCardChords">
             <h4>Chords</h4>
             <p>
               <span class="statLabel">Correct</span
@@ -69,8 +69,19 @@
               <span class="statLabel">Incorrect</span
               ><span id="txtChordsIncorrect">0</span>
             </p>
+            <p class="statGoalRow">
+              <label class="statLabel" for="inputChordsGoal">Goal</label>
+              <input
+                type="number"
+                id="inputChordsGoal"
+                inputmode="numeric"
+                min="0"
+                max="9999"
+                value="0"
+              />
+            </p>
           </div>
-          <div class="statCard">
+          <div class="statCard" id="statCardProgressions">
             <h4>Progressions</h4>
             <p>
               <span class="statLabel">Correct</span
@@ -80,8 +91,19 @@
               <span class="statLabel">Incorrect</span
               ><span id="txtProgressionsIncorrect">0</span>
             </p>
+            <p class="statGoalRow">
+              <label class="statLabel" for="inputProgressionsGoal">Goal</label>
+              <input
+                type="number"
+                id="inputProgressionsGoal"
+                inputmode="numeric"
+                min="0"
+                max="9999"
+                value="0"
+              />
+            </p>
           </div>
-          <div class="statCard">
+          <div class="statCard" id="statCardDegrees">
             <h4>Degrees</h4>
             <p>
               <span class="statLabel">Correct</span
@@ -91,8 +113,19 @@
               <span class="statLabel">Incorrect</span
               ><span id="txtDegreesIncorrect">0</span>
             </p>
+            <p class="statGoalRow">
+              <label class="statLabel" for="inputDegreesGoal">Goal</label>
+              <input
+                type="number"
+                id="inputDegreesGoal"
+                inputmode="numeric"
+                min="0"
+                max="9999"
+                value="0"
+              />
+            </p>
           </div>
-          <div class="statCard">
+          <div class="statCard" id="statCardScales">
             <h4>Scales</h4>
             <p>
               <span class="statLabel">Correct</span
@@ -102,8 +135,19 @@
               <span class="statLabel">Incorrect</span
               ><span id="txtScalesIncorrect">0</span>
             </p>
+            <p class="statGoalRow">
+              <label class="statLabel" for="inputScalesGoal">Goal</label>
+              <input
+                type="number"
+                id="inputScalesGoal"
+                inputmode="numeric"
+                min="0"
+                max="9999"
+                value="0"
+              />
+            </p>
           </div>
-          <div class="statCard">
+          <div class="statCard" id="statCardBricks">
             <h4>Bricks</h4>
             <p>
               <span class="statLabel">Correct</span
@@ -112,6 +156,17 @@
             <p>
               <span class="statLabel">Incorrect</span
               ><span id="txtBricksIncorrect">0</span>
+            </p>
+            <p class="statGoalRow">
+              <label class="statLabel" for="inputBricksGoal">Goal</label>
+              <input
+                type="number"
+                id="inputBricksGoal"
+                inputmode="numeric"
+                min="0"
+                max="9999"
+                value="0"
+              />
             </p>
           </div>
         </div>

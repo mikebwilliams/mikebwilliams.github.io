@@ -36,6 +36,78 @@ const documentAvailable =
     ? !!sharedGlobals.hasDocument
     : typeof document !== "undefined";
 
+const statCategoryConfig = {
+  chords: {
+    correctElement: () => dom.cntChordsCorrect,
+    goalInput: () => (dom.statGoals ? dom.statGoals.chords : null),
+    cardElement: () => (dom.statCards ? dom.statCards.chords : null),
+  },
+  progressions: {
+    correctElement: () => dom.cntProgsCorrect,
+    goalInput: () => (dom.statGoals ? dom.statGoals.progressions : null),
+    cardElement: () => (dom.statCards ? dom.statCards.progressions : null),
+  },
+  degrees: {
+    correctElement: () => dom.cntDegreesCorrect,
+    goalInput: () => (dom.statGoals ? dom.statGoals.degrees : null),
+    cardElement: () => (dom.statCards ? dom.statCards.degrees : null),
+  },
+  scales: {
+    correctElement: () => dom.cntScalesCorrect,
+    goalInput: () => (dom.statGoals ? dom.statGoals.scales : null),
+    cardElement: () => (dom.statCards ? dom.statCards.scales : null),
+  },
+  bricks: {
+    correctElement: () => dom.cntBricksCorrect,
+    goalInput: () => (dom.statGoals ? dom.statGoals.bricks : null),
+    cardElement: () => (dom.statCards ? dom.statCards.bricks : null),
+  },
+};
+
+function parseCountFromElement(element) {
+  if (!element || typeof element.textContent !== "string") return 0;
+  const parsed = parseInt(element.textContent, 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+}
+
+function parseGoalValue(input) {
+  if (!input || typeof input.value === "undefined") return 0;
+  const parsed = parseInt(input.value, 10);
+  if (!Number.isFinite(parsed) || parsed < 0) return 0;
+  if (parsed > 9999) return 9999;
+  return parsed;
+}
+
+function updateStatGoalStatus(category) {
+  const resolve = statCategoryConfig[category];
+  if (!resolve) return;
+  const card = resolve.cardElement();
+  if (!card || !card.classList || typeof card.classList.add !== "function") {
+    return;
+  }
+  const goalValue = parseGoalValue(resolve.goalInput());
+  const correctValue = parseCountFromElement(resolve.correctElement());
+  if (goalValue > 0 && correctValue >= goalValue) {
+    card.classList.add("goalMet");
+  } else {
+    card.classList.remove("goalMet");
+  }
+}
+
+function updateAllStatGoalStatuses() {
+  Object.keys(statCategoryConfig).forEach(updateStatGoalStatus);
+}
+
+sharedGlobals.updateStatGoalStatus = updateStatGoalStatus;
+sharedGlobals.updateStatGoalStatuses = updateAllStatGoalStatuses;
+sharedGlobals.statGoalsChanged = updateAllStatGoalStatuses;
+
+if (runtimeRoot && !runtimeRoot.statGoalsChanged) {
+  runtimeRoot.statGoalsChanged = updateAllStatGoalStatuses;
+}
+
+updateAllStatGoalStatuses();
+
 function syncSettingsStore() {
   if (
     logicSettingsStore &&
@@ -269,11 +341,15 @@ function updateResultCounters({
   skipCorrect = false,
   correctElement,
   incorrectElement,
+  category,
 }) {
   if (wasIncorrect) {
     incrementTextContent(incorrectElement);
   } else if (!skipCorrect) {
     incrementTextContent(correctElement);
+  }
+  if (category) {
+    updateStatGoalStatus(category);
   }
 }
 
@@ -283,6 +359,7 @@ function recordChordCompletion() {
     wasIncorrect: isIncorrect,
     correctElement: dom.cntChordsCorrect,
     incorrectElement: dom.cntChordsIncorrect,
+    category: "chords",
   });
   isIncorrect = false;
 }
@@ -292,6 +369,7 @@ function recordDegreeCompletion() {
     wasIncorrect: isIncorrect,
     correctElement: dom.cntDegreesCorrect,
     incorrectElement: dom.cntDegreesIncorrect,
+    category: "degrees",
   });
   isIncorrect = false;
 }
@@ -901,6 +979,7 @@ function nextChord(skip = false) {
           skipCorrect: skip,
           correctElement: dom.cntProgsCorrect,
           incorrectElement: dom.cntProgsIncorrect,
+          category: "progressions",
         });
       } else if (modeIsJazz()) {
         // Handle Jazz Brick spaced repetition using unified queue
@@ -910,6 +989,7 @@ function nextChord(skip = false) {
           skipCorrect: skip,
           correctElement: dom.cntBricksCorrect,
           incorrectElement: dom.cntBricksIncorrect,
+          category: "bricks",
         });
       } else if (modeIsScales()) {
         updateResultCounters({
@@ -917,6 +997,7 @@ function nextChord(skip = false) {
           skipCorrect: skip,
           correctElement: dom.cntScalesCorrect,
           incorrectElement: dom.cntScalesIncorrect,
+          category: "scales",
         });
       }
 

@@ -658,4 +658,18 @@ dom.resetStatsButton.addEventListener("click", () => {
   dom.cntScalesIncorrect.textContent = "0";
   dom.cntDegreesIncorrect.textContent = "0";
   dom.cntBricksIncorrect.textContent = "0";
+  if (typeof uiGlobals.updateStatGoalStatuses === "function") {
+    uiGlobals.updateStatGoalStatuses();
+  }
+});
+
+Object.entries(dom.statGoals || {}).forEach(([category, input]) => {
+  if (!input || typeof input.addEventListener !== "function") return;
+  input.addEventListener("input", () => {
+    if (typeof uiGlobals.updateStatGoalStatus === "function") {
+      uiGlobals.updateStatGoalStatus(category);
+    } else if (typeof uiGlobals.updateStatGoalStatuses === "function") {
+      uiGlobals.updateStatGoalStatuses();
+    }
+  });
 });
