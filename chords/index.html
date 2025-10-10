@@ -168,6 +168,14 @@
             value="tabMidi"
           />
           <label for="tabOptionsMidi">MIDI</label>
+
+          <input
+            type="radio"
+            id="tabOptionsSettings"
+            name="options"
+            value="tabSettings"
+          />
+          <label for="tabOptionsSettings">Settings</label>
         </div>
 
         <div class="tabContent" id="panelOptionsKeys">
@@ -480,6 +488,31 @@
           >
           <table id="tableMidiInputs"></table>
           <table id="tableMidiOutputs"></table>
+        </div>
+
+        <div class="tabContent" id="panelOptionsSettings">
+          <div class="settingsRow">
+            <label for="selectSettingsPreset">Presets:</label>
+            <select id="selectSettingsPreset"></select>
+            <button id="btnSettingsLoad" type="button">Load</button>
+            <button id="btnSettingsDelete" type="button">Delete</button>
+          </div>
+          <div class="settingsRow">
+            <label for="inputSettingsPresetName">Save As:</label>
+            <input
+              type="text"
+              id="inputSettingsPresetName"
+              placeholder="Preset name"
+            />
+            <button id="btnSettingsSave" type="button">Save Preset</button>
+          </div>
+          <div class="settingsRow">
+            <button id="btnSettingsReset" type="button">
+              Reset to Defaults
+            </button>
+            <button id="btnSettingsExport" type="button">Show JSON</button>
+          </div>
+          <pre id="panelSettingsDebug" class="settingsDebugOutput"></pre>
         </div>
       </section>
 

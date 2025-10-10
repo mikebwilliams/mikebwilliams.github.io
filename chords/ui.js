@@ -527,6 +527,93 @@ dom.jazzBrickButtons.dropbacks.addEventListener("click", () => {
   syncSettingsStore();
 });
 
+function refreshSettingsPresetOptions() {
+  if (!uiSettingsStore) return;
+  const select = dom.settingsPresetSelect;
+  const currentValue = select.value;
+  while (select.firstChild) {
+    select.removeChild(select.firstChild);
+  }
+  const presets = uiSettingsStore.listPresets();
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = presets.length
+    ? "Select a preset"
+    : "No presets saved";
+  placeholder.disabled = !presets.length;
+  placeholder.selected = true;
+  select.appendChild(placeholder);
+  presets.forEach((name) => {
+    const option = document.createElement("option");
+    option.value = name;
+    option.textContent = name;
+    select.appendChild(option);
+  });
+  if (presets.includes(currentValue)) {
+    select.value = currentValue;
+  } else {
+    select.value = "";
+  }
+}
+
+function handleSettingsSave() {
+  if (!uiSettingsStore) return;
+  const name = dom.settingsPresetName.value.trim();
+  if (!name) {
+    alert("Please enter a preset name before saving.");
+    return;
+  }
+  uiSettingsStore.syncFromDom();
+  uiSettingsStore.savePreset(name);
+  refreshSettingsPresetOptions();
+  dom.settingsPresetSelect.value = name;
+}
+
+function handleSettingsLoad() {
+  if (!uiSettingsStore) return;
+  const name = dom.settingsPresetSelect.value;
+  if (!name) {
+    alert("Select a preset to load.");
+    return;
+  }
+  const loaded = uiSettingsStore.loadPreset(name);
+  if (!loaded) {
+    alert("Preset could not be loaded.");
+    return;
+  }
+  refreshSettingsPresetOptions();
+  dom.settingsPresetSelect.value = name;
+}
+
+function handleSettingsDelete() {
+  if (!uiSettingsStore) return;
+  const name = dom.settingsPresetSelect.value;
+  if (!name) {
+    alert("Select a preset to delete.");
+    return;
+  }
+  if (!confirm(`Delete preset "${name}"?`)) return;
+  uiSettingsStore.deletePreset(name);
+  refreshSettingsPresetOptions();
+  dom.settingsPresetSelect.value = "";
+}
+
+function handleSettingsReset() {
+  if (!uiSettingsStore) return;
+  if (!confirm("Reset all settings to their default values?")) return;
+  uiSettingsStore.resetToDefaults();
+  refreshSettingsPresetOptions();
+  dom.settingsPresetSelect.value = "";
+  dom.settingsPresetName.value = "";
+  dom.settingsDebugPanel.textContent = "";
+}
+
+function handleSettingsExport() {
+  if (!uiSettingsStore) return;
+  uiSettingsStore.syncFromDom();
+  dom.settingsDebugPanel.textContent = uiSettingsStore.getCurrentJSON(true);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initJazzBricks();
   initScales();
@@ -551,6 +638,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   dom.optionsTabKeys.checked = true;
   optionsChange();
+
+  refreshSettingsPresetOptions();
+  dom.settingsSaveButton.addEventListener("click", handleSettingsSave);
+  dom.settingsLoadButton.addEventListener("click", handleSettingsLoad);
+  dom.settingsDeleteButton.addEventListener("click", handleSettingsDelete);
+  dom.settingsResetButton.addEventListener("click", handleSettingsReset);
+  dom.settingsExportButton.addEventListener("click", handleSettingsExport);
 });
 
 dom.resetStatsButton.addEventListener("click", () => {

@@ -442,6 +442,7 @@ const optionsPanels = {
   tabSpacedRep: requireElement("panelOptionsSpacedRep"),
   tabEar: requireElement("panelOptionsEar"),
   tabVoicings: requireElement("panelOptionsVoicings"),
+  tabSettings: requireElement("panelOptionsSettings"),
 };
 
 const modeSections = {
@@ -518,6 +519,14 @@ const domElements = {
   midiStatusText: requireElement("txtMidiStatus"),
   midiInputs: requireElement("tableMidiInputs"),
   midiOutputs: requireElement("tableMidiOutputs"),
+  settingsPresetSelect: requireElement("selectSettingsPreset"),
+  settingsPresetName: requireElement("inputSettingsPresetName"),
+  settingsSaveButton: requireElement("btnSettingsSave"),
+  settingsLoadButton: requireElement("btnSettingsLoad"),
+  settingsDeleteButton: requireElement("btnSettingsDelete"),
+  settingsResetButton: requireElement("btnSettingsReset"),
+  settingsExportButton: requireElement("btnSettingsExport"),
+  settingsDebugPanel: requireElement("panelSettingsDebug"),
   scalesButtons: requireElement("panelScalesButtons"),
   scalesSelected: requireElement("panelScalesSelected"),
   scaleCheckboxes: {},
@@ -1591,10 +1600,17 @@ function settingsStoreFactory() {
     presetsKey: SETTINGS_PRESETS_KEY,
     initialized: false,
     attachedElements: new Set(),
+    resolveStorage() {
+      if (this.storage) return this.storage;
+      const handle = getStorageHandle();
+      if (handle) this.storage = handle;
+      return this.storage;
+    },
     load() {
-      if (!this.storage) return null;
+      const activeStorage = this.resolveStorage();
+      if (!activeStorage) return null;
       try {
-        const raw = this.storage.getItem(this.storageKey);
+        const raw = activeStorage.getItem(this.storageKey);
         if (!raw) return null;
         return JSON.parse(raw);
       } catch (_) {
@@ -1602,9 +1618,10 @@ function settingsStoreFactory() {
       }
     },
     loadPresets() {
-      if (!this.storage) return {};
+      const activeStorage = this.resolveStorage();
+      if (!activeStorage) return {};
       try {
-        const raw = this.storage.getItem(this.presetsKey);
+        const raw = activeStorage.getItem(this.presetsKey);
         if (!raw) return {};
         const parsed = JSON.parse(raw);
         return typeof parsed === "object" && parsed ? parsed : {};
@@ -1613,18 +1630,20 @@ function settingsStoreFactory() {
       }
     },
     save() {
-      if (!this.storage) return;
+      const activeStorage = this.resolveStorage();
+      if (!activeStorage) return;
       try {
-        this.storage.setItem(
+        activeStorage.setItem(
           this.storageKey,
           JSON.stringify(this.current || this.defaults),
         );
       } catch (_) {}
     },
     savePresets(presets) {
-      if (!this.storage) return;
+      const activeStorage = this.resolveStorage();
+      if (!activeStorage) return;
       try {
-        this.storage.setItem(this.presetsKey, JSON.stringify(presets));
+        activeStorage.setItem(this.presetsKey, JSON.stringify(presets));
       } catch (_) {}
     },
     initialize() {
@@ -1639,12 +1658,9 @@ function settingsStoreFactory() {
       this.current = cloneObject(source);
       applyScaleState(source.scales);
       applyJazzCadenceState(source.jazzCadences);
-      if (hasDocument) {
-        applySettingsToDom(source);
-      }
+      applySettingsToDom(source);
     },
     syncFromDom({ save = true } = {}) {
-      if (!hasDocument) return;
       const snapshot = captureSettingsFromDom();
       this.current = sanitizeSettings(snapshot, this.defaults);
       applyScaleState(this.current.scales);
@@ -1676,6 +1692,21 @@ function settingsStoreFactory() {
     listPresets() {
       const presets = this.loadPresets();
       return Object.keys(presets);
+    },
+    resetToDefaults({ apply = true, save = true } = {}) {
+      this.current = cloneObject(this.defaults);
+      if (apply) this.applyToDom(this.current);
+      if (save) this.save();
+    },
+    getCurrentSnapshot() {
+      return cloneObject(this.current);
+    },
+    getCurrentJSON(pretty = true) {
+      try {
+        return JSON.stringify(this.current, null, pretty ? 2 : 0);
+      } catch (_) {
+        return "{}";
+      }
     },
     watchElement(el, eventName = "change") {
       if (!el || !el.addEventListener) return;
