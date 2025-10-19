@@ -442,6 +442,7 @@ const optionsPanels = {
   tabSpacedRep: requireElement("panelOptionsSpacedRep"),
   tabEar: requireElement("panelOptionsEar"),
   tabVoicings: requireElement("panelOptionsVoicings"),
+  tabWorkouts: requireElement("panelOptionsWorkouts"),
   tabSettings: requireElement("panelOptionsSettings"),
 };
 
@@ -610,6 +611,16 @@ const domElements = {
   settingsResetButton: requireElement("btnSettingsReset"),
   settingsExportButton: requireElement("btnSettingsExport"),
   settingsDebugPanel: requireElement("panelSettingsDebug"),
+  workoutPanel: requireElement("panelOptionsWorkouts"),
+  workoutSelect: requireElement("selectWorkout"),
+  workoutNameInput: requireElement("inputWorkoutName"),
+  workoutNewButton: requireElement("btnWorkoutNew"),
+  workoutSaveButton: requireElement("btnWorkoutSave"),
+  workoutDeleteButton: requireElement("btnWorkoutDelete"),
+  workoutPresetSelect: requireElement("selectWorkoutPreset"),
+  workoutGoalInput: requireElement("inputWorkoutGoal"),
+  workoutAddEntryButton: requireElement("btnWorkoutAddEntry"),
+  workoutEntriesPanel: requireElement("panelWorkoutEntries"),
   scalesButtons: requireElement("panelScalesButtons"),
   scalesSelected: requireElement("panelScalesSelected"),
   scaleCheckboxes: {},
@@ -1433,6 +1444,8 @@ const jazzCadencesDropbacks = [
 
 const SETTINGS_STORAGE_KEY = "chordChallenge.settings";
 const SETTINGS_PRESETS_KEY = "chordChallenge.settings.presets";
+const WORKOUTS_STORAGE_KEY = "chordChallenge.workouts";
+const WORKOUTS_SELECTED_KEY = "chordChallenge.workouts.selected";
 
 function getStorageHandle() {
   try {
@@ -1472,6 +1485,213 @@ function mergeSettings(base, extra) {
     }
   });
   return result;
+}
+
+function sanitizeWorkoutName(name) {
+  if (typeof name !== "string") return "";
+  const trimmed = name.trim();
+  return trimmed;
+}
+
+function sanitizeWorkoutGoal(value) {
+  const parsed = parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed < 0) return 0;
+  if (parsed > 9999) return 9999;
+  return parsed;
+}
+
+function sanitizeWorkoutCategory(category) {
+  if (typeof category !== "string") return null;
+  const trimmed = category.trim();
+  return statCategoryKeys.includes(trimmed) ? trimmed : null;
+}
+
+function sanitizeWorkoutEntry(entry) {
+  if (!entry || typeof entry !== "object") return null;
+  const preset = typeof entry.preset === "string" ? entry.preset.trim() : "";
+  if (!preset) return null;
+  const goal = sanitizeWorkoutGoal(
+    Object.prototype.hasOwnProperty.call(entry, "goal") ? entry.goal : 0,
+  );
+  const category = sanitizeWorkoutCategory(entry.category);
+  return {
+    preset,
+    goal,
+    category,
+  };
+}
+
+function sanitizeWorkoutEntries(entries) {
+  if (!Array.isArray(entries)) return [];
+  return entries
+    .map((entry) => sanitizeWorkoutEntry(entry))
+    .filter((entry) => entry !== null);
+}
+
+function sanitizeWorkoutMap(collection) {
+  if (!collection || typeof collection !== "object") return {};
+  const sanitized = {};
+  Object.keys(collection).forEach((name) => {
+    const cleanName = sanitizeWorkoutName(name);
+    if (!cleanName) return;
+    const source = collection[name];
+    const entries = sanitizeWorkoutEntries(
+      source && typeof source === "object" ? source.entries : [],
+    );
+    sanitized[cleanName] = {
+      entries,
+    };
+  });
+  return sanitized;
+}
+
+function workoutStoreFactory() {
+  const store = {
+    storage: getStorageHandle(),
+    storageKey: WORKOUTS_STORAGE_KEY,
+    selectedKey: WORKOUTS_SELECTED_KEY,
+    resolveStorage() {
+      if (this.storage) return this.storage;
+      const handle = getStorageHandle();
+      if (handle) this.storage = handle;
+      return this.storage;
+    },
+    loadAll() {
+      const activeStorage = this.resolveStorage();
+      if (!activeStorage) return {};
+      try {
+        const raw = activeStorage.getItem(this.storageKey);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return sanitizeWorkoutMap(parsed);
+      } catch (_) {
+        return {};
+      }
+    },
+    saveAll(workouts) {
+      const activeStorage = this.resolveStorage();
+      if (!activeStorage) return;
+      const sanitized = sanitizeWorkoutMap(workouts);
+      try {
+        activeStorage.setItem(this.storageKey, JSON.stringify(sanitized));
+      } catch (_) {}
+    },
+    listWorkouts() {
+      return Object.keys(this.loadAll()).sort((a, b) =>
+        a.localeCompare(b, "en", { sensitivity: "base" }),
+      );
+    },
+    getWorkout(name) {
+      const cleanName = sanitizeWorkoutName(name);
+      if (!cleanName) return null;
+      const workouts = this.loadAll();
+      if (!Object.prototype.hasOwnProperty.call(workouts, cleanName)) {
+        return null;
+      }
+      const entry = workouts[cleanName] || { entries: [] };
+      return {
+        name: cleanName,
+        entries: cloneObject(entry.entries || []),
+      };
+    },
+    saveWorkout(name, entries) {
+      const cleanName = sanitizeWorkoutName(name);
+      if (!cleanName) return false;
+      const workouts = this.loadAll();
+      workouts[cleanName] = {
+        entries: sanitizeWorkoutEntries(entries),
+      };
+      this.saveAll(workouts);
+      return true;
+    },
+    deleteWorkout(name) {
+      const cleanName = sanitizeWorkoutName(name);
+      if (!cleanName) return false;
+      const workouts = this.loadAll();
+      if (!Object.prototype.hasOwnProperty.call(workouts, cleanName)) {
+        return false;
+      }
+      delete workouts[cleanName];
+      this.saveAll(workouts);
+      const selection = this.getLastSelection();
+      if (selection && selection.workout === cleanName) {
+        this.clearLastSelection();
+      }
+      return true;
+    },
+    hasWorkout(name) {
+      const cleanName = sanitizeWorkoutName(name);
+      if (!cleanName) return false;
+      const workouts = this.loadAll();
+      return Object.prototype.hasOwnProperty.call(workouts, cleanName);
+    },
+    renameWorkout(oldName, newName) {
+      const fromName = sanitizeWorkoutName(oldName);
+      const toName = sanitizeWorkoutName(newName);
+      if (!fromName || !toName) return false;
+      if (fromName === toName) return true;
+      const workouts = this.loadAll();
+      if (!Object.prototype.hasOwnProperty.call(workouts, fromName)) {
+        return false;
+      }
+      if (Object.prototype.hasOwnProperty.call(workouts, toName)) {
+        return false;
+      }
+      workouts[toName] = workouts[fromName];
+      delete workouts[fromName];
+      this.saveAll(workouts);
+      const selection = this.getLastSelection();
+      if (selection && selection.workout === fromName) {
+        this.setLastSelection(toName, selection.entryIndex);
+      }
+      return true;
+    },
+    replaceAll(workouts) {
+      this.saveAll(workouts);
+    },
+    setLastSelection(workoutName, entryIndex = 0) {
+      const activeStorage = this.resolveStorage();
+      if (!activeStorage) return;
+      const cleanName = sanitizeWorkoutName(workoutName);
+      if (!cleanName) {
+        this.clearLastSelection();
+        return;
+      }
+      const payload = {
+        workout: cleanName,
+        entryIndex: Number.isFinite(entryIndex) ? entryIndex : 0,
+      };
+      try {
+        activeStorage.setItem(this.selectedKey, JSON.stringify(payload));
+      } catch (_) {}
+    },
+    getLastSelection() {
+      const activeStorage = this.resolveStorage();
+      if (!activeStorage) return null;
+      try {
+        const raw = activeStorage.getItem(this.selectedKey);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return null;
+        const workout = sanitizeWorkoutName(parsed.workout);
+        if (!workout) return null;
+        const entryIndex = Number.isFinite(parsed.entryIndex)
+          ? parsed.entryIndex
+          : 0;
+        return { workout, entryIndex };
+      } catch (_) {
+        return null;
+      }
+    },
+    clearLastSelection() {
+      const activeStorage = this.resolveStorage();
+      if (!activeStorage) return;
+      try {
+        activeStorage.removeItem(this.selectedKey);
+      } catch (_) {}
+    },
+  };
+  return store;
 }
 
 function captureCheckboxState(collection) {
@@ -1966,6 +2186,12 @@ if (appGlobals.root) {
   appGlobals.root.settingsStore = settingsStore;
 }
 
+const workoutStore = workoutStoreFactory();
+appGlobals.workoutStore = workoutStore;
+if (appGlobals.root) {
+  appGlobals.root.workoutStore = workoutStore;
+}
+
 const dataExports = {
   allNotes,
   normalNotes,
@@ -2001,6 +2227,7 @@ const dataExports = {
   jazzCadencesDropbacks,
   voicingUtils,
   settingsStore,
+  workoutStore,
 };
 
 if (typeof module !== "undefined" && module.exports) {

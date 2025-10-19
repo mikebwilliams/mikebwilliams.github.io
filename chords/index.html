@@ -226,6 +226,14 @@
 
           <input
             type="radio"
+            id="tabOptionsWorkouts"
+            name="options"
+            value="tabWorkouts"
+          />
+          <label for="tabOptionsWorkouts">Workouts</label>
+
+          <input
+            type="radio"
             id="tabOptionsSettings"
             name="options"
             value="tabSettings"
@@ -543,6 +551,37 @@
           >
           <table id="tableMidiInputs"></table>
           <table id="tableMidiOutputs"></table>
+        </div>
+
+        <div class="tabContent" id="panelOptionsWorkouts">
+          <div class="workoutControls">
+            <label for="selectWorkout">Workout:</label>
+            <select id="selectWorkout"></select>
+            <button id="btnWorkoutNew" type="button">New</button>
+            <button id="btnWorkoutSave" type="button">Save</button>
+            <button id="btnWorkoutDelete" type="button">Delete</button>
+          </div>
+          <div class="workoutNameRow">
+            <label for="inputWorkoutName">Name:</label>
+            <input id="inputWorkoutName" type="text" />
+          </div>
+          <div class="workoutEntriesHeader">
+            <h5>Entries</h5>
+          </div>
+          <div id="panelWorkoutEntries" class="workoutEntries"></div>
+          <div class="workoutAddRow">
+            <label for="selectWorkoutPreset">Preset:</label>
+            <select id="selectWorkoutPreset"></select>
+            <label for="inputWorkoutGoal">Goal:</label>
+            <input
+              id="inputWorkoutGoal"
+              type="number"
+              min="0"
+              max="9999"
+              value="0"
+            />
+            <button id="btnWorkoutAddEntry" type="button">Add Entry</button>
+          </div>
         </div>
 
         <div class="tabContent" id="panelOptionsSettings">

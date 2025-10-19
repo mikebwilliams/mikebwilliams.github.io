@@ -529,6 +529,109 @@ label {
   margin: 0;
 }
 
+#panelOptionsWorkouts label {
+  margin: 0;
+}
+
+.workoutControls,
+.workoutNameRow,
+.workoutAddRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.workoutControls select,
+.workoutAddRow select {
+  min-width: 180px;
+}
+
+.workoutNameRow input {
+  flex: 1 1 220px;
+}
+
+.workoutAddRow input[type="number"] {
+  width: 100px;
+}
+
+.workoutEntriesHeader {
+  margin: 18px 0 8px;
+}
+
+.workoutEntriesHeader h5 {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+}
+
+.workoutEntries {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.workoutEntry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--surface-700);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+}
+
+.workoutEntry.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(140, 169, 255, 0.38);
+}
+
+.workoutEntryInfo {
+  flex: 1 1 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.workoutEntryTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.workoutEntryMeta {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.workoutEntryActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.workoutEntry button {
+  padding: 0.45rem 1rem;
+}
+
+.workoutEmpty {
+  padding: 18px;
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--text-dim);
+  border: 1px dashed var(--border-soft);
+  border-radius: var(--radius-sm);
+}
+
+.workoutPresetMissing {
+  color: var(--warning);
+}
+
 input[type="checkbox"],
 input[type="radio"] {
   width: 18px;

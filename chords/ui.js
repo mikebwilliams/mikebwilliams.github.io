@@ -11,6 +11,47 @@ const uiSettingsStore =
   uiRoot.settingsStore ||
   uiRoot.appSettingsStore ||
   {};
+const uiWorkoutStore =
+  uiGlobals.workoutStore ||
+  uiRoot.workoutStore ||
+  (uiRoot.appGlobals ? uiRoot.appGlobals.workoutStore : null) ||
+  null;
+
+const modeStatCategoryMap = {
+  tabChords: "chords",
+  tabProgressions: "progressions",
+  tabDegrees: "degrees",
+  tabScales: "scales",
+  tabJazz: "bricks",
+};
+
+const statCategoryLabels = {
+  chords: "Chords",
+  progressions: "Progressions",
+  degrees: "Degrees",
+  scales: "Scales",
+  bricks: "Bricks",
+};
+
+const flowModeLabels = {
+  random: "Random keys",
+  circleOfFourths: "Circle of Fourths",
+  circleOfFifths: "Circle of Fifths",
+  ascendingWholeSteps: "Ascending Whole Steps",
+  descendingWholeSteps: "Descending Whole Steps",
+  ascendingHalfSteps: "Ascending Half Steps",
+  descendingHalfSteps: "Descending Half Steps",
+  ascendingMinorThirds: "Ascending Minor Thirds",
+  descendingMinorThirds: "Descending Minor Thirds",
+};
+
+const workoutState = {
+  originalName: "",
+  draftName: "",
+  entries: [],
+  activeIndex: -1,
+  dirty: false,
+};
 
 function syncSettingsStore() {
   if (uiSettingsStore && typeof uiSettingsStore.syncFromDom === "function") {
@@ -554,6 +595,7 @@ function refreshSettingsPresetOptions() {
   } else {
     select.value = "";
   }
+  refreshWorkoutPresetOptions();
 }
 
 function handleSettingsSave() {
@@ -614,6 +656,665 @@ function handleSettingsExport() {
   dom.settingsDebugPanel.textContent = uiSettingsStore.getCurrentJSON(true);
 }
 
+function normalizeWorkoutGoal(value) {
+  const parsed = parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed < 0) return 0;
+  if (parsed > 9999) return 9999;
+  return parsed;
+}
+
+function cloneWorkoutEntry(entry) {
+  if (!entry || typeof entry !== "object") {
+    return {
+      preset: "",
+      goal: 0,
+      category: null,
+    };
+  }
+  const preset = typeof entry.preset === "string" ? entry.preset.trim() : "";
+  return {
+    preset,
+    goal: normalizeWorkoutGoal(entry.goal),
+    category:
+      typeof entry.category === "string" && statCategoryLabels[entry.category]
+        ? entry.category
+        : null,
+  };
+}
+
+function getPresetSnapshots() {
+  if (!uiSettingsStore || typeof uiSettingsStore.loadPresets !== "function") {
+    return {};
+  }
+  return uiSettingsStore.loadPresets() || {};
+}
+
+function inferCategoryFromPresetSnapshot(preset) {
+  if (!preset || typeof preset !== "object") return null;
+  const mode =
+    typeof preset.mode === "string" ? preset.mode : preset.selectedMode;
+  if (typeof mode !== "string") return null;
+  return modeStatCategoryMap[mode] || null;
+}
+
+function resolveEntryCategory(entry, preset) {
+  const inferred = inferCategoryFromPresetSnapshot(preset);
+  if (inferred) return inferred;
+  if (
+    entry &&
+    typeof entry.category === "string" &&
+    statCategoryLabels[entry.category]
+  ) {
+    return entry.category;
+  }
+  return null;
+}
+
+function describeFlow(preset) {
+  if (!preset || typeof preset !== "object" || !preset.flow) return null;
+  const flow = preset.flow;
+  const mode = typeof flow.mode === "string" ? flow.mode : null;
+  let label = null;
+  if (mode && Object.prototype.hasOwnProperty.call(flowModeLabels, mode)) {
+    label = flowModeLabels[mode];
+  } else if (mode) {
+    label = mode.replace(/([a-z])([A-Z])/g, "$1 $2");
+  }
+  if (!label) return null;
+  if (mode === "random") return label;
+  const startKey =
+    typeof flow.startKey === "string" && flow.startKey ? flow.startKey : null;
+  return startKey ? `${label} (start ${startKey})` : label;
+}
+
+function buildWorkoutEntryMeta(entry, preset) {
+  const parts = [];
+  const category = resolveEntryCategory(entry, preset);
+  const label = category ? statCategoryLabels[category] : null;
+  const goalValue = normalizeWorkoutGoal(entry.goal);
+  parts.push(label ? `Goal ${goalValue} ${label}` : `Goal ${goalValue}`);
+  const flowText = describeFlow(preset);
+  if (flowText) parts.push(flowText);
+  return parts.join(" · ");
+}
+
+function createWorkoutEntryButton(label, action, disabled = false) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = label;
+  button.dataset.action = action;
+  if (disabled) button.disabled = true;
+  return button;
+}
+
+function refreshWorkoutSelect(selectedName) {
+  const select = dom.workoutSelect;
+  if (
+    !select ||
+    typeof select.appendChild !== "function" ||
+    typeof document === "undefined"
+  ) {
+    return;
+  }
+  const currentValue =
+    typeof selectedName === "string" ? selectedName : select.value;
+  while (select.firstChild) {
+    select.removeChild(select.firstChild);
+  }
+  const workouts =
+    uiWorkoutStore && typeof uiWorkoutStore.listWorkouts === "function"
+      ? uiWorkoutStore.listWorkouts()
+      : [];
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = workouts.length
+    ? "Select a workout"
+    : "No workouts saved";
+  placeholder.disabled = !workouts.length;
+  placeholder.selected = true;
+  select.appendChild(placeholder);
+  workouts.forEach((name) => {
+    const option = document.createElement("option");
+    option.value = name;
+    option.textContent = name;
+    select.appendChild(option);
+  });
+  if (workouts.includes(currentValue)) {
+    select.value = currentValue;
+  } else if (workouts.includes(workoutState.originalName)) {
+    select.value = workoutState.originalName;
+  } else {
+    select.value = "";
+  }
+  select.disabled = !workouts.length;
+}
+
+function updateWorkoutControls() {
+  if (dom.workoutSaveButton) {
+    const hasName = !!workoutState.draftName.trim();
+    const hasEntries = workoutState.entries.length > 0;
+    dom.workoutSaveButton.disabled = !(hasName && hasEntries);
+  }
+  if (dom.workoutDeleteButton) {
+    dom.workoutDeleteButton.disabled = !workoutState.originalName;
+  }
+}
+
+function renderWorkoutEntries() {
+  const container = dom.workoutEntriesPanel;
+  if (
+    !container ||
+    typeof container.appendChild !== "function" ||
+    typeof document === "undefined"
+  ) {
+    return;
+  }
+  while (container.firstChild) {
+    container.removeChild(container.firstChild);
+  }
+  if (!workoutState.entries.length) {
+    const empty = document.createElement("div");
+    empty.className = "workoutEmpty";
+    empty.textContent = "No entries added yet.";
+    container.appendChild(empty);
+    return;
+  }
+  const presets = getPresetSnapshots();
+  workoutState.entries.forEach((entry, index) => {
+    const preset = presets[entry.preset] || null;
+    const row = document.createElement("div");
+    row.className = "workoutEntry";
+    if (index === workoutState.activeIndex) {
+      row.classList.add("active");
+    }
+    row.dataset.index = String(index);
+    const info = document.createElement("div");
+    info.className = "workoutEntryInfo";
+    const title = document.createElement("p");
+    title.className = "workoutEntryTitle";
+    if (preset) {
+      title.textContent = entry.preset;
+    } else {
+      title.textContent = `${entry.preset} (missing preset)`;
+      title.classList.add("workoutPresetMissing");
+    }
+    info.appendChild(title);
+    const meta = document.createElement("p");
+    meta.className = "workoutEntryMeta";
+    meta.textContent = buildWorkoutEntryMeta(entry, preset);
+    info.appendChild(meta);
+    row.appendChild(info);
+
+    const actions = document.createElement("div");
+    actions.className = "workoutEntryActions";
+    actions.appendChild(createWorkoutEntryButton("Load", "load"));
+    actions.appendChild(createWorkoutEntryButton("Up", "up", index === 0));
+    actions.appendChild(
+      createWorkoutEntryButton(
+        "Down",
+        "down",
+        index === workoutState.entries.length - 1,
+      ),
+    );
+    actions.appendChild(createWorkoutEntryButton("Remove", "remove"));
+    row.appendChild(actions);
+    container.appendChild(row);
+  });
+}
+
+function renderWorkoutEditor() {
+  if (
+    dom.workoutNameInput &&
+    dom.workoutNameInput.value !== workoutState.draftName
+  ) {
+    dom.workoutNameInput.value = workoutState.draftName;
+  }
+  renderWorkoutEntries();
+  updateWorkoutControls();
+}
+
+function setWorkoutStateFromRecord(record) {
+  workoutState.originalName = record && record.name ? record.name : "";
+  workoutState.draftName = workoutState.originalName;
+  workoutState.entries =
+    record && Array.isArray(record.entries)
+      ? record.entries.map((entry) => cloneWorkoutEntry(entry))
+      : [];
+  workoutState.activeIndex = -1;
+  workoutState.dirty = false;
+}
+
+function resetWorkoutState() {
+  workoutState.originalName = "";
+  workoutState.draftName = "";
+  workoutState.entries = [];
+  workoutState.activeIndex = -1;
+  workoutState.dirty = false;
+}
+
+function refreshWorkoutPresetOptions() {
+  const select = dom.workoutPresetSelect;
+  if (
+    !select ||
+    typeof select.appendChild !== "function" ||
+    typeof document === "undefined"
+  ) {
+    return;
+  }
+  const current = select.value;
+  while (select.firstChild) {
+    select.removeChild(select.firstChild);
+  }
+  const presets =
+    uiSettingsStore && typeof uiSettingsStore.listPresets === "function"
+      ? uiSettingsStore.listPresets()
+      : [];
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = presets.length
+    ? "Select a preset"
+    : "No presets saved";
+  placeholder.disabled = !presets.length;
+  placeholder.selected = true;
+  select.appendChild(placeholder);
+  presets.forEach((name) => {
+    const option = document.createElement("option");
+    option.value = name;
+    option.textContent = name;
+    select.appendChild(option);
+  });
+  if (presets.includes(current)) {
+    select.value = current;
+  } else {
+    select.value = "";
+  }
+  select.disabled = !presets.length;
+  if (
+    dom.workoutAddEntryButton &&
+    typeof dom.workoutAddEntryButton.disabled !== "undefined"
+  ) {
+    dom.workoutAddEntryButton.disabled = !presets.length;
+  }
+}
+
+function handleWorkoutSelectChange() {
+  if (!dom.workoutSelect) return;
+  const name = dom.workoutSelect.value;
+  if (!name) {
+    resetWorkoutState();
+    renderWorkoutEditor();
+    if (
+      uiWorkoutStore &&
+      typeof uiWorkoutStore.clearLastSelection === "function"
+    ) {
+      uiWorkoutStore.clearLastSelection();
+    }
+    return;
+  }
+  if (!uiWorkoutStore || typeof uiWorkoutStore.getWorkout !== "function") {
+    return;
+  }
+  const record = uiWorkoutStore.getWorkout(name);
+  if (!record) {
+    alert("Workout could not be loaded.");
+    refreshWorkoutSelect("");
+    resetWorkoutState();
+    renderWorkoutEditor();
+    return;
+  }
+  setWorkoutStateFromRecord(record);
+  const selection =
+    uiWorkoutStore && typeof uiWorkoutStore.getLastSelection === "function"
+      ? uiWorkoutStore.getLastSelection()
+      : null;
+  if (
+    selection &&
+    selection.workout === record.name &&
+    Number.isFinite(selection.entryIndex) &&
+    selection.entryIndex >= 0 &&
+    selection.entryIndex < workoutState.entries.length
+  ) {
+    workoutState.activeIndex = selection.entryIndex;
+  }
+  renderWorkoutEditor();
+  refreshWorkoutSelect(record.name);
+  dom.workoutSelect.value = record.name;
+}
+
+function handleWorkoutNameInput(event) {
+  workoutState.draftName = event.target.value;
+  workoutState.dirty = true;
+  updateWorkoutControls();
+}
+
+function handleWorkoutNew() {
+  resetWorkoutState();
+  renderWorkoutEditor();
+  refreshWorkoutSelect("");
+  if (dom.workoutSelect) {
+    dom.workoutSelect.value = "";
+  }
+  if (
+    uiWorkoutStore &&
+    typeof uiWorkoutStore.clearLastSelection === "function"
+  ) {
+    uiWorkoutStore.clearLastSelection();
+  }
+}
+
+function handleWorkoutSave() {
+  if (!uiWorkoutStore || typeof uiWorkoutStore.saveWorkout !== "function") {
+    return;
+  }
+  const name = workoutState.draftName.trim();
+  if (!name) {
+    alert("Enter a workout name before saving.");
+    return;
+  }
+  if (!workoutState.entries.length) {
+    alert("Add at least one entry to the workout before saving.");
+    return;
+  }
+  const overwriting =
+    workoutState.originalName !== name &&
+    typeof uiWorkoutStore.hasWorkout === "function" &&
+    uiWorkoutStore.hasWorkout(name);
+  if (overwriting) {
+    const confirmed = confirm(`Overwrite existing workout "${name}"?`);
+    if (!confirmed) return;
+  }
+  const presets = getPresetSnapshots();
+  const entriesToSave = workoutState.entries.map((entry) => {
+    const preset = presets[entry.preset] || null;
+    const category = resolveEntryCategory(entry, preset);
+    return {
+      preset: entry.preset,
+      goal: normalizeWorkoutGoal(entry.goal),
+      category,
+    };
+  });
+  const saved = uiWorkoutStore.saveWorkout(name, entriesToSave);
+  if (!saved) {
+    alert("Workout could not be saved.");
+    return;
+  }
+  if (
+    workoutState.originalName &&
+    workoutState.originalName !== name &&
+    typeof uiWorkoutStore.deleteWorkout === "function"
+  ) {
+    uiWorkoutStore.deleteWorkout(workoutState.originalName);
+  }
+  workoutState.originalName = name;
+  workoutState.draftName = name;
+  workoutState.entries = entriesToSave.map((entry) => cloneWorkoutEntry(entry));
+  workoutState.dirty = false;
+  refreshWorkoutSelect(name);
+  renderWorkoutEditor();
+  if (dom.workoutSelect) {
+    dom.workoutSelect.value = name;
+  }
+  if (uiWorkoutStore && typeof uiWorkoutStore.setLastSelection === "function") {
+    const active =
+      workoutState.activeIndex >= 0 &&
+      workoutState.activeIndex < workoutState.entries.length
+        ? workoutState.activeIndex
+        : 0;
+    uiWorkoutStore.setLastSelection(name, active);
+  }
+}
+
+function handleWorkoutDelete() {
+  if (!uiWorkoutStore || typeof uiWorkoutStore.deleteWorkout !== "function") {
+    resetWorkoutState();
+    renderWorkoutEditor();
+    refreshWorkoutSelect("");
+    return;
+  }
+  if (!workoutState.originalName) {
+    resetWorkoutState();
+    renderWorkoutEditor();
+    refreshWorkoutSelect("");
+    return;
+  }
+  const confirmed = confirm(`Delete workout "${workoutState.originalName}"?`);
+  if (!confirmed) return;
+  uiWorkoutStore.deleteWorkout(workoutState.originalName);
+  resetWorkoutState();
+  renderWorkoutEditor();
+  refreshWorkoutSelect("");
+  if (
+    uiWorkoutStore &&
+    typeof uiWorkoutStore.clearLastSelection === "function"
+  ) {
+    uiWorkoutStore.clearLastSelection();
+  }
+}
+
+function handleWorkoutAddEntry() {
+  if (!dom.workoutPresetSelect) return;
+  const presetName = dom.workoutPresetSelect.value
+    ? dom.workoutPresetSelect.value.trim()
+    : "";
+  if (!presetName) {
+    alert("Select a preset before adding an entry.");
+    return;
+  }
+  const goal = normalizeWorkoutGoal(dom.workoutGoalInput.value);
+  const presets = getPresetSnapshots();
+  const preset = presets[presetName] || null;
+  const category = inferCategoryFromPresetSnapshot(preset);
+  workoutState.entries.push({
+    preset: presetName,
+    goal,
+    category,
+  });
+  workoutState.dirty = true;
+  if (dom.workoutPresetSelect) {
+    dom.workoutPresetSelect.value = "";
+  }
+  if (dom.workoutGoalInput) {
+    dom.workoutGoalInput.value = "0";
+  }
+  renderWorkoutEditor();
+}
+
+function handleWorkoutEntryClick(event) {
+  const button = event.target && event.target.closest("button");
+  if (!button) return;
+  const action = button.dataset.action;
+  if (!action) return;
+  const row = button.closest(".workoutEntry");
+  if (!row) return;
+  const index = parseInt(row.dataset.index, 10);
+  if (!Number.isFinite(index)) return;
+  if (action === "load") {
+    applyWorkoutEntry(index);
+    return;
+  }
+  if (action === "remove") {
+    workoutState.entries.splice(index, 1);
+    if (workoutState.activeIndex === index) {
+      workoutState.activeIndex = -1;
+    } else if (workoutState.activeIndex > index) {
+      workoutState.activeIndex -= 1;
+    }
+    workoutState.dirty = true;
+    renderWorkoutEditor();
+    return;
+  }
+  if (action === "up" && index > 0) {
+    const [entry] = workoutState.entries.splice(index, 1);
+    workoutState.entries.splice(index - 1, 0, entry);
+    if (workoutState.activeIndex === index) {
+      workoutState.activeIndex = index - 1;
+    } else if (workoutState.activeIndex === index - 1) {
+      workoutState.activeIndex = index;
+    }
+    workoutState.dirty = true;
+    renderWorkoutEditor();
+    return;
+  }
+  if (
+    action === "down" &&
+    index >= 0 &&
+    index < workoutState.entries.length - 1
+  ) {
+    const [entry] = workoutState.entries.splice(index, 1);
+    workoutState.entries.splice(index + 1, 0, entry);
+    if (workoutState.activeIndex === index) {
+      workoutState.activeIndex = index + 1;
+    } else if (workoutState.activeIndex === index + 1) {
+      workoutState.activeIndex = index;
+    }
+    workoutState.dirty = true;
+    renderWorkoutEditor();
+  }
+}
+
+function applyWorkoutEntry(index) {
+  if (!uiSettingsStore || typeof uiSettingsStore.loadPreset !== "function") {
+    return;
+  }
+  const entry = workoutState.entries[index];
+  if (!entry) return;
+  const presetName = entry.preset;
+  if (!presetName) return;
+  const loaded = uiSettingsStore.loadPreset(presetName);
+  if (!loaded) {
+    alert(`Preset "${presetName}" could not be loaded.`);
+    return;
+  }
+  const presets = getPresetSnapshots();
+  const presetSnapshot = presets[presetName] || null;
+  let category = resolveEntryCategory(entry, presetSnapshot);
+  if (!category && typeof uiSettingsStore.getCurrentSnapshot === "function") {
+    const snapshot = uiSettingsStore.getCurrentSnapshot();
+    if (snapshot && typeof snapshot.mode === "string") {
+      category = modeStatCategoryMap[snapshot.mode] || null;
+    }
+  }
+  if (!category) {
+    category = "chords";
+  }
+  const goalValue = normalizeWorkoutGoal(entry.goal);
+  const goalInput =
+    dom.statGoals && dom.statGoals[category] ? dom.statGoals[category] : null;
+  if (goalInput) {
+    goalInput.value = String(goalValue);
+  }
+  syncSettingsStore();
+  workoutState.activeIndex = index;
+  renderWorkoutEntries();
+  if (
+    uiWorkoutStore &&
+    typeof uiWorkoutStore.setLastSelection === "function" &&
+    workoutState.originalName
+  ) {
+    uiWorkoutStore.setLastSelection(workoutState.originalName, index);
+  }
+}
+
+function initWorkoutsPanel() {
+  if (typeof document === "undefined") return;
+  refreshWorkoutPresetOptions();
+  refreshWorkoutSelect(workoutState.originalName);
+  const workouts =
+    uiWorkoutStore && typeof uiWorkoutStore.listWorkouts === "function"
+      ? uiWorkoutStore.listWorkouts()
+      : [];
+  let initialName = null;
+  const selection =
+    uiWorkoutStore && typeof uiWorkoutStore.getLastSelection === "function"
+      ? uiWorkoutStore.getLastSelection()
+      : null;
+  if (selection && workouts.includes(selection.workout)) {
+    initialName = selection.workout;
+  } else if (workouts.length) {
+    initialName = workouts[0];
+  }
+  if (initialName) {
+    const record = uiWorkoutStore.getWorkout(initialName);
+    if (record) {
+      setWorkoutStateFromRecord(record);
+      if (
+        selection &&
+        selection.workout === initialName &&
+        Number.isFinite(selection.entryIndex) &&
+        selection.entryIndex >= 0 &&
+        selection.entryIndex < workoutState.entries.length
+      ) {
+        workoutState.activeIndex = selection.entryIndex;
+      }
+    } else {
+      resetWorkoutState();
+    }
+    refreshWorkoutSelect(initialName);
+    if (dom.workoutSelect) {
+      dom.workoutSelect.value = initialName;
+    }
+  } else {
+    resetWorkoutState();
+    refreshWorkoutSelect("");
+    if (dom.workoutSelect) {
+      dom.workoutSelect.value = "";
+    }
+  }
+  renderWorkoutEditor();
+  if (dom.workoutGoalInput) {
+    dom.workoutGoalInput.value = "0";
+  }
+}
+
+if (
+  dom.workoutSelect &&
+  typeof dom.workoutSelect.addEventListener === "function"
+) {
+  dom.workoutSelect.addEventListener("change", handleWorkoutSelectChange);
+}
+
+if (
+  dom.workoutNameInput &&
+  typeof dom.workoutNameInput.addEventListener === "function"
+) {
+  dom.workoutNameInput.addEventListener("input", handleWorkoutNameInput);
+}
+
+if (
+  dom.workoutNewButton &&
+  typeof dom.workoutNewButton.addEventListener === "function"
+) {
+  dom.workoutNewButton.addEventListener("click", handleWorkoutNew);
+}
+
+if (
+  dom.workoutSaveButton &&
+  typeof dom.workoutSaveButton.addEventListener === "function"
+) {
+  dom.workoutSaveButton.addEventListener("click", handleWorkoutSave);
+}
+
+if (
+  dom.workoutDeleteButton &&
+  typeof dom.workoutDeleteButton.addEventListener === "function"
+) {
+  dom.workoutDeleteButton.addEventListener("click", handleWorkoutDelete);
+}
+
+if (
+  dom.workoutAddEntryButton &&
+  typeof dom.workoutAddEntryButton.addEventListener === "function"
+) {
+  dom.workoutAddEntryButton.addEventListener("click", handleWorkoutAddEntry);
+}
+
+if (
+  dom.workoutEntriesPanel &&
+  typeof dom.workoutEntriesPanel.addEventListener === "function"
+) {
+  dom.workoutEntriesPanel.addEventListener("click", handleWorkoutEntryClick);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initJazzBricks();
   initScales();
@@ -640,6 +1341,7 @@ document.addEventListener("DOMContentLoaded", () => {
   optionsChange();
 
   refreshSettingsPresetOptions();
+  initWorkoutsPanel();
   dom.settingsSaveButton.addEventListener("click", handleSettingsSave);
   dom.settingsLoadButton.addEventListener("click", handleSettingsLoad);
   dom.settingsDeleteButton.addEventListener("click", handleSettingsDelete);
