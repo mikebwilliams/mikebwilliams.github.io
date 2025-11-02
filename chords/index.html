@@ -14,18 +14,14 @@
           ><span id="txtCadence"></span><br /><span id="txtProgression"></span>
         </h2>
         <div class="challengeActiveArea">
-          <div class="challengeBox">
-            <div class="challengeControls">
-              <div class="controlsRow">
-                <button id="btnSkip">Skip</button>
-                <button id="btnPlayAnswer">Play Answer</button>
-                <button id="btnStatsReset">Reset Stats</button>
-              </div>
-            </div>
-          </div>
-
           <details class="challengeCollapsible" id="panelKeyboard" open>
-            <summary>Keyboard</summary>
+            <summary>
+              <span class="collapsibleTitle">Keyboard</span>
+              <div class="summaryActions">
+                <button id="btnSkip" type="button">Skip</button>
+                <button id="btnPlayAnswer" type="button">Play Answer</button>
+              </div>
+            </summary>
             <div class="challengeCollapsibleBody">
               <div class="challengePiano">
                 <div id="panelPiano">
@@ -77,7 +73,12 @@
           </details>
 
           <details class="challengeCollapsible statsPanel" open>
-            <summary>Stats</summary>
+            <summary>
+              <span class="collapsibleTitle">Stats</span>
+              <div class="summaryActions">
+                <button id="btnStatsReset" type="button">Reset Stats</button>
+              </div>
+            </summary>
             <div class="challengeCollapsibleBody">
               <div class="statsGrid">
                 <div class="statCard" id="statCardChords">

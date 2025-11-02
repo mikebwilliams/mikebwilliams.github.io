@@ -441,7 +441,9 @@ details.challengeCollapsible > summary {
   color: var(--text-primary);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
   background: rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
@@ -456,7 +458,8 @@ details.challengeCollapsible > summary::after {
   font-size: 0.8rem;
   color: var(--text-muted);
   transition: transform var(--transition);
-  margin-left: 1rem;
+  margin-left: 0;
+  order: 2;
 }
 
 details.challengeCollapsible[open] > summary::after {
@@ -469,6 +472,22 @@ details.challengeCollapsible[open] > summary {
 
 details.challengeCollapsible:not([open]) > summary {
   border-radius: var(--radius-md);
+}
+
+details.challengeCollapsible > summary .collapsibleTitle {
+  order: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+details.challengeCollapsible > summary .summaryActions {
+  order: 3;
+  display: inline-flex;
+  gap: 12px;
+  margin-left: auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .statsGrid {
