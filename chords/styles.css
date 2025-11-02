@@ -93,17 +93,131 @@ main.page {
     border-radius: var(--radius-md);
     padding: 22px 20px;
   }
+
+  .heroCard {
+    gap: 24px;
+    padding: 32px 20px 38px;
+  }
+
+  .challengeBox {
+    padding: 18px 18px 20px;
+  }
+
+  .challengeCollapsibleBody {
+    padding: 18px 18px 22px;
+  }
+
+  .challengePiano {
+    padding: 10px 0 2px;
+  }
+
+  .keyboardOptions {
+    margin-top: 14px;
+  }
+
+  .keyboardOptionsRow {
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .keyboardOptionsRow input[type="number"] {
+    width: 3.2rem;
+  }
 }
 
 .heroCard {
   text-align: center;
-  padding-block: 54px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 32px;
+  padding: 48px 36px 52px;
   background: linear-gradient(
     135deg,
     rgba(140, 169, 255, 0.28),
     rgba(14, 18, 38, 0.92)
   );
   border-color: rgba(140, 169, 255, 0.36);
+}
+
+.challengeActiveArea {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  align-items: stretch;
+}
+
+.challengeBox {
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(129, 140, 180, 0.32);
+  background: linear-gradient(165deg, var(--surface-900), var(--surface-800));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  padding: 22px 24px;
+}
+
+.challengePiano {
+  padding: 12px 0 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.challengePiano::-webkit-scrollbar {
+  height: 8px;
+}
+
+.challengePiano::-webkit-scrollbar-thumb {
+  background: var(--surface-soft-strong);
+  border-radius: 999px;
+}
+
+.keyboardOptions {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+}
+
+.keyboardOptionsRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.keyboardOptionsRow input[type="checkbox"] {
+  accent-color: var(--accent-strong);
+}
+
+.keyboardOptionsRow input[type="number"] {
+  width: 3.6rem;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-soft);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+}
+
+.keyboardOptionSuffix {
+  color: var(--text-muted);
+}
+
+.challengeControls {
+  display: flex;
+  justify-content: center;
+  padding: 0;
+}
+
+.challengeCollapsibleBody {
+  padding: 22px 24px 26px;
+  background: linear-gradient(
+    165deg,
+    rgba(39, 44, 66, 0.95),
+    rgba(23, 26, 42, 0.95)
+  );
+  border-top: 1px solid rgba(129, 140, 180, 0.18);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 
 #panelHeader {
@@ -151,20 +265,6 @@ main.page {
   letter-spacing: 0.38em;
   text-transform: uppercase;
   color: var(--text-dim);
-}
-
-.pianoCard {
-  padding: 24px 16px 28px;
-  overflow-x: hidden;
-}
-
-.pianoCard::-webkit-scrollbar {
-  height: 8px;
-}
-
-.pianoCard::-webkit-scrollbar-thumb {
-  background: var(--surface-soft-strong);
-  border-radius: 999px;
 }
 
 #panelPiano {
@@ -277,10 +377,6 @@ main.page {
   box-shadow: 0 0 22px rgba(69, 213, 164, 0.55);
 }
 
-.controlsCard {
-  padding: 20px 24px;
-}
-
 .controlsRow {
   display: flex;
   flex-wrap: wrap;
@@ -326,34 +422,36 @@ button:disabled {
   box-shadow: none;
 }
 
-details.surfaceCard {
+details.challengeCollapsible {
   padding: 0;
   overflow: hidden;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(129, 140, 180, 0.32);
+  background: linear-gradient(165deg, var(--surface-900), var(--surface-800));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-details.surfaceCard > summary {
+details.challengeCollapsible > summary {
   cursor: pointer;
   list-style: none;
   margin: 0;
-  padding: 22px 28px;
+  padding: 20px 26px;
   font-weight: 600;
   font-size: 1.05rem;
-  background: var(--surface-soft);
   color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 
-details.surfaceCard > summary::marker {
+details.challengeCollapsible > summary::marker,
+details.challengeCollapsible > summary::-webkit-details-marker {
   display: none;
 }
 
-details.surfaceCard > summary::-webkit-details-marker {
-  display: none;
-}
-
-details.surfaceCard > summary::after {
+details.challengeCollapsible > summary::after {
   content: "\25BC";
   font-size: 0.8rem;
   color: var(--text-muted);
@@ -361,19 +459,23 @@ details.surfaceCard > summary::after {
   margin-left: 1rem;
 }
 
-details.surfaceCard[open] > summary::after {
+details.challengeCollapsible[open] > summary::after {
   transform: rotate(-180deg);
 }
 
-details.surfaceCard[open] > summary {
-  border-bottom: 1px solid var(--border-soft);
+details.challengeCollapsible[open] > summary {
+  border-bottom: 1px solid rgba(129, 140, 180, 0.26);
+}
+
+details.challengeCollapsible:not([open]) > summary {
+  border-radius: var(--radius-md);
 }
 
 .statsGrid {
   display: grid;
   gap: 18px;
   margin: 0;
-  padding: 26px 28px 30px;
+  padding: 0;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
 }
 

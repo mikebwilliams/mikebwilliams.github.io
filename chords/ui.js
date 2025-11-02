@@ -359,9 +359,14 @@ document.querySelectorAll("div[data-note]").forEach((div) => {
   });
 });
 
-dom.showKeyboardToggle.addEventListener("click", () => {
-  dom.piano.style.display = dom.showKeyboardToggle.checked ? "block" : "none";
-});
+if (
+  dom.keyboardDetails &&
+  typeof dom.keyboardDetails.addEventListener === "function"
+) {
+  dom.keyboardDetails.addEventListener("toggle", () => {
+    syncSettingsStore();
+  });
+}
 
 dom.highlightCorrectKeys.addEventListener("change", () => {
   highlightCorrectKeys();

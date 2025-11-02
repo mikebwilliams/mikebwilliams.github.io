@@ -53,7 +53,7 @@ test("settings store saves and loads presets round-trip", () => {
 
   dom.flowSelect.value = "ascendingHalfSteps";
   dom.flowStartSelect.value = "F#";
-  dom.showKeyboardToggle.checked = false;
+  dom.keyboardDetails.open = false;
   dom.highlightCorrectKeys.checked = true;
   dom.highlightDelay.value = "5";
   dom.hideProgressionChordNames.checked = true;
@@ -84,7 +84,7 @@ test("settings store saves and loads presets round-trip", () => {
 
   dom.flowSelect.value = "descendingWholeSteps";
   dom.flowStartSelect.value = "C";
-  dom.showKeyboardToggle.checked = true;
+  dom.keyboardDetails.open = true;
   dom.highlightCorrectKeys.checked = false;
   dom.highlightDelay.value = "3";
   dom.hideProgressionChordNames.checked = false;
@@ -106,7 +106,7 @@ test("settings store saves and loads presets round-trip", () => {
   assert.strictEqual(loaded, true, "preset should load successfully");
   assert.strictEqual(dom.flowSelect.value, "ascendingHalfSteps");
   assert.strictEqual(dom.flowStartSelect.value, "F#");
-  assert.strictEqual(dom.showKeyboardToggle.checked, false);
+  assert.strictEqual(dom.keyboardDetails.open, false);
   assert.strictEqual(dom.highlightCorrectKeys.checked, true);
   assert.strictEqual(dom.highlightDelay.value, "5");
   assert.strictEqual(dom.randomizeSpellings.checked, false);
@@ -128,7 +128,7 @@ test("settings store saves and loads presets round-trip", () => {
 test("settings store JSON export reflects current snapshot", () => {
   settingsStore.resetToDefaults({ apply: false, save: false });
   dom.flowSelect.value = "random";
-  dom.showKeyboardToggle.checked = true;
+  dom.keyboardDetails.open = true;
   settingsStore.syncFromDom();
   const snapshot = settingsStore.getCurrentSnapshot();
   const json = settingsStore.getCurrentJSON(true);

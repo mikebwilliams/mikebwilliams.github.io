@@ -8,169 +8,195 @@
   </head>
   <body>
     <main class="page">
-      <div class="container surfaceCard heroCard">
+      <section class="surfaceCard heroCard">
         <h2 id="panelHeader">
           <span id="txtCurrentKey"></span><span id="txtChord">Chord</span
           ><span id="txtCadence"></span><br /><span id="txtProgression"></span>
         </h2>
-      </div>
+        <div class="challengeActiveArea">
+          <div class="challengeBox">
+            <div class="challengeControls">
+              <div class="controlsRow">
+                <button id="btnSkip">Skip</button>
+                <button id="btnPlayAnswer">Play Answer</button>
+                <button id="btnStatsReset">Reset Stats</button>
+              </div>
+            </div>
+          </div>
 
-      <section class="surfaceCard pianoCard">
-        <div id="panelPiano">
-          <!-- White keys -->
-          <div class="key white" data-note="48"></div>
-          <div class="key white" data-note="50"></div>
-          <div class="key white" data-note="52"></div>
-          <div class="key white" data-note="53"></div>
-          <div class="key white" data-note="55"></div>
-          <div class="key white" data-note="57"></div>
-          <div class="key white" data-note="59"></div>
-          <div class="key white" data-note="60"></div>
-          <div class="key white" data-note="62"></div>
-          <div class="key white" data-note="64"></div>
-          <div class="key white" data-note="65"></div>
-          <div class="key white" data-note="67"></div>
-          <div class="key white" data-note="69"></div>
-          <div class="key white" data-note="71"></div>
-          <div class="key white" data-note="72"></div>
+          <details class="challengeCollapsible" id="panelKeyboard" open>
+            <summary>Keyboard</summary>
+            <div class="challengeCollapsibleBody">
+              <div class="challengePiano">
+                <div id="panelPiano">
+                  <!-- White keys -->
+                  <div class="key white" data-note="48"></div>
+                  <div class="key white" data-note="50"></div>
+                  <div class="key white" data-note="52"></div>
+                  <div class="key white" data-note="53"></div>
+                  <div class="key white" data-note="55"></div>
+                  <div class="key white" data-note="57"></div>
+                  <div class="key white" data-note="59"></div>
+                  <div class="key white" data-note="60"></div>
+                  <div class="key white" data-note="62"></div>
+                  <div class="key white" data-note="64"></div>
+                  <div class="key white" data-note="65"></div>
+                  <div class="key white" data-note="67"></div>
+                  <div class="key white" data-note="69"></div>
+                  <div class="key white" data-note="71"></div>
+                  <div class="key white" data-note="72"></div>
 
-          <!-- Black keys -->
-          <div class="key black" data-note="49"></div>
-          <div class="key black" data-note="51"></div>
-          <div class="key black" data-note="54"></div>
-          <div class="key black" data-note="56"></div>
-          <div class="key black" data-note="58"></div>
-          <div class="key black" data-note="61"></div>
-          <div class="key black" data-note="63"></div>
-          <div class="key black" data-note="66"></div>
-          <div class="key black" data-note="68"></div>
-          <div class="key black" data-note="70"></div>
+                  <!-- Black keys -->
+                  <div class="key black" data-note="49"></div>
+                  <div class="key black" data-note="51"></div>
+                  <div class="key black" data-note="54"></div>
+                  <div class="key black" data-note="56"></div>
+                  <div class="key black" data-note="58"></div>
+                  <div class="key black" data-note="61"></div>
+                  <div class="key black" data-note="63"></div>
+                  <div class="key black" data-note="66"></div>
+                  <div class="key black" data-note="68"></div>
+                  <div class="key black" data-note="70"></div>
+                </div>
+              </div>
+              <div class="keyboardOptions">
+                <label class="keyboardOptionsRow">
+                  <input type="checkbox" id="chkDisplayHighlightKeys" />
+                  <span>Show Correct Keys After</span>
+                  <input
+                    type="number"
+                    id="inputDisplayHighlightDelay"
+                    min="0"
+                    step="0.1"
+                    value="3"
+                  />
+                  <span class="keyboardOptionSuffix">s</span>
+                </label>
+              </div>
+            </div>
+          </details>
+
+          <details class="challengeCollapsible statsPanel" open>
+            <summary>Stats</summary>
+            <div class="challengeCollapsibleBody">
+              <div class="statsGrid">
+                <div class="statCard" id="statCardChords">
+                  <h4>Chords</h4>
+                  <p>
+                    <span class="statLabel">Correct</span
+                    ><span id="txtChordsCorrect">0</span>
+                  </p>
+                  <p>
+                    <span class="statLabel">Incorrect</span
+                    ><span id="txtChordsIncorrect">0</span>
+                  </p>
+                  <p class="statGoalRow">
+                    <label class="statLabel" for="inputChordsGoal">Goal</label>
+                    <input
+                      type="number"
+                      id="inputChordsGoal"
+                      inputmode="numeric"
+                      min="0"
+                      max="9999"
+                      value="0"
+                    />
+                  </p>
+                </div>
+                <div class="statCard" id="statCardProgressions">
+                  <h4>Progressions</h4>
+                  <p>
+                    <span class="statLabel">Correct</span
+                    ><span id="txtProgressionsCorrect">0</span>
+                  </p>
+                  <p>
+                    <span class="statLabel">Incorrect</span
+                    ><span id="txtProgressionsIncorrect">0</span>
+                  </p>
+                  <p class="statGoalRow">
+                    <label class="statLabel" for="inputProgressionsGoal"
+                      >Goal</label
+                    >
+                    <input
+                      type="number"
+                      id="inputProgressionsGoal"
+                      inputmode="numeric"
+                      min="0"
+                      max="9999"
+                      value="0"
+                    />
+                  </p>
+                </div>
+                <div class="statCard" id="statCardDegrees">
+                  <h4>Degrees</h4>
+                  <p>
+                    <span class="statLabel">Correct</span
+                    ><span id="txtDegreesCorrect">0</span>
+                  </p>
+                  <p>
+                    <span class="statLabel">Incorrect</span
+                    ><span id="txtDegreesIncorrect">0</span>
+                  </p>
+                  <p class="statGoalRow">
+                    <label class="statLabel" for="inputDegreesGoal">Goal</label>
+                    <input
+                      type="number"
+                      id="inputDegreesGoal"
+                      inputmode="numeric"
+                      min="0"
+                      max="9999"
+                      value="0"
+                    />
+                  </p>
+                </div>
+                <div class="statCard" id="statCardScales">
+                  <h4>Scales</h4>
+                  <p>
+                    <span class="statLabel">Correct</span
+                    ><span id="txtScalesCorrect">0</span>
+                  </p>
+                  <p>
+                    <span class="statLabel">Incorrect</span
+                    ><span id="txtScalesIncorrect">0</span>
+                  </p>
+                  <p class="statGoalRow">
+                    <label class="statLabel" for="inputScalesGoal">Goal</label>
+                    <input
+                      type="number"
+                      id="inputScalesGoal"
+                      inputmode="numeric"
+                      min="0"
+                      max="9999"
+                      value="0"
+                    />
+                  </p>
+                </div>
+                <div class="statCard" id="statCardBricks">
+                  <h4>Bricks</h4>
+                  <p>
+                    <span class="statLabel">Correct</span
+                    ><span id="txtBricksCorrect">0</span>
+                  </p>
+                  <p>
+                    <span class="statLabel">Incorrect</span
+                    ><span id="txtBricksIncorrect">0</span>
+                  </p>
+                  <p class="statGoalRow">
+                    <label class="statLabel" for="inputBricksGoal">Goal</label>
+                    <input
+                      type="number"
+                      id="inputBricksGoal"
+                      inputmode="numeric"
+                      min="0"
+                      max="9999"
+                      value="0"
+                    />
+                  </p>
+                </div>
+              </div>
+            </div>
+          </details>
         </div>
       </section>
-
-      <section class="surfaceCard controlsCard">
-        <div class="controlsRow">
-          <button id="btnSkip">Skip</button>
-          <button id="btnPlayAnswer">Play Answer</button>
-          <button id="btnStatsReset">Reset Stats</button>
-        </div>
-      </section>
-
-      <details class="statsPanel surfaceCard" open>
-        <summary>Stats</summary>
-        <div class="statsGrid">
-          <div class="statCard" id="statCardChords">
-            <h4>Chords</h4>
-            <p>
-              <span class="statLabel">Correct</span
-              ><span id="txtChordsCorrect">0</span>
-            </p>
-            <p>
-              <span class="statLabel">Incorrect</span
-              ><span id="txtChordsIncorrect">0</span>
-            </p>
-            <p class="statGoalRow">
-              <label class="statLabel" for="inputChordsGoal">Goal</label>
-              <input
-                type="number"
-                id="inputChordsGoal"
-                inputmode="numeric"
-                min="0"
-                max="9999"
-                value="0"
-              />
-            </p>
-          </div>
-          <div class="statCard" id="statCardProgressions">
-            <h4>Progressions</h4>
-            <p>
-              <span class="statLabel">Correct</span
-              ><span id="txtProgressionsCorrect">0</span>
-            </p>
-            <p>
-              <span class="statLabel">Incorrect</span
-              ><span id="txtProgressionsIncorrect">0</span>
-            </p>
-            <p class="statGoalRow">
-              <label class="statLabel" for="inputProgressionsGoal">Goal</label>
-              <input
-                type="number"
-                id="inputProgressionsGoal"
-                inputmode="numeric"
-                min="0"
-                max="9999"
-                value="0"
-              />
-            </p>
-          </div>
-          <div class="statCard" id="statCardDegrees">
-            <h4>Degrees</h4>
-            <p>
-              <span class="statLabel">Correct</span
-              ><span id="txtDegreesCorrect">0</span>
-            </p>
-            <p>
-              <span class="statLabel">Incorrect</span
-              ><span id="txtDegreesIncorrect">0</span>
-            </p>
-            <p class="statGoalRow">
-              <label class="statLabel" for="inputDegreesGoal">Goal</label>
-              <input
-                type="number"
-                id="inputDegreesGoal"
-                inputmode="numeric"
-                min="0"
-                max="9999"
-                value="0"
-              />
-            </p>
-          </div>
-          <div class="statCard" id="statCardScales">
-            <h4>Scales</h4>
-            <p>
-              <span class="statLabel">Correct</span
-              ><span id="txtScalesCorrect">0</span>
-            </p>
-            <p>
-              <span class="statLabel">Incorrect</span
-              ><span id="txtScalesIncorrect">0</span>
-            </p>
-            <p class="statGoalRow">
-              <label class="statLabel" for="inputScalesGoal">Goal</label>
-              <input
-                type="number"
-                id="inputScalesGoal"
-                inputmode="numeric"
-                min="0"
-                max="9999"
-                value="0"
-              />
-            </p>
-          </div>
-          <div class="statCard" id="statCardBricks">
-            <h4>Bricks</h4>
-            <p>
-              <span class="statLabel">Correct</span
-              ><span id="txtBricksCorrect">0</span>
-            </p>
-            <p>
-              <span class="statLabel">Incorrect</span
-              ><span id="txtBricksIncorrect">0</span>
-            </p>
-            <p class="statGoalRow">
-              <label class="statLabel" for="inputBricksGoal">Goal</label>
-              <input
-                type="number"
-                id="inputBricksGoal"
-                inputmode="numeric"
-                min="0"
-                max="9999"
-                value="0"
-              />
-            </p>
-          </div>
-        </div>
-      </details>
 
       <section class="surfaceCard optionsSection">
         <h3 class="sectionTitle">Options</h3>
@@ -365,23 +391,6 @@
         </div>
 
         <div class="tabContent" id="panelOptionsDisplay">
-          <label
-            ><input type="checkbox" id="chkDisplayShowKeyboard" checked />Show
-            Keyboard</label
-          ><br />
-          <label>
-            <input type="checkbox" id="chkDisplayHighlightKeys" />Show Correct
-            Keys After
-            <input
-              type="number"
-              id="inputDisplayHighlightDelay"
-              min="0"
-              step="0.1"
-              value="3"
-            />
-            s
-          </label>
-          <br />
           <label
             ><input type="checkbox" id="chkDisplayHideProgressionNames" />Hide
             Progression Chord Names</label

@@ -117,6 +117,9 @@ function createElementStub(id) {
     querySelector() {
       return null;
     },
+    dispatchEvent() {
+      return false;
+    },
     set textContent(value) {
       this._textContent = value;
     },
@@ -126,6 +129,7 @@ function createElementStub(id) {
     value: "",
     checked: false,
     disabled: false,
+    open: true,
   };
 }
 
@@ -586,7 +590,7 @@ const domElements = {
   jazzBrickButtons,
   degreeCheckboxes,
   piano: requireElement("panelPiano"),
-  showKeyboardToggle: requireElement("chkDisplayShowKeyboard"),
+  keyboardDetails: requireElement("panelKeyboard"),
   skipButton: requireElement("btnSkip"),
   playAnswerButton: requireElement("btnPlayAnswer"),
   spacedRepClearButton: requireElement("btnSpacedRepClear"),
@@ -1877,7 +1881,9 @@ function captureSimpleSettings() {
       startKey: domElements.flowStartSelect.value || "C",
     },
     display: {
-      showKeyboard: !!domElements.showKeyboardToggle.checked,
+      showKeyboard: domElements.keyboardDetails
+        ? !!domElements.keyboardDetails.open
+        : true,
       highlightKeys: !!domElements.highlightCorrectKeys.checked,
       highlightDelay: parseFloat(domElements.highlightDelay.value) || 3,
       hideProgressionNames: !!domElements.hideProgressionChordNames.checked,
@@ -1951,7 +1957,11 @@ function applySimpleSettings(settings) {
   }
   if (settings.display) {
     const display = settings.display;
-    domElements.showKeyboardToggle.checked = !!display.showKeyboard;
+    if (domElements.keyboardDetails) {
+      if (Object.prototype.hasOwnProperty.call(display, "showKeyboard")) {
+        domElements.keyboardDetails.open = !!display.showKeyboard;
+      }
+    }
     domElements.highlightCorrectKeys.checked = !!display.highlightKeys;
     domElements.highlightDelay.value = String(display.highlightDelay);
     domElements.hideProgressionChordNames.checked =
@@ -2130,7 +2140,7 @@ function settingsStoreFactory() {
       if (!hasDocument) return;
       this.watchElement(domElements.flowSelect);
       this.watchElement(domElements.flowStartSelect);
-      this.watchElement(domElements.showKeyboardToggle);
+      this.watchElement(domElements.keyboardDetails, "toggle");
       this.watchElement(domElements.highlightCorrectKeys);
       this.watchElement(domElements.highlightDelay, "input");
       this.watchElement(domElements.hideProgressionChordNames);
