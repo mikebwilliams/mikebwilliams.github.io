@@ -39,27 +39,66 @@ const documentAvailable =
 const statCategoryConfig = {
   chords: {
     correctElement: () => dom.cntChordsCorrect,
-    goalInput: () => (dom.statGoals ? dom.statGoals.chords : null),
+    incorrectElement: () => dom.cntChordsIncorrect,
+    totalElement: () => dom.cntChordsTotal,
+    correctGoalInput: () =>
+      dom.statGoals && dom.statGoals.chords
+        ? dom.statGoals.chords.correct
+        : null,
+    totalGoalInput: () =>
+      dom.statGoals && dom.statGoals.chords ? dom.statGoals.chords.total : null,
     cardElement: () => (dom.statCards ? dom.statCards.chords : null),
   },
   progressions: {
     correctElement: () => dom.cntProgsCorrect,
-    goalInput: () => (dom.statGoals ? dom.statGoals.progressions : null),
+    incorrectElement: () => dom.cntProgsIncorrect,
+    totalElement: () => dom.cntProgsTotal,
+    correctGoalInput: () =>
+      dom.statGoals && dom.statGoals.progressions
+        ? dom.statGoals.progressions.correct
+        : null,
+    totalGoalInput: () =>
+      dom.statGoals && dom.statGoals.progressions
+        ? dom.statGoals.progressions.total
+        : null,
     cardElement: () => (dom.statCards ? dom.statCards.progressions : null),
   },
   degrees: {
     correctElement: () => dom.cntDegreesCorrect,
-    goalInput: () => (dom.statGoals ? dom.statGoals.degrees : null),
+    incorrectElement: () => dom.cntDegreesIncorrect,
+    totalElement: () => dom.cntDegreesTotal,
+    correctGoalInput: () =>
+      dom.statGoals && dom.statGoals.degrees
+        ? dom.statGoals.degrees.correct
+        : null,
+    totalGoalInput: () =>
+      dom.statGoals && dom.statGoals.degrees
+        ? dom.statGoals.degrees.total
+        : null,
     cardElement: () => (dom.statCards ? dom.statCards.degrees : null),
   },
   scales: {
     correctElement: () => dom.cntScalesCorrect,
-    goalInput: () => (dom.statGoals ? dom.statGoals.scales : null),
+    incorrectElement: () => dom.cntScalesIncorrect,
+    totalElement: () => dom.cntScalesTotal,
+    correctGoalInput: () =>
+      dom.statGoals && dom.statGoals.scales
+        ? dom.statGoals.scales.correct
+        : null,
+    totalGoalInput: () =>
+      dom.statGoals && dom.statGoals.scales ? dom.statGoals.scales.total : null,
     cardElement: () => (dom.statCards ? dom.statCards.scales : null),
   },
   bricks: {
     correctElement: () => dom.cntBricksCorrect,
-    goalInput: () => (dom.statGoals ? dom.statGoals.bricks : null),
+    incorrectElement: () => dom.cntBricksIncorrect,
+    totalElement: () => dom.cntBricksTotal,
+    correctGoalInput: () =>
+      dom.statGoals && dom.statGoals.bricks
+        ? dom.statGoals.bricks.correct
+        : null,
+    totalGoalInput: () =>
+      dom.statGoals && dom.statGoals.bricks ? dom.statGoals.bricks.total : null,
     cardElement: () => (dom.statCards ? dom.statCards.bricks : null),
   },
 };
@@ -74,8 +113,18 @@ function parseGoalValue(input) {
   if (!input || typeof input.value === "undefined") return 0;
   const parsed = parseInt(input.value, 10);
   if (!Number.isFinite(parsed) || parsed < 0) return 0;
-  if (parsed > 9999) return 9999;
+  if (parsed > 999) return 999;
   return parsed;
+}
+
+function updateStatTotal(category) {
+  const resolve = statCategoryConfig[category];
+  if (!resolve || typeof resolve.totalElement !== "function") return;
+  const totalEl = resolve.totalElement();
+  if (!totalEl) return;
+  const correctValue = parseCountFromElement(resolve.correctElement());
+  const incorrectValue = parseCountFromElement(resolve.incorrectElement());
+  totalEl.textContent = String(correctValue + incorrectValue);
 }
 
 function updateStatGoalStatus(category) {
@@ -85,9 +134,14 @@ function updateStatGoalStatus(category) {
   if (!card || !card.classList || typeof card.classList.add !== "function") {
     return;
   }
-  const goalValue = parseGoalValue(resolve.goalInput());
+  const correctGoal = parseGoalValue(resolve.correctGoalInput());
+  const totalGoal = parseGoalValue(resolve.totalGoalInput());
   const correctValue = parseCountFromElement(resolve.correctElement());
-  if (goalValue > 0 && correctValue >= goalValue) {
+  const incorrectValue = parseCountFromElement(resolve.incorrectElement());
+  const totalValue = correctValue + incorrectValue;
+  const meetsCorrect = correctGoal === 0 || correctValue >= correctGoal;
+  const meetsTotal = totalGoal === 0 || totalValue >= totalGoal;
+  if (meetsCorrect && meetsTotal && (correctGoal > 0 || totalGoal > 0)) {
     card.classList.add("goalMet");
   } else {
     card.classList.remove("goalMet");
@@ -95,15 +149,24 @@ function updateStatGoalStatus(category) {
 }
 
 function updateAllStatGoalStatuses() {
+  updateAllStatTotals();
   Object.keys(statCategoryConfig).forEach(updateStatGoalStatus);
+}
+
+function updateAllStatTotals() {
+  Object.keys(statCategoryConfig).forEach(updateStatTotal);
 }
 
 sharedGlobals.updateStatGoalStatus = updateStatGoalStatus;
 sharedGlobals.updateStatGoalStatuses = updateAllStatGoalStatuses;
+sharedGlobals.updateStatTotals = updateAllStatTotals;
 sharedGlobals.statGoalsChanged = updateAllStatGoalStatuses;
 
 if (runtimeRoot && !runtimeRoot.statGoalsChanged) {
   runtimeRoot.statGoalsChanged = updateAllStatGoalStatuses;
+}
+if (runtimeRoot && !runtimeRoot.updateStatTotals) {
+  runtimeRoot.updateStatTotals = updateAllStatTotals;
 }
 
 updateAllStatGoalStatuses();
@@ -349,6 +412,7 @@ function updateResultCounters({
     incrementTextContent(correctElement);
   }
   if (category) {
+    updateStatTotal(category);
     updateStatGoalStatus(category);
   }
 }

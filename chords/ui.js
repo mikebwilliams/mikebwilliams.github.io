@@ -661,25 +661,76 @@ function handleSettingsExport() {
   dom.settingsDebugPanel.textContent = uiSettingsStore.getCurrentJSON(true);
 }
 
-function normalizeWorkoutGoal(value) {
+function normalizeGoalValue(value) {
   const parsed = parseInt(value, 10);
   if (!Number.isFinite(parsed) || parsed < 0) return 0;
-  if (parsed > 9999) return 9999;
+  if (parsed > 999) return 999;
   return parsed;
+}
+
+function normalizeWorkoutGoals(source) {
+  if (!source || typeof source !== "object") {
+    return { correct: 0, total: 0 };
+  }
+  const payload =
+    source.goals && typeof source.goals === "object" ? source.goals : source;
+  const has = (key) =>
+    payload && Object.prototype.hasOwnProperty.call(payload, key);
+  const correct = normalizeGoalValue(
+    has("correct")
+      ? payload.correct
+      : has("goal")
+        ? payload.goal
+        : has("target")
+          ? payload.target
+          : 0,
+  );
+  const total = normalizeGoalValue(
+    has("total")
+      ? payload.total
+      : has("overall")
+        ? payload.overall
+        : has("totalGoal")
+          ? payload.totalGoal
+          : 0,
+  );
+  return { correct, total };
+}
+
+function readWorkoutGoalInputs() {
+  const inputs = dom.workoutGoalInputs || {};
+  const correct =
+    inputs.correct && "value" in inputs.correct ? inputs.correct.value : 0;
+  const total =
+    inputs.total && "value" in inputs.total ? inputs.total.value : 0;
+  return {
+    correct: normalizeGoalValue(correct),
+    total: normalizeGoalValue(total),
+  };
+}
+
+function resetWorkoutGoalInputs() {
+  const inputs = dom.workoutGoalInputs || {};
+  if (inputs.correct && "value" in inputs.correct) {
+    inputs.correct.value = "0";
+  }
+  if (inputs.total && "value" in inputs.total) {
+    inputs.total.value = "0";
+  }
 }
 
 function cloneWorkoutEntry(entry) {
   if (!entry || typeof entry !== "object") {
     return {
       preset: "",
-      goal: 0,
+      goals: { correct: 0, total: 0 },
       category: null,
     };
   }
   const preset = typeof entry.preset === "string" ? entry.preset.trim() : "";
   return {
     preset,
-    goal: normalizeWorkoutGoal(entry.goal),
+    goals: normalizeWorkoutGoals(entry),
     category:
       typeof entry.category === "string" && statCategoryLabels[entry.category]
         ? entry.category
@@ -736,8 +787,19 @@ function buildWorkoutEntryMeta(entry, preset) {
   const parts = [];
   const category = resolveEntryCategory(entry, preset);
   const label = category ? statCategoryLabels[category] : null;
-  const goalValue = normalizeWorkoutGoal(entry.goal);
-  parts.push(label ? `Goal ${goalValue} ${label}` : `Goal ${goalValue}`);
+  const goals = normalizeWorkoutGoals(entry);
+  const segments = [];
+  if (goals.correct > 0) {
+    segments.push(`${goals.correct} correct`);
+  }
+  if (goals.total > 0) {
+    segments.push(`${goals.total} total`);
+  }
+  const hasGoals = segments.length > 0;
+  const goalText = hasGoals
+    ? `${segments.length > 1 ? "Goals" : "Goal"} ${segments.join(" / ")}`
+    : "Goal 0";
+  parts.push(label ? `${goalText} ${label}` : goalText);
   const flowText = describeFlow(preset);
   if (flowText) parts.push(flowText);
   return parts.join(" · ");
@@ -1034,7 +1096,7 @@ function handleWorkoutSave() {
     const category = resolveEntryCategory(entry, preset);
     return {
       preset: entry.preset,
-      goal: normalizeWorkoutGoal(entry.goal),
+      goals: normalizeWorkoutGoals(entry),
       category,
     };
   });
@@ -1105,22 +1167,20 @@ function handleWorkoutAddEntry() {
     alert("Select a preset before adding an entry.");
     return;
   }
-  const goal = normalizeWorkoutGoal(dom.workoutGoalInput.value);
   const presets = getPresetSnapshots();
   const preset = presets[presetName] || null;
   const category = inferCategoryFromPresetSnapshot(preset);
+  const goals = readWorkoutGoalInputs();
   workoutState.entries.push({
     preset: presetName,
-    goal,
+    goals,
     category,
   });
   workoutState.dirty = true;
   if (dom.workoutPresetSelect) {
     dom.workoutPresetSelect.value = "";
   }
-  if (dom.workoutGoalInput) {
-    dom.workoutGoalInput.value = "0";
-  }
+  resetWorkoutGoalInputs();
   renderWorkoutEditor();
 }
 
@@ -1202,11 +1262,16 @@ function applyWorkoutEntry(index) {
   if (!category) {
     category = "chords";
   }
-  const goalValue = normalizeWorkoutGoal(entry.goal);
-  const goalInput =
+  const goals = normalizeWorkoutGoals(entry);
+  const goalInputs =
     dom.statGoals && dom.statGoals[category] ? dom.statGoals[category] : null;
-  if (goalInput) {
-    goalInput.value = String(goalValue);
+  if (goalInputs) {
+    if (goalInputs.correct && "value" in goalInputs.correct) {
+      goalInputs.correct.value = String(goals.correct);
+    }
+    if (goalInputs.total && "value" in goalInputs.total) {
+      goalInputs.total.value = String(goals.total);
+    }
   }
   syncSettingsStore();
   workoutState.activeIndex = index;
@@ -1266,9 +1331,7 @@ function initWorkoutsPanel() {
     }
   }
   renderWorkoutEditor();
-  if (dom.workoutGoalInput) {
-    dom.workoutGoalInput.value = "0";
-  }
+  resetWorkoutGoalInputs();
 }
 
 if (
@@ -1365,18 +1428,30 @@ dom.resetStatsButton.addEventListener("click", () => {
   dom.cntScalesIncorrect.textContent = "0";
   dom.cntDegreesIncorrect.textContent = "0";
   dom.cntBricksIncorrect.textContent = "0";
+  dom.cntChordsTotal.textContent = "0";
+  dom.cntProgsTotal.textContent = "0";
+  dom.cntScalesTotal.textContent = "0";
+  dom.cntDegreesTotal.textContent = "0";
+  dom.cntBricksTotal.textContent = "0";
+  if (typeof uiGlobals.updateStatTotals === "function") {
+    uiGlobals.updateStatTotals();
+  }
   if (typeof uiGlobals.updateStatGoalStatuses === "function") {
     uiGlobals.updateStatGoalStatuses();
   }
 });
 
-Object.entries(dom.statGoals || {}).forEach(([category, input]) => {
-  if (!input || typeof input.addEventListener !== "function") return;
-  input.addEventListener("input", () => {
-    if (typeof uiGlobals.updateStatGoalStatus === "function") {
-      uiGlobals.updateStatGoalStatus(category);
-    } else if (typeof uiGlobals.updateStatGoalStatuses === "function") {
-      uiGlobals.updateStatGoalStatuses();
-    }
+Object.entries(dom.statGoals || {}).forEach(([category, inputs]) => {
+  if (!inputs) return;
+  ["correct", "total"].forEach((key) => {
+    const input = inputs[key];
+    if (!input || typeof input.addEventListener !== "function") return;
+    input.addEventListener("input", () => {
+      if (typeof uiGlobals.updateStatGoalStatus === "function") {
+        uiGlobals.updateStatGoalStatus(category);
+      } else if (typeof uiGlobals.updateStatGoalStatuses === "function") {
+        uiGlobals.updateStatGoalStatuses();
+      }
+    });
   });
 });

@@ -533,11 +533,26 @@ const statCategoryKeys = [
 ];
 
 const statGoalInputIds = {
-  chords: "inputChordsGoal",
-  progressions: "inputProgressionsGoal",
-  degrees: "inputDegreesGoal",
-  scales: "inputScalesGoal",
-  bricks: "inputBricksGoal",
+  chords: {
+    correct: "inputChordsGoalCorrect",
+    total: "inputChordsGoalTotal",
+  },
+  progressions: {
+    correct: "inputProgressionsGoalCorrect",
+    total: "inputProgressionsGoalTotal",
+  },
+  degrees: {
+    correct: "inputDegreesGoalCorrect",
+    total: "inputDegreesGoalTotal",
+  },
+  scales: {
+    correct: "inputScalesGoalCorrect",
+    total: "inputScalesGoalTotal",
+  },
+  bricks: {
+    correct: "inputBricksGoalCorrect",
+    total: "inputBricksGoalTotal",
+  },
 };
 
 const statCardIds = {
@@ -548,13 +563,30 @@ const statCardIds = {
   bricks: "statCardBricks",
 };
 
+const statTotalIds = {
+  chords: "txtChordsTotal",
+  progressions: "txtProgressionsTotal",
+  degrees: "txtDegreesTotal",
+  scales: "txtScalesTotal",
+  bricks: "txtBricksTotal",
+};
+
 const statGoalInputs = statCategoryKeys.reduce((acc, key) => {
-  acc[key] = requireElement(statGoalInputIds[key]);
+  const ids = statGoalInputIds[key];
+  acc[key] = {
+    correct: requireElement(ids.correct),
+    total: requireElement(ids.total),
+  };
   return acc;
 }, {});
 
 const statCardElements = statCategoryKeys.reduce((acc, key) => {
   acc[key] = requireElement(statCardIds[key]);
+  return acc;
+}, {});
+
+const statTotalElements = statCategoryKeys.reduce((acc, key) => {
+  acc[key] = requireElement(statTotalIds[key]);
   return acc;
 }, {});
 
@@ -582,9 +614,15 @@ const domElements = {
   cntScalesIncorrect: requireElement("txtScalesIncorrect"),
   cntDegreesIncorrect: requireElement("txtDegreesIncorrect"),
   cntBricksIncorrect: requireElement("txtBricksIncorrect"),
+  cntChordsTotal: statTotalElements.chords,
+  cntProgsTotal: statTotalElements.progressions,
+  cntScalesTotal: statTotalElements.scales,
+  cntDegreesTotal: statTotalElements.degrees,
+  cntBricksTotal: statTotalElements.bricks,
   resetStatsButton: requireElement("btnStatsReset"),
   statGoals: statGoalInputs,
   statCards: statCardElements,
+  statTotals: statTotalElements,
   optionsPanels,
   modeSections,
   jazzBrickButtons,
@@ -622,7 +660,10 @@ const domElements = {
   workoutSaveButton: requireElement("btnWorkoutSave"),
   workoutDeleteButton: requireElement("btnWorkoutDelete"),
   workoutPresetSelect: requireElement("selectWorkoutPreset"),
-  workoutGoalInput: requireElement("inputWorkoutGoal"),
+  workoutGoalInputs: {
+    correct: requireElement("inputWorkoutGoalCorrect"),
+    total: requireElement("inputWorkoutGoalTotal"),
+  },
   workoutAddEntryButton: requireElement("btnWorkoutAddEntry"),
   workoutEntriesPanel: requireElement("panelWorkoutEntries"),
   scalesButtons: requireElement("panelScalesButtons"),
@@ -1500,7 +1541,7 @@ function sanitizeWorkoutName(name) {
 function sanitizeWorkoutGoal(value) {
   const parsed = parseInt(value, 10);
   if (!Number.isFinite(parsed) || parsed < 0) return 0;
-  if (parsed > 9999) return 9999;
+  if (parsed > 999) return 999;
   return parsed;
 }
 
@@ -1510,17 +1551,42 @@ function sanitizeWorkoutCategory(category) {
   return statCategoryKeys.includes(trimmed) ? trimmed : null;
 }
 
+function sanitizeWorkoutGoals(source) {
+  if (!source || typeof source !== "object") {
+    return { correct: 0, total: 0 };
+  }
+  const payload =
+    source.goals && typeof source.goals === "object" ? source.goals : source;
+  const has = (key) => Object.prototype.hasOwnProperty.call(payload, key);
+  const correct = sanitizeWorkoutGoal(
+    has("correct")
+      ? payload.correct
+      : has("goal")
+        ? payload.goal
+        : has("target")
+          ? payload.target
+          : 0,
+  );
+  const total = sanitizeWorkoutGoal(
+    has("total")
+      ? payload.total
+      : has("overall")
+        ? payload.overall
+        : has("totalGoal")
+          ? payload.totalGoal
+          : 0,
+  );
+  return { correct, total };
+}
+
 function sanitizeWorkoutEntry(entry) {
   if (!entry || typeof entry !== "object") return null;
   const preset = typeof entry.preset === "string" ? entry.preset.trim() : "";
   if (!preset) return null;
-  const goal = sanitizeWorkoutGoal(
-    Object.prototype.hasOwnProperty.call(entry, "goal") ? entry.goal : 0,
-  );
   const category = sanitizeWorkoutCategory(entry.category);
   return {
     preset,
-    goal,
+    goals: sanitizeWorkoutGoals(entry),
     category,
   };
 }
@@ -1811,14 +1877,58 @@ function applyScaleState(state) {
   });
 }
 
+function sanitizeStatsGoalValue(raw) {
+  const parsed = parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed < 0) return 0;
+  if (parsed > 999) return 999;
+  return parsed;
+}
+
+function sanitizeStatsGoalPair(source) {
+  if (typeof source === "number") {
+    return {
+      correct: sanitizeStatsGoalValue(source),
+      total: 0,
+    };
+  }
+  if (source && typeof source === "object") {
+    const correct = sanitizeStatsGoalValue(
+      Object.prototype.hasOwnProperty.call(source, "correct")
+        ? source.correct
+        : Object.prototype.hasOwnProperty.call(source, "goal")
+          ? source.goal
+          : 0,
+    );
+    const total = sanitizeStatsGoalValue(
+      Object.prototype.hasOwnProperty.call(source, "total")
+        ? source.total
+        : Object.prototype.hasOwnProperty.call(source, "overall")
+          ? source.overall
+          : 0,
+    );
+    return { correct, total };
+  }
+  return { correct: 0, total: 0 };
+}
+
 function captureStatGoalState() {
   const goals = {};
   const inputs = domElements.statGoals || {};
   statCategoryKeys.forEach((key) => {
-    const el = inputs[key];
-    if (!el) return;
-    const parsed = parseInt(el.value, 10);
-    goals[key] = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+    const group = inputs[key];
+    if (!group) return;
+    const correct = sanitizeStatsGoalValue(
+      group.correct &&
+        Object.prototype.hasOwnProperty.call(group.correct, "value")
+        ? group.correct.value
+        : 0,
+    );
+    const total = sanitizeStatsGoalValue(
+      group.total && Object.prototype.hasOwnProperty.call(group.total, "value")
+        ? group.total.value
+        : 0,
+    );
+    goals[key] = { correct, total };
   });
   return goals;
 }
@@ -1826,15 +1936,25 @@ function captureStatGoalState() {
 function applyStatGoalState(state) {
   const inputs = domElements.statGoals || {};
   statCategoryKeys.forEach((key) => {
-    const el = inputs[key];
-    if (!el) return;
+    const group = inputs[key];
+    if (!group) return;
     const raw =
       state && Object.prototype.hasOwnProperty.call(state, key)
         ? state[key]
-        : 0;
-    const parsed = parseInt(raw, 10);
-    const value = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
-    el.value = String(value);
+        : { correct: 0, total: 0 };
+    const normalized = sanitizeStatsGoalPair(raw);
+    if (
+      group.correct &&
+      Object.prototype.hasOwnProperty.call(group.correct, "value")
+    ) {
+      group.correct.value = String(normalized.correct);
+    }
+    if (
+      group.total &&
+      Object.prototype.hasOwnProperty.call(group.total, "value")
+    ) {
+      group.total.value = String(normalized.total);
+    }
   });
 }
 
@@ -2152,8 +2272,10 @@ function settingsStoreFactory() {
       this.watchElement(domElements.progressionSelect);
       this.watchElement(domElements.customProgressionInput, "input");
       this.watchElement(domElements.randomProgressionCount, "input");
-      Object.values(domElements.statGoals || {}).forEach((el) => {
-        this.watchElement(el, "input");
+      Object.values(domElements.statGoals || {}).forEach((group) => {
+        if (!group) return;
+        this.watchElement(group.correct, "input");
+        this.watchElement(group.total, "input");
       });
 
       Object.values(domElements.chordCheckboxes || {}).forEach((el) =>

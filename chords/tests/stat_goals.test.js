@@ -30,24 +30,72 @@ function triggerGoalUpdate() {
   }
 }
 
-function setGoal(category, value) {
-  const input = dom.statGoals && dom.statGoals[category];
-  if (input) {
-    input.value = String(value);
+function getGoalInputs(category) {
+  return dom.statGoals && dom.statGoals[category]
+    ? dom.statGoals[category]
+    : null;
+}
+
+function setGoals(category, goals) {
+  const inputs = getGoalInputs(category);
+  if (!inputs) return;
+  if (
+    Object.prototype.hasOwnProperty.call(goals, "correct") &&
+    inputs.correct &&
+    typeof inputs.correct.value !== "undefined"
+  ) {
+    inputs.correct.value = String(goals.correct);
+  }
+  if (
+    Object.prototype.hasOwnProperty.call(goals, "total") &&
+    inputs.total &&
+    typeof inputs.total.value !== "undefined"
+  ) {
+    inputs.total.value = String(goals.total);
   }
 }
 
-function setCorrect(category, value) {
-  const spans = {
+function setCounts(category, { correct, incorrect }) {
+  const correctSpans = {
     chords: dom.cntChordsCorrect,
     progressions: dom.cntProgsCorrect,
     degrees: dom.cntDegreesCorrect,
     scales: dom.cntScalesCorrect,
     bricks: dom.cntBricksCorrect,
   };
-  const el = spans[category];
-  if (el) {
-    el.textContent = String(value);
+  const incorrectSpans = {
+    chords: dom.cntChordsIncorrect,
+    progressions: dom.cntProgsIncorrect,
+    degrees: dom.cntDegreesIncorrect,
+    scales: dom.cntScalesIncorrect,
+    bricks: dom.cntBricksIncorrect,
+  };
+  const totalSpans = {
+    chords: dom.cntChordsTotal,
+    progressions: dom.cntProgsTotal,
+    degrees: dom.cntDegreesTotal,
+    scales: dom.cntScalesTotal,
+    bricks: dom.cntBricksTotal,
+  };
+  const nextCorrect =
+    typeof correct === "number"
+      ? correct
+      : parseInt(correctSpans[category]?.textContent || "0", 10);
+  const nextIncorrect =
+    typeof incorrect === "number"
+      ? incorrect
+      : parseInt(incorrectSpans[category]?.textContent || "0", 10);
+  if (typeof correct === "number" && correctSpans[category]) {
+    correctSpans[category].textContent = String(correct);
+  }
+  if (typeof incorrect === "number" && incorrectSpans[category]) {
+    incorrectSpans[category].textContent = String(incorrect);
+  }
+  if (totalSpans[category]) {
+    const totalValue =
+      (Number.isFinite(nextCorrect) ? nextCorrect : 0) +
+      (Number.isFinite(nextIncorrect) ? nextIncorrect : 0);
+    totalSpans[category].textContent = String(totalValue);
   }
 }
 
@@ -56,33 +104,41 @@ function test(name, fn) {
   tests.push({ name, fn });
 }
 
-test("stat card marks goal when target reached", () => {
+test("stat card marks goal when both thresholds reached", () => {
   const card = dom.statCards.chords;
   attachTrackingClassList(card);
-  setGoal("chords", 3);
-  setCorrect("chords", 2);
+  setGoals("chords", { correct: 3, total: 5 });
+  setCounts("chords", { correct: 2, incorrect: 2 });
 
   triggerGoalUpdate();
   assert.strictEqual(
     card.classList.contains("goalMet"),
     false,
-    "card should not be marked complete before reaching goal",
+    "card should not be marked complete before goals reached",
   );
 
-  setCorrect("chords", 3);
+  setCounts("chords", { correct: 3, incorrect: 1 });
+  triggerGoalUpdate();
+  assert.strictEqual(
+    card.classList.contains("goalMet"),
+    false,
+    "card should not be complete until total goal reached",
+  );
+
+  setCounts("chords", { correct: 3, incorrect: 2 });
   triggerGoalUpdate();
   assert.strictEqual(
     card.classList.contains("goalMet"),
     true,
-    "card should be marked complete once goal reached",
+    "card should be marked complete once both goals reached",
   );
 });
 
-test("stat card clears completion when goal lowered", () => {
+test("stat card clears completion when goals disabled", () => {
   const card = dom.statCards.progressions;
   attachTrackingClassList(card);
-  setGoal("progressions", 2);
-  setCorrect("progressions", 5);
+  setGoals("progressions", { correct: 2, total: 0 });
+  setCounts("progressions", { correct: 5, incorrect: 0 });
 
   triggerGoalUpdate();
   assert.strictEqual(
@@ -91,12 +147,34 @@ test("stat card clears completion when goal lowered", () => {
     "card should be complete when correct count exceeds goal",
   );
 
-  setGoal("progressions", 0);
+  setGoals("progressions", { correct: 0, total: 0 });
   triggerGoalUpdate();
   assert.strictEqual(
     card.classList.contains("goalMet"),
     false,
     "card should clear completion when goal disabled",
+  );
+});
+
+test("total-only goals respect total attempts", () => {
+  const card = dom.statCards.degrees;
+  attachTrackingClassList(card);
+  setGoals("degrees", { correct: 0, total: 4 });
+  setCounts("degrees", { correct: 1, incorrect: 2 });
+
+  triggerGoalUpdate();
+  assert.strictEqual(
+    card.classList.contains("goalMet"),
+    false,
+    "card should not complete before total attempts reached",
+  );
+
+  setCounts("degrees", { correct: 2, incorrect: 2 });
+  triggerGoalUpdate();
+  assert.strictEqual(
+    card.classList.contains("goalMet"),
+    true,
+    "card should complete when total attempts match goal",
   );
 });
 

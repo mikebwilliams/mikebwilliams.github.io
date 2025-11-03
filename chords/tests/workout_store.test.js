@@ -36,8 +36,12 @@ test("workout store saves and loads sanitized entries", () => {
   workoutStore.replaceAll({});
 
   const saved = workoutStore.saveWorkout("Daily", [
-    { preset: "All Chords", goal: 100, category: "chords" },
-    { preset: " Evening Drill ", goal: "-3", category: "invalid" },
+    {
+      preset: "All Chords",
+      goals: { correct: 100, total: 120 },
+      category: "chords",
+    },
+    { preset: " Evening Drill ", goal: "-3", total: "7", category: "invalid" },
   ]);
   assert.strictEqual(saved, true, "workout should save successfully");
 
@@ -54,8 +58,16 @@ test("workout store saves and loads sanitized entries", () => {
   assert.deepStrictEqual(
     loaded.entries,
     [
-      { preset: "All Chords", goal: 100, category: "chords" },
-      { preset: "Evening Drill", goal: 0, category: null },
+      {
+        preset: "All Chords",
+        goals: { correct: 100, total: 120 },
+        category: "chords",
+      },
+      {
+        preset: "Evening Drill",
+        goals: { correct: 0, total: 7 },
+        category: null,
+      },
     ],
     "entries should be sanitized on save/load",
   );
@@ -89,7 +101,9 @@ test("workout store rename and delete operate safely", () => {
 test("workout store tracks last selection and clears when removed", () => {
   storageMock.clear();
   workoutStore.replaceAll({});
-  workoutStore.saveWorkout("Session", [{ preset: "Focus", goal: 5 }]);
+  workoutStore.saveWorkout("Session", [
+    { preset: "Focus", goals: { correct: 5, total: 0 } },
+  ]);
 
   workoutStore.setLastSelection("Session", 2);
   const selection = workoutStore.getLastSelection();

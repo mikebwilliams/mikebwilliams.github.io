@@ -83,115 +83,318 @@
               <div class="statsGrid">
                 <div class="statCard" id="statCardChords">
                   <h4>Chords</h4>
-                  <p>
-                    <span class="statLabel">Correct</span
-                    ><span id="txtChordsCorrect">0</span>
-                  </p>
-                  <p>
-                    <span class="statLabel">Incorrect</span
-                    ><span id="txtChordsIncorrect">0</span>
-                  </p>
-                  <p class="statGoalRow">
-                    <label class="statLabel" for="inputChordsGoal">Goal</label>
-                    <input
-                      type="number"
-                      id="inputChordsGoal"
-                      inputmode="numeric"
-                      min="0"
-                      max="9999"
-                      value="0"
-                    />
-                  </p>
+                  <table class="statTable">
+                    <tbody>
+                      <tr>
+                        <th scope="row" class="statLabelCell">
+                          <span aria-hidden="true">✔</span>
+                          <span class="visuallyHidden">Correct</span>
+                        </th>
+                        <td class="statCellCount">
+                          <span id="txtChordsCorrect">0</span>
+                        </td>
+                        <td class="statCellGoal">
+                          <input
+                            class="statGoalInput"
+                            type="number"
+                            id="inputChordsGoalCorrect"
+                            inputmode="numeric"
+                            min="0"
+                            max="999"
+                            value="0"
+                            aria-label="Chords correct goal"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th scope="row" class="statLabelCell">
+                          <span aria-hidden="true">✖</span>
+                          <span class="visuallyHidden">Incorrect</span>
+                        </th>
+                        <td class="statCellCount">
+                          <span id="txtChordsIncorrect">0</span>
+                        </td>
+                        <td
+                          class="statCellGoal statCellPlaceholder"
+                          aria-hidden="true"
+                        >
+                          —
+                        </td>
+                      </tr>
+                    </tbody>
+                    <tfoot>
+                      <tr class="statTotalRow">
+                        <th scope="row" class="statLabelCell">Total</th>
+                        <td class="statCellValue">
+                          <span id="txtChordsTotal">0</span>
+                        </td>
+                        <td class="statCellGoal">
+                          <input
+                            class="statGoalInput"
+                            type="number"
+                            id="inputChordsGoalTotal"
+                            inputmode="numeric"
+                            min="0"
+                            max="999"
+                            value="0"
+                            aria-label="Chords total goal"
+                          />
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
                 </div>
                 <div class="statCard" id="statCardProgressions">
                   <h4>Progressions</h4>
-                  <p>
-                    <span class="statLabel">Correct</span
-                    ><span id="txtProgressionsCorrect">0</span>
-                  </p>
-                  <p>
-                    <span class="statLabel">Incorrect</span
-                    ><span id="txtProgressionsIncorrect">0</span>
-                  </p>
-                  <p class="statGoalRow">
-                    <label class="statLabel" for="inputProgressionsGoal"
-                      >Goal</label
-                    >
-                    <input
-                      type="number"
-                      id="inputProgressionsGoal"
-                      inputmode="numeric"
-                      min="0"
-                      max="9999"
-                      value="0"
-                    />
-                  </p>
+                  <table class="statTable">
+                    <tbody>
+                      <tr>
+                        <th scope="row" class="statLabelCell">
+                          <span aria-hidden="true">✔</span>
+                          <span class="visuallyHidden">Correct</span>
+                        </th>
+                        <td class="statCellCount">
+                          <span id="txtProgressionsCorrect">0</span>
+                        </td>
+                        <td class="statCellGoal">
+                          <input
+                            class="statGoalInput"
+                            type="number"
+                            id="inputProgressionsGoalCorrect"
+                            inputmode="numeric"
+                            min="0"
+                            max="999"
+                            value="0"
+                            aria-label="Progressions correct goal"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th scope="row" class="statLabelCell">
+                          <span aria-hidden="true">✖</span>
+                          <span class="visuallyHidden">Incorrect</span>
+                        </th>
+                        <td class="statCellCount">
+                          <span id="txtProgressionsIncorrect">0</span>
+                        </td>
+                        <td
+                          class="statCellGoal statCellPlaceholder"
+                          aria-hidden="true"
+                        >
+                          —
+                        </td>
+                      </tr>
+                    </tbody>
+                    <tfoot>
+                      <tr class="statTotalRow">
+                        <th scope="row" class="statLabelCell">Total</th>
+                        <td class="statCellValue">
+                          <span id="txtProgressionsTotal">0</span>
+                        </td>
+                        <td class="statCellGoal">
+                          <input
+                            class="statGoalInput"
+                            type="number"
+                            id="inputProgressionsGoalTotal"
+                            inputmode="numeric"
+                            min="0"
+                            max="999"
+                            value="0"
+                            aria-label="Progressions total goal"
+                          />
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
                 </div>
                 <div class="statCard" id="statCardDegrees">
                   <h4>Degrees</h4>
-                  <p>
-                    <span class="statLabel">Correct</span
-                    ><span id="txtDegreesCorrect">0</span>
-                  </p>
-                  <p>
-                    <span class="statLabel">Incorrect</span
-                    ><span id="txtDegreesIncorrect">0</span>
-                  </p>
-                  <p class="statGoalRow">
-                    <label class="statLabel" for="inputDegreesGoal">Goal</label>
-                    <input
-                      type="number"
-                      id="inputDegreesGoal"
-                      inputmode="numeric"
-                      min="0"
-                      max="9999"
-                      value="0"
-                    />
-                  </p>
+                  <table class="statTable">
+                    <tbody>
+                      <tr>
+                        <th scope="row" class="statLabelCell">
+                          <span aria-hidden="true">✔</span>
+                          <span class="visuallyHidden">Correct</span>
+                        </th>
+                        <td class="statCellCount">
+                          <span id="txtDegreesCorrect">0</span>
+                        </td>
+                        <td class="statCellGoal">
+                          <input
+                            class="statGoalInput"
+                            type="number"
+                            id="inputDegreesGoalCorrect"
+                            inputmode="numeric"
+                            min="0"
+                            max="999"
+                            value="0"
+                            aria-label="Degrees correct goal"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th scope="row" class="statLabelCell">
+                          <span aria-hidden="true">✖</span>
+                          <span class="visuallyHidden">Incorrect</span>
+                        </th>
+                        <td class="statCellCount">
+                          <span id="txtDegreesIncorrect">0</span>
+                        </td>
+                        <td
+                          class="statCellGoal statCellPlaceholder"
+                          aria-hidden="true"
+                        >
+                          —
+                        </td>
+                      </tr>
+                    </tbody>
+                    <tfoot>
+                      <tr class="statTotalRow">
+                        <th scope="row" class="statLabelCell">Total</th>
+                        <td class="statCellValue">
+                          <span id="txtDegreesTotal">0</span>
+                        </td>
+                        <td class="statCellGoal">
+                          <input
+                            class="statGoalInput"
+                            type="number"
+                            id="inputDegreesGoalTotal"
+                            inputmode="numeric"
+                            min="0"
+                            max="999"
+                            value="0"
+                            aria-label="Degrees total goal"
+                          />
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
                 </div>
                 <div class="statCard" id="statCardScales">
                   <h4>Scales</h4>
-                  <p>
-                    <span class="statLabel">Correct</span
-                    ><span id="txtScalesCorrect">0</span>
-                  </p>
-                  <p>
-                    <span class="statLabel">Incorrect</span
-                    ><span id="txtScalesIncorrect">0</span>
-                  </p>
-                  <p class="statGoalRow">
-                    <label class="statLabel" for="inputScalesGoal">Goal</label>
-                    <input
-                      type="number"
-                      id="inputScalesGoal"
-                      inputmode="numeric"
-                      min="0"
-                      max="9999"
-                      value="0"
-                    />
-                  </p>
+                  <table class="statTable">
+                    <tbody>
+                      <tr>
+                        <th scope="row" class="statLabelCell">
+                          <span aria-hidden="true">✔</span>
+                          <span class="visuallyHidden">Correct</span>
+                        </th>
+                        <td class="statCellCount">
+                          <span id="txtScalesCorrect">0</span>
+                        </td>
+                        <td class="statCellGoal">
+                          <input
+                            class="statGoalInput"
+                            type="number"
+                            id="inputScalesGoalCorrect"
+                            inputmode="numeric"
+                            min="0"
+                            max="999"
+                            value="0"
+                            aria-label="Scales correct goal"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th scope="row" class="statLabelCell">
+                          <span aria-hidden="true">✖</span>
+                          <span class="visuallyHidden">Incorrect</span>
+                        </th>
+                        <td class="statCellCount">
+                          <span id="txtScalesIncorrect">0</span>
+                        </td>
+                        <td
+                          class="statCellGoal statCellPlaceholder"
+                          aria-hidden="true"
+                        >
+                          —
+                        </td>
+                      </tr>
+                    </tbody>
+                    <tfoot>
+                      <tr class="statTotalRow">
+                        <th scope="row" class="statLabelCell">Total</th>
+                        <td class="statCellValue">
+                          <span id="txtScalesTotal">0</span>
+                        </td>
+                        <td class="statCellGoal">
+                          <input
+                            class="statGoalInput"
+                            type="number"
+                            id="inputScalesGoalTotal"
+                            inputmode="numeric"
+                            min="0"
+                            max="999"
+                            value="0"
+                            aria-label="Scales total goal"
+                          />
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
                 </div>
                 <div class="statCard" id="statCardBricks">
                   <h4>Bricks</h4>
-                  <p>
-                    <span class="statLabel">Correct</span
-                    ><span id="txtBricksCorrect">0</span>
-                  </p>
-                  <p>
-                    <span class="statLabel">Incorrect</span
-                    ><span id="txtBricksIncorrect">0</span>
-                  </p>
-                  <p class="statGoalRow">
-                    <label class="statLabel" for="inputBricksGoal">Goal</label>
-                    <input
-                      type="number"
-                      id="inputBricksGoal"
-                      inputmode="numeric"
-                      min="0"
-                      max="9999"
-                      value="0"
-                    />
-                  </p>
+                  <table class="statTable">
+                    <tbody>
+                      <tr>
+                        <th scope="row" class="statLabelCell">
+                          <span aria-hidden="true">✔</span>
+                          <span class="visuallyHidden">Correct</span>
+                        </th>
+                        <td class="statCellCount">
+                          <span id="txtBricksCorrect">0</span>
+                        </td>
+                        <td class="statCellGoal">
+                          <input
+                            class="statGoalInput"
+                            type="number"
+                            id="inputBricksGoalCorrect"
+                            inputmode="numeric"
+                            min="0"
+                            max="999"
+                            value="0"
+                            aria-label="Bricks correct goal"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th scope="row" class="statLabelCell">
+                          <span aria-hidden="true">✖</span>
+                          <span class="visuallyHidden">Incorrect</span>
+                        </th>
+                        <td class="statCellCount">
+                          <span id="txtBricksIncorrect">0</span>
+                        </td>
+                        <td
+                          class="statCellGoal statCellPlaceholder"
+                          aria-hidden="true"
+                        >
+                          —
+                        </td>
+                      </tr>
+                    </tbody>
+                    <tfoot>
+                      <tr class="statTotalRow">
+                        <th scope="row" class="statLabelCell">Total</th>
+                        <td class="statCellValue">
+                          <span id="txtBricksTotal">0</span>
+                        </td>
+                        <td class="statCellGoal">
+                          <input
+                            class="statGoalInput"
+                            type="number"
+                            id="inputBricksGoalTotal"
+                            inputmode="numeric"
+                            min="0"
+                            max="999"
+                            value="0"
+                            aria-label="Bricks total goal"
+                          />
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
                 </div>
               </div>
             </div>
@@ -582,14 +785,29 @@
           <div class="workoutAddRow">
             <label for="selectWorkoutPreset">Preset:</label>
             <select id="selectWorkoutPreset"></select>
-            <label for="inputWorkoutGoal">Goal:</label>
-            <input
-              id="inputWorkoutGoal"
-              type="number"
-              min="0"
-              max="9999"
-              value="0"
-            />
+            <span class="workoutGoalLegend">Goal:</span>
+            <label class="workoutGoalField" aria-label="Workout goal correct">
+              <span>Correct</span>
+              <input
+                id="inputWorkoutGoalCorrect"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                max="999"
+                value="0"
+              />
+            </label>
+            <label class="workoutGoalField" aria-label="Workout goal total">
+              <span>Total</span>
+              <input
+                id="inputWorkoutGoalTotal"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                max="999"
+                value="0"
+              />
+            </label>
             <button id="btnWorkoutAddEntry" type="button">Add Entry</button>
           </div>
         </div>

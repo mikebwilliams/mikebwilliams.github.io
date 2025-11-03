@@ -529,24 +529,116 @@ details.challengeCollapsible > summary .summaryActions {
 }
 
 .statCard.goalMet h4,
-.statCard.goalMet .statLabel {
+.statCard.goalMet .statLabelCell {
   color: #d6f7ea;
 }
 
-.statCard p {
-  display: flex;
-  justify-content: space-between;
-  margin: 6px 0;
-  font-size: 0.95rem;
-  align-items: center;
+.statTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 6px;
+  table-layout: fixed;
 }
 
-.statLabel {
+.statTable thead th {
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.statTable tbody th,
+.statTable tfoot th {
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.statLabelCell {
+  font-weight: 500;
+  color: var(--text-dim);
+  font-size: 0.95rem;
+}
+
+.statTable td {
+  padding: 8px 10px;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.statColValue,
+.statCellValue,
+.statCellCount {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.statCellCount span {
+  display: inline-block;
+}
+
+.statColGoal,
+.statCellGoal {
+  text-align: right;
+}
+
+.statCellPlaceholder {
   color: var(--text-dim);
 }
 
-.statGoalRow {
-  margin-top: 12px;
+.statTotalRow th,
+.statTotalRow td {
+  border-top: 1px solid rgba(129, 140, 180, 0.26);
+  padding-top: 10px;
+}
+
+.statTotalRow th {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.statGoalInput {
+  width: 3.25em;
+  min-width: 3.25em !important;
+  padding: 4px 6px;
+  text-align: right;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.18);
+  color: inherit;
+  border: 1px solid var(--border-soft);
+  font-variant-numeric: tabular-nums;
+  box-sizing: border-box;
+  font-size: 0.92rem;
+  -moz-appearance: textfield;
+}
+
+.statGoalInput:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.statCard.goalMet .statGoalInput {
+  background: rgba(0, 0, 0, 0.22);
+  color: #f3fff9;
+}
+
+.statGoalInput::-webkit-outer-spin-button,
+.statGoalInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .sectionTitle {
@@ -669,6 +761,25 @@ label {
   min-width: 180px;
 }
 
+.workoutGoalLegend {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.workoutGoalField {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+
+.workoutGoalField input {
+  width: 72px;
+  padding: 4px 10px;
+  text-align: right;
+}
+
 .workoutNameRow input {
   flex: 1 1 220px;
 }
@@ -783,25 +894,6 @@ input[type="textbox"]:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
-}
-
-.statGoalRow input {
-  width: 72px;
-  padding: 4px 12px 4px 8px;
-  text-align: right;
-  border-radius: var(--radius-sm);
-  background: rgba(0, 0, 0, 0.18);
-  color: inherit;
-  box-sizing: border-box;
-}
-
-.statGoalRow input[type="number"] {
-  padding-right: 12px;
-}
-
-.statCard.goalMet .statGoalRow input {
-  background: rgba(0, 0, 0, 0.22);
-  color: #f3fff9;
 }
 
 #panelKeyPresets {
