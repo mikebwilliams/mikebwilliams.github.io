@@ -99,10 +99,6 @@ main.page {
     padding: 32px 20px 38px;
   }
 
-  .challengeBox {
-    padding: 18px 18px 20px;
-  }
-
   .challengeCollapsibleBody {
     padding: 18px 18px 22px;
   }
@@ -146,14 +142,6 @@ main.page {
   flex-direction: column;
   gap: 28px;
   align-items: stretch;
-}
-
-.challengeBox {
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(129, 140, 180, 0.32);
-  background: linear-gradient(165deg, var(--surface-900), var(--surface-800));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  padding: 22px 24px;
 }
 
 .challengePiano {
@@ -200,12 +188,6 @@ main.page {
 
 .keyboardOptionSuffix {
   color: var(--text-muted);
-}
-
-.challengeControls {
-  display: flex;
-  justify-content: center;
-  padding: 0;
 }
 
 .challengeCollapsibleBody {
@@ -373,13 +355,6 @@ main.page {
 .key.correct {
   background: var(--success);
   box-shadow: 0 0 22px rgba(69, 213, 164, 0.55);
-}
-
-.controlsRow {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
 }
 
 button {
@@ -565,7 +540,6 @@ details.challengeCollapsible > summary .summaryActions {
   color: var(--text-primary);
 }
 
-.statColValue,
 .statCellValue,
 .statCellCount {
   text-align: right;
@@ -871,8 +845,7 @@ input[type="radio"] {
 
 select,
 input[type="number"],
-input[type="text"],
-input[type="textbox"] {
+input[type="text"] {
   background: var(--surface-900);
   color: var(--text-primary);
   border: 1px solid var(--border-soft);
@@ -887,8 +860,7 @@ input[type="textbox"] {
 
 select:focus,
 input[type="number"]:focus,
-input[type="text"]:focus,
-input[type="textbox"]:focus {
+input[type="text"]:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
@@ -944,7 +916,7 @@ input[type="textbox"]:focus {
 
 #panelModeProgressions select,
 #panelModeProgressions input[type="number"],
-#panelModeProgressions input[type="textbox"] {
+#panelModeProgressions input[type="text"] {
   margin-left: 6px;
 }
 
