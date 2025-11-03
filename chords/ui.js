@@ -434,34 +434,6 @@ function generateScalesButtons() {
   buttonContainer.innerHTML = buttonsHtml;
 }
 
-function getEnabledScales() {
-  const enabledScales = [];
-
-  for (let key in scales) {
-    if (scales.hasOwnProperty(key)) {
-      if (dom.scaleCheckboxes[key].checked) {
-        enabledScales.push(key);
-      }
-    }
-  }
-
-  return enabledScales;
-}
-
-function getEnabledScaleDetails() {
-  const enabledScaleDetails = [];
-
-  for (let key in scales) {
-    if (scales.hasOwnProperty(key)) {
-      if (dom.scaleCheckboxes[key].checked) {
-        enabledScaleDetails.push(scales[key]);
-      }
-    }
-  }
-
-  return enabledScaleDetails;
-}
-
 function initScales() {
   generateScalesTable();
   generateScalesButtons();

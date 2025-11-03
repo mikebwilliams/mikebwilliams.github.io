@@ -253,16 +253,6 @@ const romanNumerals = {
   "#VII": 0,
 };
 
-const romanNumeralNames = {
-  I: "Tonic",
-  II: "Supertonic",
-  III: "Mediant",
-  IV: "Subdominant",
-  V: "Dominant",
-  VI: "Submediant",
-  VII: "Leading Tone",
-};
-
 // These are separated so we can so one way gives us more flats and the other more sharps,
 // e.g. F# in the fifths vs Gb in the fourths.
 const circleOfFourths = [
@@ -292,45 +282,6 @@ const circleOfFifths = [
   "D#",
   "A#",
   "F",
-];
-const majorScaleIntervals = [0, 2, 4, 5, 7, 9, 11];
-const minorScaleIntervals = [0, 2, 3, 5, 7, 8, 10];
-
-const chords = [
-  "C",
-  "Cm",
-  "C#",
-  "C#m",
-  "Db",
-  "Dbm",
-  "D",
-  "Dm",
-  "D#",
-  "D#m",
-  "Eb",
-  "Ebm",
-  "E",
-  "Em",
-  "F",
-  "Fm",
-  "F#",
-  "F#m",
-  "Gb",
-  "Gbm",
-  "G",
-  "Gm",
-  "G#",
-  "G#m",
-  "Ab",
-  "Abm",
-  "A",
-  "Am",
-  "A#",
-  "A#m",
-  "Bb",
-  "Bbm",
-  "B",
-  "Bm",
 ];
 
 const chordTypeConfigs = [
@@ -2332,7 +2283,6 @@ const dataExports = {
   noteValues,
   valuesToNotesSharp,
   valuesToNotesFlat,
-  chords,
   chordStructures,
   chordStructureNames,
   chordTypeConfigs,
