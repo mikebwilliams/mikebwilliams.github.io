@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test("Settings tab renders (and no console errors)", async ({ page }) => {
+test("Presets tab renders (and no console errors)", async ({ page }) => {
   const errors: string[] = [];
 
   // Capture browser console messages

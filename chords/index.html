@@ -68,6 +68,13 @@
                   />
                   <span class="keyboardOptionSuffix">s</span>
                 </label>
+                <label
+                  class="keyboardOptionsRow"
+                  title="For guessing from sound"
+                >
+                  <input type="checkbox" id="chkEarSendMidi" />
+                  <span>Play Answer Notes over MIDI</span>
+                </label>
               </div>
             </div>
           </details>
@@ -440,19 +447,11 @@
 
           <input
             type="radio"
-            id="tabOptionsEar"
+            id="tabOptionsPresets"
             name="options"
-            value="tabEar"
+            value="tabPresets"
           />
-          <label for="tabOptionsEar">Ear Training</label>
-
-          <input
-            type="radio"
-            id="tabOptionsMidi"
-            name="options"
-            value="tabMidi"
-          />
-          <label for="tabOptionsMidi">MIDI</label>
+          <label for="tabOptionsPresets">Presets</label>
 
           <input
             type="radio"
@@ -464,11 +463,11 @@
 
           <input
             type="radio"
-            id="tabOptionsSettings"
+            id="tabOptionsMidi"
             name="options"
-            value="tabSettings"
+            value="tabMidi"
           />
-          <label for="tabOptionsSettings">Settings</label>
+          <label for="tabOptionsMidi">MIDI</label>
         </div>
 
         <div class="tabContent" id="panelOptionsKeys">
@@ -631,13 +630,6 @@
           </div>
         </div>
 
-        <div class="tabContent" id="panelOptionsEar">
-          <label
-            ><input type="checkbox" id="chkEarSendMidi" />Play Answer Notes over
-            MIDI (for guessing from sound)</label
-          ><br />
-        </div>
-
         <div class="tabContent" id="panelOptionsVoicings">
           <table>
             <tr>
@@ -758,12 +750,29 @@
           </table>
         </div>
 
-        <div class="tabContent" id="panelOptionsMidi">
-          <label id="labelMidiStatus"
-            >MIDI Status: <span id="txtMidiStatus">Not Connected</span></label
-          >
-          <table id="tableMidiInputs"></table>
-          <table id="tableMidiOutputs"></table>
+        <div class="tabContent" id="panelOptionsPresets">
+          <div class="settingsRow">
+            <label for="selectSettingsPreset">Presets:</label>
+            <select id="selectSettingsPreset"></select>
+            <button id="btnSettingsLoad" type="button">Load</button>
+            <button id="btnSettingsDelete" type="button">Delete</button>
+          </div>
+          <div class="settingsRow">
+            <label for="inputSettingsPresetName">Save As:</label>
+            <input
+              type="text"
+              id="inputSettingsPresetName"
+              placeholder="Preset name"
+            />
+            <button id="btnSettingsSave" type="button">Save Preset</button>
+          </div>
+          <div class="settingsRow">
+            <button id="btnSettingsReset" type="button">
+              Reset to Defaults
+            </button>
+            <button id="btnSettingsExport" type="button">Show JSON</button>
+          </div>
+          <pre id="panelSettingsDebug" class="settingsDebugOutput"></pre>
         </div>
 
         <div class="tabContent" id="panelOptionsWorkouts">
@@ -812,29 +821,12 @@
           </div>
         </div>
 
-        <div class="tabContent" id="panelOptionsSettings">
-          <div class="settingsRow">
-            <label for="selectSettingsPreset">Presets:</label>
-            <select id="selectSettingsPreset"></select>
-            <button id="btnSettingsLoad" type="button">Load</button>
-            <button id="btnSettingsDelete" type="button">Delete</button>
-          </div>
-          <div class="settingsRow">
-            <label for="inputSettingsPresetName">Save As:</label>
-            <input
-              type="text"
-              id="inputSettingsPresetName"
-              placeholder="Preset name"
-            />
-            <button id="btnSettingsSave" type="button">Save Preset</button>
-          </div>
-          <div class="settingsRow">
-            <button id="btnSettingsReset" type="button">
-              Reset to Defaults
-            </button>
-            <button id="btnSettingsExport" type="button">Show JSON</button>
-          </div>
-          <pre id="panelSettingsDebug" class="settingsDebugOutput"></pre>
+        <div class="tabContent" id="panelOptionsMidi">
+          <label id="labelMidiStatus"
+            >MIDI Status: <span id="txtMidiStatus">Not Connected</span></label
+          >
+          <table id="tableMidiInputs"></table>
+          <table id="tableMidiOutputs"></table>
         </div>
       </section>
 

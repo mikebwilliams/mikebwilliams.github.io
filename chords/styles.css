@@ -109,12 +109,14 @@ main.page {
 
   .keyboardOptions {
     margin-top: 14px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
   }
 
   .keyboardOptionsRow {
     gap: 8px;
-    flex-wrap: wrap;
-    justify-content: center;
   }
 
   .keyboardOptionsRow input[type="number"] {
@@ -161,8 +163,11 @@ main.page {
 
 .keyboardOptions {
   margin-top: 18px;
-  display: flex;
+  display: inline-flex;
   justify-content: center;
+  align-items: center;
+  gap: 26px;
+  flex-wrap: wrap;
 }
 
 .keyboardOptionsRow {

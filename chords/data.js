@@ -393,12 +393,11 @@ const keyPresetButtons = {
 const optionsPanels = {
   tabKeys: requireElement("panelOptionsKeys"),
   tabDisplay: requireElement("panelOptionsDisplay"),
-  tabMidi: requireElement("panelOptionsMidi"),
-  tabSpacedRep: requireElement("panelOptionsSpacedRep"),
-  tabEar: requireElement("panelOptionsEar"),
   tabVoicings: requireElement("panelOptionsVoicings"),
+  tabSpacedRep: requireElement("panelOptionsSpacedRep"),
+  tabPresets: requireElement("panelOptionsPresets"),
   tabWorkouts: requireElement("panelOptionsWorkouts"),
-  tabSettings: requireElement("panelOptionsSettings"),
+  tabMidi: requireElement("panelOptionsMidi"),
 };
 
 const modeSections = {
