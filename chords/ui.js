@@ -1390,6 +1390,10 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 dom.resetStatsButton.addEventListener("click", () => {
+  if (typeof uiGlobals.resetDailyStats === "function") {
+    uiGlobals.resetDailyStats();
+    return;
+  }
   dom.cntChordsCorrect.textContent = "0";
   dom.cntProgsCorrect.textContent = "0";
   dom.cntScalesCorrect.textContent = "0";

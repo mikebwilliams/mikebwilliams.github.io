@@ -171,6 +171,178 @@ if (runtimeRoot && !runtimeRoot.updateStatTotals) {
 
 updateAllStatGoalStatuses();
 
+const STATS_STORAGE_KEY = "chordChallenge.dailyStats";
+let statsStorageHandle = null;
+let dailyStatsState = null;
+
+function resolveStatsStorageHandle() {
+  if (statsStorageHandle) return statsStorageHandle;
+  try {
+    if (typeof localStorage !== "undefined") {
+      statsStorageHandle = localStorage;
+      return statsStorageHandle;
+    }
+  } catch (_) {}
+  if (runtimeRoot && runtimeRoot.localStorage) {
+    statsStorageHandle = runtimeRoot.localStorage;
+  }
+  return statsStorageHandle;
+}
+
+function formatDateKey(sourceDate) {
+  const date =
+    sourceDate instanceof Date ||
+    (sourceDate && typeof sourceDate.getTime === "function")
+      ? sourceDate
+      : new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function sanitizeStatCounterValue(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) return 0;
+  if (parsed > 1000000) return 1000000;
+  return Math.floor(parsed);
+}
+
+function createEmptyStatCounts() {
+  return Object.keys(statCategoryConfig).reduce((acc, category) => {
+    acc[category] = { correct: 0, incorrect: 0 };
+    return acc;
+  }, {});
+}
+
+function createDefaultDailyStats(dateKey = formatDateKey()) {
+  return {
+    date: dateKey,
+    counts: createEmptyStatCounts(),
+  };
+}
+
+function normalizeDailyStats(raw, fallbackDate = formatDateKey()) {
+  const normalized = createDefaultDailyStats(fallbackDate);
+  if (raw && typeof raw.date === "string" && raw.date.trim()) {
+    normalized.date = raw.date;
+  }
+  if (raw && raw.counts && typeof raw.counts === "object") {
+    Object.keys(normalized.counts).forEach((category) => {
+      const entry = raw.counts[category];
+      if (entry && typeof entry === "object") {
+        normalized.counts[category] = {
+          correct: sanitizeStatCounterValue(entry.correct),
+          incorrect: sanitizeStatCounterValue(entry.incorrect),
+        };
+      }
+    });
+  }
+  return normalized;
+}
+
+function loadDailyStatsFromStorage() {
+  const todayKey = formatDateKey();
+  const storage = resolveStatsStorageHandle();
+  if (!storage) return createDefaultDailyStats(todayKey);
+  try {
+    const raw = storage.getItem(STATS_STORAGE_KEY);
+    if (!raw) return createDefaultDailyStats(todayKey);
+    const parsed = JSON.parse(raw);
+    const normalized = normalizeDailyStats(parsed, todayKey);
+    if (normalized.date !== todayKey) {
+      const fresh = createDefaultDailyStats(todayKey);
+      storage.setItem(STATS_STORAGE_KEY, JSON.stringify(fresh));
+      return fresh;
+    }
+    return normalized;
+  } catch (_) {
+    return createDefaultDailyStats(todayKey);
+  }
+}
+
+function saveDailyStatsState(state = dailyStatsState) {
+  const storage = resolveStatsStorageHandle();
+  if (!storage || !state) return;
+  try {
+    storage.setItem(STATS_STORAGE_KEY, JSON.stringify(state));
+  } catch (_) {}
+}
+
+function applyDailyStatsToDom(state) {
+  if (!state || !state.counts) return;
+  Object.keys(statCategoryConfig).forEach((category) => {
+    const counts =
+      state.counts[category] && typeof state.counts[category] === "object"
+        ? state.counts[category]
+        : { correct: 0, incorrect: 0 };
+    const correctEl = statCategoryConfig[category].correctElement();
+    const incorrectEl = statCategoryConfig[category].incorrectElement();
+    if (correctEl && typeof correctEl.textContent !== "undefined") {
+      correctEl.textContent = String(counts.correct);
+    }
+    if (incorrectEl && typeof incorrectEl.textContent !== "undefined") {
+      incorrectEl.textContent = String(counts.incorrect);
+    }
+  });
+  updateAllStatGoalStatuses();
+}
+
+function ensureDailyStatsCurrent() {
+  const todayKey = formatDateKey();
+  if (!dailyStatsState) {
+    dailyStatsState = createDefaultDailyStats(todayKey);
+    return;
+  }
+  if (dailyStatsState.date !== todayKey) {
+    dailyStatsState = createDefaultDailyStats(todayKey);
+    saveDailyStatsState();
+    applyDailyStatsToDom(dailyStatsState);
+  }
+}
+
+function bumpDailyStat(category, { wasIncorrect, skipCorrect }) {
+  if (!category) return;
+  if (!dailyStatsState) {
+    dailyStatsState = loadDailyStatsFromStorage();
+  }
+  ensureDailyStatsCurrent();
+  if (!dailyStatsState.counts) {
+    dailyStatsState.counts = createEmptyStatCounts();
+  }
+  if (!dailyStatsState.counts[category]) {
+    dailyStatsState.counts[category] = { correct: 0, incorrect: 0 };
+  }
+  if (wasIncorrect) {
+    dailyStatsState.counts[category].incorrect += 1;
+  } else if (!skipCorrect) {
+    dailyStatsState.counts[category].correct += 1;
+  }
+  saveDailyStatsState();
+}
+
+function resetDailyStats({ keepDate = true } = {}) {
+  const targetDate =
+    keepDate && dailyStatsState && dailyStatsState.date
+      ? dailyStatsState.date
+      : formatDateKey();
+  dailyStatsState = createDefaultDailyStats(targetDate);
+  saveDailyStatsState();
+  applyDailyStatsToDom(dailyStatsState);
+}
+
+function initializeDailyStats() {
+  dailyStatsState = loadDailyStatsFromStorage();
+  applyDailyStatsToDom(dailyStatsState);
+}
+
+initializeDailyStats();
+
+sharedGlobals.resetDailyStats = resetDailyStats;
+if (runtimeRoot && !runtimeRoot.resetDailyStats) {
+  runtimeRoot.resetDailyStats = resetDailyStats;
+}
+
 function syncSettingsStore() {
   if (
     logicSettingsStore &&
@@ -412,6 +584,7 @@ function updateResultCounters({
     incrementTextContent(correctElement);
   }
   if (category) {
+    bumpDailyStat(category, { wasIncorrect, skipCorrect });
     updateStatTotal(category);
     updateStatGoalStatus(category);
   }
@@ -1524,5 +1697,7 @@ if (typeof module !== "undefined" && module.exports) {
     resolveStartValue,
     rotateSequenceToStart,
     flowPresetMap,
+    formatDateKey,
+    normalizeDailyStats,
   };
 }
