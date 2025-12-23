@@ -599,6 +599,7 @@ const domElements = {
   settingsPresetName: requireElement("inputSettingsPresetName"),
   settingsSaveButton: requireElement("btnSettingsSave"),
   settingsLoadButton: requireElement("btnSettingsLoad"),
+  settingsOverwriteButton: requireElement("btnSettingsOverwrite"),
   settingsDeleteButton: requireElement("btnSettingsDelete"),
   settingsResetButton: requireElement("btnSettingsReset"),
   settingsExportButton: requireElement("btnSettingsExport"),

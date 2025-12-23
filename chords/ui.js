@@ -604,6 +604,23 @@ function handleSettingsLoad() {
   dom.settingsPresetSelect.value = name;
 }
 
+function handleSettingsOverwrite() {
+  if (!uiSettingsStore) return;
+  const name = dom.settingsPresetSelect.value;
+  if (!name) {
+    alert("Select a preset to overwrite.");
+    return;
+  }
+  if (!confirm(`Overwrite preset "${name}" with current settings?`)) return;
+  uiSettingsStore.syncFromDom();
+  uiSettingsStore.savePreset(name);
+  refreshSettingsPresetOptions();
+  dom.settingsPresetSelect.value = name;
+  if (dom.settingsPresetName) {
+    dom.settingsPresetName.value = name;
+  }
+}
+
 function handleSettingsDelete() {
   if (!uiSettingsStore) return;
   const name = dom.settingsPresetSelect.value;
@@ -1384,6 +1401,10 @@ document.addEventListener("DOMContentLoaded", () => {
   initWorkoutsPanel();
   dom.settingsSaveButton.addEventListener("click", handleSettingsSave);
   dom.settingsLoadButton.addEventListener("click", handleSettingsLoad);
+  dom.settingsOverwriteButton.addEventListener(
+    "click",
+    handleSettingsOverwrite,
+  );
   dom.settingsDeleteButton.addEventListener("click", handleSettingsDelete);
   dom.settingsResetButton.addEventListener("click", handleSettingsReset);
   dom.settingsExportButton.addEventListener("click", handleSettingsExport);
