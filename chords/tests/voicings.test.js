@@ -88,9 +88,9 @@ seventhChordTypes.forEach((suffix) => {
 });
 
 sixthChordTypes.forEach((suffix) => {
-  const { third } = expectedUpperIntervals[suffix];
+  const { third, seventh } = expectedUpperIntervals[suffix];
   test(`shell r37 keeps root/3 for ${suffix}`, () => {
-    expectShellR37(suffix, third);
+    expectShellR37(suffix, third, seventh);
   });
 });
 

@@ -886,6 +886,12 @@ function computeShellVoicing(notes, chordInternalName, mode) {
         alternates: null,
       };
     }
+    if (thirdCandidate !== undefined && sixthCandidate !== undefined) {
+      return {
+        notes: [root, thirdCandidate, sixthCandidate],
+        alternates: null,
+      };
+    }
     if (thirdCandidate !== undefined) {
       return { notes: [root, thirdCandidate], alternates: null };
     }

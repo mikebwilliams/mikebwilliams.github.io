@@ -171,13 +171,13 @@ test("computeShellVoicing promotes sixths in pure 6 chords for r3or7 mode", () =
   );
 });
 
-test("computeShellVoicing keeps sixths out of r37 mode", () => {
+test("computeShellVoicing includes sixths in r37 mode for pure 6 chords", () => {
   const base = generateNotesFromChordName("C6");
   const result = computeShellVoicing(base, "C6", "r37");
   assertSequenceEqual(
     normalizeNotes(result.notes),
-    [0, 4],
-    "r37 mode should ignore the sixth when no seventh is present",
+    [0, 4, 9],
+    "r37 mode should include the sixth when no seventh is present",
   );
 });
 
