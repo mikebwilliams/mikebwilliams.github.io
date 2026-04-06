@@ -1448,6 +1448,35 @@ const SETTINGS_STORAGE_KEY = "chordChallenge.settings";
 const SETTINGS_PRESETS_KEY = "chordChallenge.settings.presets";
 const WORKOUTS_STORAGE_KEY = "chordChallenge.workouts";
 const WORKOUTS_SELECTED_KEY = "chordChallenge.workouts.selected";
+const SONGS_STORAGE_KEY = "chordChallenge.songs";
+const IREAL_PRO_URI_REGEX = /.*?(irealb(?:ook)?):\/\/([^"]*)/;
+const IREAL_PRO_SCRAMBLE_MARKER = "1r34LbKcu7";
+const IREAL_PRO_CHORD_REGEX =
+  /^([A-G][b#]?)((?:sus|alt|add|[+\-^\dhob#])*)(\*.+?\*)*(\/[A-G][#b]?)?(\(.*?\))?/;
+const IREAL_PRO_SPACER_CHORD_REGEX = /^([ Wp])()()(\/[A-G][#b]?)?(\(.*?\))?/;
+const IREAL_PRO_TOKEN_PATTERNS = [
+  { type: "section", regex: /^\*[a-zA-Z]/ },
+  { type: "timeSignature", regex: /^T\d\d/ },
+  { type: "ending", regex: /^N./ },
+  { type: "comment", regex: /^<.*?>/ },
+  { type: "chord", regex: IREAL_PRO_CHORD_REGEX },
+  { type: "chord", regex: IREAL_PRO_SPACER_CHORD_REGEX },
+];
+const IREAL_PRO_TIME_SIGNATURES = {
+  T22: "2/2",
+  T24: "2/4",
+  T32: "3/2",
+  T34: "3/4",
+  T44: "4/4",
+  T54: "5/4",
+  T58: "5/8",
+  T64: "6/4",
+  T68: "6/8",
+  T74: "7/4",
+  T78: "7/8",
+  T98: "9/8",
+  T12: "12/8",
+};
 
 function getStorageHandle() {
   try {
@@ -1487,6 +1516,693 @@ function mergeSettings(base, extra) {
     }
   });
   return result;
+}
+
+function normalizeTextValue(value) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function parseIRealProTitle(title) {
+  return normalizeTextValue(title).replace(/(.*)(, )(A|The)$/g, "$3 $1");
+}
+
+function parseIRealProComposer(composer) {
+  const normalized = normalizeTextValue(composer);
+  const parts = normalized.split(/(\s+)/);
+  if (parts.length === 3) {
+    return parts[2] + parts[1] + parts[0];
+  }
+  return normalized;
+}
+
+function normalizeIRealProIdentityPart(value) {
+  return normalizeTextValue(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function createIRealProSongId(title, composer) {
+  const titlePart = normalizeIRealProIdentityPart(title) || "untitled";
+  const composerPart = normalizeIRealProIdentityPart(composer) || "unknown";
+  return `${titlePart}--${composerPart}`;
+}
+
+function obfuscateIRealPro50Segment(segment) {
+  const buffer = segment.split("");
+  for (let i = 0; i < 5; i++) {
+    buffer[49 - i] = segment[i];
+    buffer[i] = segment[49 - i];
+  }
+  for (let i = 10; i < 24; i++) {
+    buffer[49 - i] = segment[i];
+    buffer[i] = segment[49 - i];
+  }
+  return buffer.join("");
+}
+
+function decodeIRealProMusic(source) {
+  const normalized = normalizeTextValue(source);
+  if (!normalized) return "";
+  const markerIndex = normalized.indexOf(IREAL_PRO_SCRAMBLE_MARKER);
+  if (markerIndex === -1) return normalized;
+  let remaining = normalized.slice(
+    markerIndex + IREAL_PRO_SCRAMBLE_MARKER.length,
+  );
+  let decoded = "";
+  while (remaining.length > 51) {
+    decoded += obfuscateIRealPro50Segment(remaining.slice(0, 50));
+    remaining = remaining.slice(50);
+  }
+  decoded += remaining;
+  return decoded
+    .replace(/Kcl/g, "| x")
+    .replace(/LZ/g, " |")
+    .replace(/XyQ/g, "   ");
+}
+
+function parseIRealProChordMatch(match) {
+  const note = match[1] || " ";
+  let quality = match[2] || "";
+  const comment = match[3] || "";
+  if (comment) quality += comment.slice(1, -1);
+  let bass = match[4] || "";
+  if (bass.startsWith("/")) {
+    bass = bass.slice(1);
+  }
+  let alternate = match[5] || null;
+  if (alternate) {
+    const nested = IREAL_PRO_CHORD_REGEX.exec(alternate.slice(1, -1));
+    alternate = nested ? parseIRealProChordMatch(nested) : null;
+  }
+  if (note === " " && !alternate && !bass) return null;
+  return {
+    raw: match[0],
+    kind:
+      note === "n"
+        ? "noChord"
+        : note === "x"
+          ? "repeatOne"
+          : note === "r"
+            ? "repeatTwo"
+            : note === "W"
+              ? "invisibleRoot"
+              : note === "p"
+                ? "slash"
+                : "chord",
+    root: note,
+    quality,
+    bass: bass
+      ? {
+          raw: bass,
+          kind: "chord",
+          root: bass,
+          quality: "",
+          bass: null,
+          alternate: null,
+        }
+      : null,
+    alternate,
+    displaySize: "normal",
+  };
+}
+
+function classifyIRealProSymbolToken(char) {
+  switch (char) {
+    case "{":
+    case "[":
+    case "|":
+    case "]":
+    case "}":
+    case "Z":
+      return { type: "barline", raw: char, value: char };
+    case "S":
+      return { type: "annotation", raw: char, value: char };
+    case "Q":
+      return { type: "annotation", raw: char, value: char };
+    case "U":
+      return { type: "annotation", raw: char, value: char };
+    case "s":
+      return { type: "annotation", raw: char, value: char };
+    case "l":
+      return { type: "annotation", raw: char, value: char };
+    case "f":
+      return { type: "annotation", raw: char, value: char };
+    case "Y":
+      return { type: "spacer", raw: char, value: char };
+    case "n":
+      return {
+        type: "chord",
+        raw: char,
+        value: char,
+        chord: parseIRealProChordMatch([char, char, "", "", "", ""]),
+      };
+    case "x":
+      return {
+        type: "chord",
+        raw: char,
+        value: char,
+        chord: parseIRealProChordMatch([char, char, "", "", "", ""]),
+      };
+    case "r":
+      return {
+        type: "chord",
+        raw: char,
+        value: char,
+        chord: parseIRealProChordMatch([char, char, "", "", "", ""]),
+      };
+    case ",":
+      return { type: "separator", raw: char, value: char };
+    default:
+      return { type: "unknown", raw: char, value: char };
+  }
+}
+
+function tokenizeIRealProChart(chartText) {
+  let remaining = normalizeTextValue(chartText);
+  const tokens = [];
+  while (remaining) {
+    let matched = false;
+    for (const pattern of IREAL_PRO_TOKEN_PATTERNS) {
+      const match = pattern.regex.exec(remaining);
+      if (!match) continue;
+      matched = true;
+      if (pattern.type === "comment") {
+        tokens.push({
+          type: "comment",
+          raw: match[0],
+          value: match[0].slice(1, -1),
+        });
+      } else if (pattern.type === "section") {
+        tokens.push({
+          type: "annotation",
+          raw: match[0],
+          value: match[0],
+        });
+      } else if (pattern.type === "timeSignature") {
+        tokens.push({
+          type: "annotation",
+          raw: match[0],
+          value: match[0],
+        });
+      } else if (pattern.type === "ending") {
+        tokens.push({
+          type: "annotation",
+          raw: match[0],
+          value: match[0],
+        });
+      } else if (pattern.type === "chord") {
+        tokens.push({
+          type: "chord",
+          raw: match[0],
+          value: match[0],
+          chord: parseIRealProChordMatch(match),
+        });
+      }
+      remaining = remaining.slice(match[0].length);
+      break;
+    }
+    if (matched) continue;
+    const nextChar = remaining[0];
+    tokens.push(classifyIRealProSymbolToken(nextChar));
+    remaining = remaining.slice(1);
+  }
+  return tokens;
+}
+
+function createIRealProCell(cells) {
+  const cell = {
+    index: cells.length,
+    bars: "",
+    annotations: [],
+    comments: [],
+    spacer: 0,
+    chord: null,
+  };
+  cells.push(cell);
+  return cell;
+}
+
+function buildIRealProCells(tokens) {
+  const cells = [];
+  let currentCell = createIRealProCell(cells);
+  let previousCell = null;
+  tokens.forEach((token, index) => {
+    let advancesCell = false;
+    if (token.type === "chord") {
+      currentCell.chord = token.chord ? cloneObject(token.chord) : null;
+      advancesCell = true;
+    } else if (token.type === "barline") {
+      switch (token.raw) {
+        case "{":
+        case "[":
+          if (previousCell) {
+            previousCell.bars += ")";
+            previousCell = null;
+          }
+          currentCell.bars = token.raw;
+          break;
+        case "|":
+          if (previousCell) {
+            previousCell.bars += ")";
+            previousCell = null;
+          }
+          currentCell.bars = "(";
+          break;
+        case "]":
+        case "}":
+        case "Z":
+          if (previousCell) {
+            previousCell.bars += token.raw;
+            previousCell = null;
+          }
+          break;
+        default:
+      }
+    } else if (token.type === "annotation") {
+      currentCell.annotations.push(token.value);
+    } else if (token.type === "comment") {
+      currentCell.comments.push(token.value);
+    } else if (token.type === "spacer") {
+      currentCell.spacer += 1;
+      previousCell = null;
+    }
+    if (advancesCell && index < tokens.length - 1) {
+      previousCell = currentCell;
+      currentCell = createIRealProCell(cells);
+    }
+  });
+  return cells;
+}
+
+function decodeIRealProTimeSignature(value) {
+  return IREAL_PRO_TIME_SIGNATURES[value] || "4/4";
+}
+
+function hasIRealProMeasureStart(cell) {
+  return /[\(\{\[]/.test(cell.bars);
+}
+
+function hasIRealProMeasureContent(cell) {
+  return !!(cell.chord || cell.annotations.length || cell.comments.length);
+}
+
+function parseIRealProBar(bars, location) {
+  if (!bars) return null;
+  const marker =
+    location === "left"
+      ? bars.includes("{")
+        ? "{"
+        : bars.includes("[")
+          ? "["
+          : bars.includes("(")
+            ? "("
+            : ""
+      : bars.includes("Z")
+        ? "Z"
+        : bars.includes("}")
+          ? "}"
+          : bars.includes("]")
+            ? "]"
+            : bars.includes(")")
+              ? ")"
+              : "";
+  if (!marker) return null;
+  const kind =
+    marker === "{"
+      ? "repeatStart"
+      : marker === "}"
+        ? "repeatEnd"
+        : marker === "["
+          ? "double"
+          : marker === "]"
+            ? "double"
+            : marker === "Z"
+              ? "final"
+              : "single";
+  return {
+    raw: marker,
+    location,
+    kind,
+  };
+}
+
+function createIRealProMeasure(index, timeSignature, cellIndex) {
+  return {
+    index,
+    timeSignature,
+    cells: [],
+    chords: [],
+    annotations: [],
+    comments: [],
+    endings: [],
+    section: null,
+    coda: false,
+    segno: false,
+    fermata: false,
+    spacer: 0,
+    startsNewSystem: cellIndex > 0 && cellIndex % 16 === 0,
+    leftBar: null,
+    rightBar: null,
+    finalBar: false,
+  };
+}
+
+function applyIRealProCellStateToMeasure(cell, measure, state) {
+  let displaySize = state.displaySize;
+  cell.annotations.forEach((annotation) => {
+    measure.annotations.push(annotation);
+    if (annotation === "s") {
+      displaySize = "small";
+    } else if (annotation === "l") {
+      displaySize = "normal";
+    } else if (annotation === "Q") {
+      measure.coda = true;
+    } else if (annotation === "S") {
+      measure.segno = true;
+    } else if (annotation === "f") {
+      measure.fermata = true;
+    } else if (annotation.startsWith("T")) {
+      measure.timeSignature = decodeIRealProTimeSignature(annotation);
+      state.timeSignature = measure.timeSignature;
+    } else if (annotation.startsWith("N")) {
+      measure.endings.push(annotation.slice(1));
+    } else if (annotation.startsWith("*")) {
+      measure.section = annotation.slice(1);
+    }
+  });
+  state.displaySize = displaySize;
+  const cellCopy = cloneObject(cell);
+  if (cellCopy.chord) {
+    cellCopy.chord.displaySize = displaySize;
+    measure.chords.push({
+      cellIndex: measure.cells.length,
+      ...cloneObject(cellCopy.chord),
+    });
+  }
+  measure.comments = measure.comments.concat(cellCopy.comments);
+  measure.spacer += cellCopy.spacer;
+  measure.cells.push(cellCopy);
+}
+
+function buildIRealProMeasures(cells) {
+  const measures = [];
+  const state = {
+    timeSignature: "4/4",
+    displaySize: "normal",
+  };
+  let currentMeasure = null;
+  cells.forEach((cell, cellIndex) => {
+    const shouldStartMeasure =
+      hasIRealProMeasureStart(cell) ||
+      (!currentMeasure && hasIRealProMeasureContent(cell));
+    if (shouldStartMeasure) {
+      if (currentMeasure) {
+        measures.push(currentMeasure);
+      }
+      currentMeasure = createIRealProMeasure(
+        measures.length + 1,
+        state.timeSignature,
+        cellIndex,
+      );
+      currentMeasure.leftBar = parseIRealProBar(cell.bars, "left");
+    }
+    if (!currentMeasure) return;
+    applyIRealProCellStateToMeasure(cell, currentMeasure, state);
+    const rightBar = parseIRealProBar(cell.bars, "right");
+    if (rightBar) {
+      currentMeasure.rightBar = rightBar;
+      currentMeasure.finalBar = rightBar.kind === "final";
+      measures.push(currentMeasure);
+      currentMeasure = null;
+    }
+  });
+  if (currentMeasure) {
+    measures.push(currentMeasure);
+  }
+  return measures;
+}
+
+function parseIRealProChart(source, options = {}) {
+  if (typeof source !== "string" || !source.trim()) {
+    throw new Error("iReal Pro chart text is required");
+  }
+  const decodedMusic = options.alreadyDecoded
+    ? normalizeTextValue(source)
+    : decodeIRealProMusic(source);
+  const tokens = tokenizeIRealProChart(decodedMusic);
+  const cells = buildIRealProCells(tokens);
+  const measures = buildIRealProMeasures(cells);
+  return {
+    decodedMusic,
+    tokens,
+    cells,
+    measures,
+    timeSignature: measures[0] ? measures[0].timeSignature : "4/4",
+    finalBar: measures.some((measure) => measure.finalBar),
+  };
+}
+
+function parseIRealProSong(recordText, options = {}) {
+  const normalized = normalizeTextValue(recordText);
+  if (!normalized) {
+    throw new Error("iReal Pro song record is required");
+  }
+  const parts = normalized.split("==");
+  if (parts.length !== 4) {
+    throw new Error("Invalid iReal Pro song record");
+  }
+  const headerIndex = parts[0].indexOf("=");
+  const styleIndex = parts[1].indexOf("=");
+  if (headerIndex === -1 || styleIndex === -1) {
+    throw new Error("Invalid iReal Pro song metadata");
+  }
+  const title = parseIRealProTitle(parts[0].slice(0, headerIndex));
+  const composer = parseIRealProComposer(parts[0].slice(headerIndex + 1));
+  const style = normalizeTextValue(parts[1].slice(0, styleIndex));
+  const key = normalizeTextValue(parts[1].slice(styleIndex + 1));
+  const encodedMusic = parts[2];
+  const decodedMusic = decodeIRealProMusic(encodedMusic);
+  if (!title || !composer || !style || !key || !decodedMusic) {
+    throw new Error("Incomplete iReal Pro song record");
+  }
+  return {
+    id: createIRealProSongId(title, composer),
+    title,
+    composer,
+    style,
+    key,
+    source: {
+      type: "irealpro",
+      playlistTitle: normalizeTextValue(options.playlistTitle),
+    },
+    raw: {
+      encodedRecord: normalized,
+      encodedMusic,
+      decodedMusic,
+    },
+    chart: parseIRealProChart(decodedMusic, { alreadyDecoded: true }),
+  };
+}
+
+function extractIRealProPlaylistPayload(sourceText) {
+  if (typeof sourceText !== "string" || !sourceText.trim()) {
+    throw new Error("iReal Pro playlist text is required");
+  }
+  const matched = IREAL_PRO_URI_REGEX.exec(sourceText.trim());
+  if (!matched) {
+    throw new Error("iReal Pro playlist must include an irealb:// URI");
+  }
+  try {
+    return decodeURIComponent(matched[2]);
+  } catch (_) {
+    throw new Error("Invalid iReal Pro URI encoding");
+  }
+}
+
+function parseIRealProPlaylist(sourceText) {
+  const playlist = extractIRealProPlaylistPayload(sourceText);
+  const parts = playlist.split("===");
+  const playlistTitle = normalizeTextValue(parts.pop());
+  if (!parts.length) {
+    throw new Error("iReal Pro playlist contains no song records");
+  }
+  const songs = parts.map((record) =>
+    parseIRealProSong(record, { playlistTitle }),
+  );
+  return {
+    sourceType: "irealpro",
+    playlistTitle,
+    songs,
+    songCount: songs.length,
+  };
+}
+
+function compactIRealProSongForStorage(song) {
+  if (!song || typeof song !== "object") return null;
+  const title = normalizeTextValue(song.title);
+  const composer = normalizeTextValue(song.composer);
+  const style = normalizeTextValue(song.style);
+  const key = normalizeTextValue(song.key);
+  const playlistTitle = normalizeTextValue(
+    song.source && song.source.playlistTitle,
+  );
+  const decodedMusic = normalizeTextValue(
+    song.raw && song.raw.decodedMusic
+      ? song.raw.decodedMusic
+      : song.chart && song.chart.decodedMusic
+        ? song.chart.decodedMusic
+        : "",
+  );
+  if (!title || !composer || !style || !key || !decodedMusic) return null;
+  return {
+    id: createIRealProSongId(title, composer),
+    title,
+    composer,
+    style,
+    key,
+    source: {
+      type: "irealpro",
+      playlistTitle,
+    },
+    raw: {
+      decodedMusic,
+    },
+  };
+}
+
+function inflateIRealProSongFromStorage(entry) {
+  const compact = compactIRealProSongForStorage(entry);
+  if (!compact) return null;
+  return {
+    ...compact,
+    chart: parseIRealProChart(compact.raw.decodedMusic, {
+      alreadyDecoded: true,
+    }),
+  };
+}
+
+function sanitizeStoredSongsMap(collection) {
+  if (!collection || typeof collection !== "object") return {};
+  const sanitized = {};
+  Object.keys(collection).forEach((key) => {
+    const compact = compactIRealProSongForStorage(collection[key]);
+    if (!compact) return;
+    sanitized[compact.id] = compact;
+  });
+  return sanitized;
+}
+
+function compareStoredSongs(a, b) {
+  const titleCompare = a.title.localeCompare(b.title, "en", {
+    sensitivity: "base",
+  });
+  if (titleCompare !== 0) return titleCompare;
+  return a.composer.localeCompare(b.composer, "en", {
+    sensitivity: "base",
+  });
+}
+
+function songsStoreFactory() {
+  const store = {
+    storage: getStorageHandle(),
+    storageKey: SONGS_STORAGE_KEY,
+    resolveStorage() {
+      if (this.storage) return this.storage;
+      const handle = getStorageHandle();
+      if (handle) this.storage = handle;
+      return this.storage;
+    },
+    loadStoredEntries() {
+      const activeStorage = this.resolveStorage();
+      if (!activeStorage) return {};
+      try {
+        const raw = activeStorage.getItem(this.storageKey);
+        if (!raw) return {};
+        return sanitizeStoredSongsMap(JSON.parse(raw));
+      } catch (_) {
+        return {};
+      }
+    },
+    saveStoredEntries(songMap) {
+      const activeStorage = this.resolveStorage();
+      if (!activeStorage) return;
+      try {
+        activeStorage.setItem(
+          this.storageKey,
+          JSON.stringify(sanitizeStoredSongsMap(songMap)),
+        );
+      } catch (_) {}
+    },
+    loadAll() {
+      const entries = this.loadStoredEntries();
+      return Object.keys(entries).reduce((acc, id) => {
+        const inflated = inflateIRealProSongFromStorage(entries[id]);
+        if (inflated) acc[id] = inflated;
+        return acc;
+      }, {});
+    },
+    saveAll(songMap) {
+      this.saveStoredEntries(songMap);
+    },
+    listSongs() {
+      return Object.values(this.loadStoredEntries())
+        .sort(compareStoredSongs)
+        .map((song) => ({
+          id: song.id,
+          title: song.title,
+          composer: song.composer,
+          style: song.style,
+          key: song.key,
+          playlistTitle: song.source.playlistTitle,
+        }));
+    },
+    getSong(id) {
+      const songId = normalizeTextValue(id);
+      if (!songId) return null;
+      const entries = this.loadStoredEntries();
+      if (!Object.prototype.hasOwnProperty.call(entries, songId)) return null;
+      return inflateIRealProSongFromStorage(entries[songId]);
+    },
+    hasSong(id) {
+      const songId = normalizeTextValue(id);
+      if (!songId) return false;
+      const entries = this.loadStoredEntries();
+      return Object.prototype.hasOwnProperty.call(entries, songId);
+    },
+    upsertSongs(songs) {
+      const entries = this.loadStoredEntries();
+      let upserted = 0;
+      (Array.isArray(songs) ? songs : []).forEach((song) => {
+        const compact = compactIRealProSongForStorage(song);
+        if (!compact) return;
+        entries[compact.id] = compact;
+        upserted += 1;
+      });
+      this.saveStoredEntries(entries);
+      return upserted;
+    },
+    importPlaylist(sourceText) {
+      const playlist = parseIRealProPlaylist(sourceText);
+      const importedCount = this.upsertSongs(playlist.songs);
+      return {
+        playlistTitle: playlist.playlistTitle,
+        importedCount,
+        totalSongs: this.listSongs().length,
+      };
+    },
+    replaceAll(songMap) {
+      this.saveStoredEntries(songMap);
+    },
+    clearAll() {
+      const activeStorage = this.resolveStorage();
+      if (!activeStorage) return;
+      try {
+        activeStorage.removeItem(this.storageKey);
+      } catch (_) {}
+    },
+  };
+  return store;
 }
 
 function sanitizeWorkoutName(name) {
@@ -2281,6 +2997,12 @@ if (appGlobals.root) {
   appGlobals.root.workoutStore = workoutStore;
 }
 
+const songsStore = songsStoreFactory();
+appGlobals.songsStore = songsStore;
+if (appGlobals.root) {
+  appGlobals.root.songsStore = songsStore;
+}
+
 const dataExports = {
   allNotes,
   normalNotes,
@@ -2314,8 +3036,12 @@ const dataExports = {
   jazzCadencesMetabricks,
   jazzCadencesDropbacks,
   voicingUtils,
+  parseIRealProChart,
+  parseIRealProSong,
+  parseIRealProPlaylist,
   settingsStore,
   workoutStore,
+  songsStore,
 };
 
 if (typeof module !== "undefined" && module.exports) {
