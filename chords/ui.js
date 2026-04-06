@@ -338,6 +338,19 @@ function syncSongFavoriteToggle() {
   dom.songFavoriteToggle.checked = !!(song && song.favorite);
 }
 
+function syncSongKeyControls() {
+  if (
+    !dom.songUseOriginalKey ||
+    !dom.songAdvanceKeyOnRepeat ||
+    !dom.songAdvanceKeyOnSongChange
+  ) {
+    return;
+  }
+  const useOriginalKey = !!dom.songUseOriginalKey.checked;
+  dom.songAdvanceKeyOnRepeat.disabled = useOriginalKey;
+  dom.songAdvanceKeyOnSongChange.disabled = useOriginalKey;
+}
+
 function refreshSongSelect(selectedId = "") {
   if (!dom.songSelect || !uiSongsStore) return;
   const songs = uiSongsStore.listSongs();
@@ -388,6 +401,7 @@ function refreshSongSelect(selectedId = "") {
 
 uiGlobals.refreshSongSelect = refreshSongSelect;
 uiGlobals.syncSongFavoriteToggle = syncSongFavoriteToggle;
+uiGlobals.syncSongKeyControls = syncSongKeyControls;
 
 function handleSongImport() {
   if (!dom.songUrlInput || !uiSongsStore) return;
@@ -468,7 +482,23 @@ if (dom.songFavoriteToggle) {
     refreshSongSelect(songId);
   });
 }
+if (dom.songUseOriginalKey) {
+  dom.songUseOriginalKey.addEventListener("change", () => {
+    syncSongKeyControls();
+    syncSettingsStore();
+    if (modeIsSongs()) {
+      resetFlow();
+    }
+  });
+}
+if (dom.songAdvanceKeyOnRepeat) {
+  dom.songAdvanceKeyOnRepeat.addEventListener("change", syncSettingsStore);
+}
+if (dom.songAdvanceKeyOnSongChange) {
+  dom.songAdvanceKeyOnSongChange.addEventListener("change", syncSettingsStore);
+}
 refreshSongSelect();
+syncSongKeyControls();
 
 [
   { key: "allOn", handler: () => toggleAllChords(true) },

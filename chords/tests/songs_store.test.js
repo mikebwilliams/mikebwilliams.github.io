@@ -114,6 +114,9 @@ test("songs store preserves favorites across re-import and song settings sanitiz
       countChordsTowardGoals: false,
     }),
     {
+      useOriginalKey: true,
+      advanceKeyOnRepeat: false,
+      advanceKeyOnSongChange: false,
       finishAction: "nothing",
       repeatCount: 3,
       countChordsTowardGoals: false,

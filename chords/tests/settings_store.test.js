@@ -65,6 +65,12 @@ test("settings store saves and loads presets round-trip", () => {
   dom.progressionSelect.value = "custom";
   dom.customProgressionInput.value = "I-IV-V-I";
   dom.randomProgressionCount.value = "8";
+  dom.songUseOriginalKey.checked = false;
+  dom.songAdvanceKeyOnRepeat.checked = true;
+  dom.songAdvanceKeyOnSongChange.checked = true;
+  dom.songFinishAction.value = "randomSong";
+  dom.songRepeatCount.value = "6";
+  dom.songCountGoals.checked = false;
   dom.statGoals.chords.correct.value = "7";
   dom.statGoals.chords.total.value = "0";
   dom.statGoals.progressions.correct.value = "5";
@@ -98,6 +104,12 @@ test("settings store saves and loads presets round-trip", () => {
   dom.progressionSelect.value = "random";
   dom.customProgressionInput.value = "ii-V-I";
   dom.randomProgressionCount.value = "2";
+  dom.songUseOriginalKey.checked = true;
+  dom.songAdvanceKeyOnRepeat.checked = false;
+  dom.songAdvanceKeyOnSongChange.checked = false;
+  dom.songFinishAction.value = "nothing";
+  dom.songRepeatCount.value = "2";
+  dom.songCountGoals.checked = true;
   dom.statGoals.chords.correct.value = "1";
   dom.statGoals.chords.total.value = "0";
   dom.statGoals.progressions.correct.value = "0";
@@ -120,6 +132,12 @@ test("settings store saves and loads presets round-trip", () => {
   assert.strictEqual(dom.progressionSelect.value, "custom");
   assert.strictEqual(dom.customProgressionInput.value, "I-IV-V-I");
   assert.strictEqual(dom.randomProgressionCount.value, "8");
+  assert.strictEqual(dom.songUseOriginalKey.checked, false);
+  assert.strictEqual(dom.songAdvanceKeyOnRepeat.checked, true);
+  assert.strictEqual(dom.songAdvanceKeyOnSongChange.checked, true);
+  assert.strictEqual(dom.songFinishAction.value, "randomSong");
+  assert.strictEqual(dom.songRepeatCount.value, "6");
+  assert.strictEqual(dom.songCountGoals.checked, false);
   assert.strictEqual(dom.statGoals.chords.correct.value, "7");
   assert.strictEqual(dom.statGoals.chords.total.value, "0");
   assert.strictEqual(dom.statGoals.progressions.correct.value, "5");

@@ -558,6 +558,9 @@ const domElements = {
   songFavoriteToggle: requireElement("chkSongFavorite"),
   songFinishAction: requireElement("selectSongFinishAction"),
   songRepeatCount: requireElement("inputSongRepeatCount"),
+  songUseOriginalKey: requireElement("chkSongUseOriginalKey"),
+  songAdvanceKeyOnRepeat: requireElement("chkSongAdvanceKeyOnRepeat"),
+  songAdvanceKeyOnSongChange: requireElement("chkSongAdvanceKeyOnSongChange"),
   songCountGoals: requireElement("chkSongCountsTowardGoals"),
   songStatus: requireElement("txtSongsStatus"),
   flowSelect: requireElement("selectFlow"),
@@ -1645,6 +1648,52 @@ function createIRealProSongId(title, composer) {
   return `${titlePart}--${composerPart}`;
 }
 
+function extractKeyTonic(key) {
+  const normalized = normalizeTextValue(key);
+  const matched = normalized.match(/[A-G][b#]?/);
+  return matched ? matched[0] : normalized;
+}
+
+function prefersFlatKeySpelling(key) {
+  const normalized = extractKeyTonic(key);
+  return (
+    normalized.includes("b") ||
+    ["F", "Bb", "Eb", "Ab", "Db", "Gb", "Cb"].includes(normalized)
+  );
+}
+
+function transposeNoteName(note, semitoneOffset, targetKey = "") {
+  const normalized = extractKeyTonic(note);
+  if (
+    !normalized ||
+    !Object.prototype.hasOwnProperty.call(noteValues, normalized)
+  ) {
+    return normalized;
+  }
+  const transposed = (noteValues[normalized] + semitoneOffset + 1200) % 12;
+  return prefersFlatKeySpelling(targetKey)
+    ? valuesToNotesFlat[transposed]
+    : valuesToNotesSharp[transposed];
+}
+
+function sanitizeSongKeySettings(source) {
+  const settings =
+    source && typeof source === "object"
+      ? source.songs && typeof source.songs === "object"
+        ? source.songs
+        : source
+      : {};
+  return {
+    useOriginalKey:
+      !settings ||
+      !Object.prototype.hasOwnProperty.call(settings, "useOriginalKey")
+        ? true
+        : !!settings.useOriginalKey,
+    advanceKeyOnRepeat: !!(settings && settings.advanceKeyOnRepeat),
+    advanceKeyOnSongChange: !!(settings && settings.advanceKeyOnSongChange),
+  };
+}
+
 function sanitizeSongRepeatCount(value) {
   const parsed = parseInt(value, 10);
   if (!Number.isFinite(parsed) || parsed < 1) return DEFAULT_SONG_REPEAT_COUNT;
@@ -1667,6 +1716,7 @@ function sanitizeSongsPracticeSettings(source) {
         : source
       : {};
   return {
+    ...sanitizeSongKeySettings(settings),
     finishAction: sanitizeSongFinishAction(settings.finishAction),
     repeatCount: sanitizeSongRepeatCount(settings.repeatCount),
     countChordsTowardGoals:
@@ -2405,15 +2455,72 @@ function formatIRealProChordDisplay(chord) {
   return raw.replace(/\^/g, "Δ").replace(/#/g, "♯").replace(/b/g, "♭");
 }
 
-function buildPlayableSongEntry(chord, measureIndex, chordIndex) {
+function transposeIRealProChord(chord, semitoneOffset, targetKey = "") {
+  if (!chord || typeof chord !== "object" || !semitoneOffset) {
+    return chord ? cloneObject(chord) : chord;
+  }
+  const root = normalizeTextValue(chord.root);
+  const bassRoot =
+    chord.bass && typeof chord.bass === "object"
+      ? normalizeTextValue(chord.bass.root)
+      : "";
+  const alternate =
+    chord.alternate && typeof chord.alternate === "object"
+      ? transposeIRealProChord(chord.alternate, semitoneOffset, targetKey)
+      : chord.alternate
+        ? cloneObject(chord.alternate)
+        : null;
+  return {
+    ...cloneObject(chord),
+    root: root ? transposeNoteName(root, semitoneOffset, targetKey) : root,
+    bass: bassRoot
+      ? {
+          ...cloneObject(chord.bass),
+          root: transposeNoteName(bassRoot, semitoneOffset, targetKey),
+          raw: transposeNoteName(bassRoot, semitoneOffset, targetKey),
+        }
+      : chord.bass
+        ? cloneObject(chord.bass)
+        : null,
+    alternate,
+  };
+}
+
+function buildAsciiChordLabel(chord) {
+  if (!chord || typeof chord !== "object") return "";
+  if (chord.kind === "noChord") return "N.C.";
+  if (chord.kind === "repeatOne") return "%";
+  if (chord.kind === "repeatTwo") return "%%";
+  const root = normalizeTextValue(chord.root);
+  const quality = normalizeTextValue(chord.quality);
+  const bass =
+    chord.bass && chord.bass.root
+      ? `/${normalizeTextValue(chord.bass.root)}`
+      : "";
+  const alternate = chord.alternate
+    ? `(${buildAsciiChordLabel(chord.alternate)})`
+    : "";
+  return `${root}${quality}${bass}${alternate}`;
+}
+
+function buildPlayableSongEntry(chord, measureIndex, chordIndex, options = {}) {
   if (!chord || chord.kind !== "chord" || !chord.root) return null;
+  const transposedChord = transposeIRealProChord(
+    chord,
+    options.semitoneOffset || 0,
+    options.targetKey || chord.root,
+  );
   return {
     kind: "songChord",
-    label: formatIRealProChordDisplay(chord),
-    rawLabel: chord.raw || chord.root,
+    label: formatIRealProChordDisplay(transposedChord),
+    rawLabel: buildAsciiChordLabel(transposedChord) || chord.raw || chord.root,
     playableChord:
-      chord.root + normalizeIRealProQualityToInternal(chord.quality || ""),
-    bassNote: chord.bass && chord.bass.root ? chord.bass.root : "",
+      transposedChord.root +
+      normalizeIRealProQualityToInternal(transposedChord.quality || ""),
+    bassNote:
+      transposedChord.bass && transposedChord.bass.root
+        ? transposedChord.bass.root
+        : "",
     measureIndex,
     chordIndex,
     sourceMeasureIndex: measureIndex,
@@ -2421,7 +2528,7 @@ function buildPlayableSongEntry(chord, measureIndex, chordIndex) {
   };
 }
 
-function buildPlayableSongEntries(song) {
+function buildPlayableSongEntries(song, options = {}) {
   if (!song || typeof song !== "object") return [];
   const chart =
     song.chart && Array.isArray(song.chart.measures)
@@ -2430,6 +2537,18 @@ function buildPlayableSongEntries(song) {
         ? parseIRealProChart(song.raw.decodedMusic, { alreadyDecoded: true })
         : null;
   if (!chart) return [];
+  const targetKey =
+    normalizeTextValue(options.targetKey) || normalizeTextValue(song.key);
+  const targetTonic = extractKeyTonic(targetKey);
+  const songKey = normalizeTextValue(song.key);
+  const songTonic = extractKeyTonic(songKey);
+  const semitoneOffset =
+    targetTonic &&
+    songTonic &&
+    Object.prototype.hasOwnProperty.call(noteValues, targetTonic) &&
+    Object.prototype.hasOwnProperty.call(noteValues, songTonic)
+      ? (noteValues[targetTonic] - noteValues[songTonic] + 12) % 12
+      : 0;
   const resolvedMeasures = [];
   const sequence = [];
   chart.measures.forEach((measure, measureIndex) => {
@@ -2448,7 +2567,10 @@ function buildPlayableSongEntries(song) {
         repeatChordIndex = chordIndex;
         return;
       }
-      const entry = buildPlayableSongEntry(chord, measureIndex, chordIndex);
+      const entry = buildPlayableSongEntry(chord, measureIndex, chordIndex, {
+        semitoneOffset,
+        targetKey,
+      });
       if (entry) measureEntries.push(entry);
     });
     if (!measureEntries.length && hasRepeatTwo && resolvedMeasures.length) {
@@ -2485,7 +2607,7 @@ function formatSongMeasureChordLabel(chord) {
   return formatIRealProChordDisplay(chord);
 }
 
-function buildSongDisplayRows(song, barsPerRow = 4) {
+function buildSongDisplayRows(song, barsPerRow = 4, options = {}) {
   if (!song || typeof song !== "object") return [];
   const chart =
     song.chart && Array.isArray(song.chart.measures)
@@ -2496,6 +2618,18 @@ function buildSongDisplayRows(song, barsPerRow = 4) {
   if (!chart || !Array.isArray(chart.measures) || barsPerRow < 1) {
     return [];
   }
+  const targetKey =
+    normalizeTextValue(options.targetKey) || normalizeTextValue(song.key);
+  const targetTonic = extractKeyTonic(targetKey);
+  const songKey = normalizeTextValue(song.key);
+  const songTonic = extractKeyTonic(songKey);
+  const semitoneOffset =
+    targetTonic &&
+    songTonic &&
+    Object.prototype.hasOwnProperty.call(noteValues, targetTonic) &&
+    Object.prototype.hasOwnProperty.call(noteValues, songTonic)
+      ? (noteValues[targetTonic] - noteValues[songTonic] + 12) % 12
+      : 0;
 
   let previousTimeSignature = "";
   const measures = chart.measures.map((measure, measureIndex) => {
@@ -2517,8 +2651,12 @@ function buildSongDisplayRows(song, barsPerRow = 4) {
             measureIndex,
             chordIndex,
             kind: normalizeTextValue(chord.kind),
-            rawLabel: normalizeTextValue(chord.raw),
-            label: formatSongMeasureChordLabel(chord),
+            rawLabel: buildAsciiChordLabel(
+              transposeIRealProChord(chord, semitoneOffset, targetKey),
+            ),
+            label: formatSongMeasureChordLabel(
+              transposeIRealProChord(chord, semitoneOffset, targetKey),
+            ),
           }))
         : [],
     };
@@ -3253,6 +3391,23 @@ function notifyStatGoalsChange() {
   }
 }
 
+function notifySongsSettingsChange() {
+  const candidates = [
+    globalRoot && typeof globalRoot.syncSongKeyControls === "function"
+      ? globalRoot.syncSongKeyControls
+      : null,
+    appGlobals && typeof appGlobals.syncSongKeyControls === "function"
+      ? appGlobals.syncSongKeyControls
+      : null,
+  ];
+  const handler = candidates.find((fn) => typeof fn === "function");
+  if (handler) {
+    try {
+      handler();
+    } catch (_) {}
+  }
+}
+
 function captureSimpleSettings() {
   return {
     mode: getRadioValue("mode", "tabChords"),
@@ -3285,6 +3440,9 @@ function captureSimpleSettings() {
       randomCount: parseInt(domElements.randomProgressionCount.value, 10) || 5,
     },
     songs: sanitizeSongsPracticeSettings({
+      useOriginalKey: !!domElements.songUseOriginalKey.checked,
+      advanceKeyOnRepeat: !!domElements.songAdvanceKeyOnRepeat.checked,
+      advanceKeyOnSongChange: !!domElements.songAdvanceKeyOnSongChange.checked,
       finishAction: domElements.songFinishAction.value,
       repeatCount: domElements.songRepeatCount.value,
       countChordsTowardGoals: !!domElements.songCountGoals.checked,
@@ -3371,9 +3529,15 @@ function applySimpleSettings(settings) {
   }
   if (settings.songs) {
     const songSettings = sanitizeSongsPracticeSettings(settings.songs);
+    domElements.songUseOriginalKey.checked = !!songSettings.useOriginalKey;
+    domElements.songAdvanceKeyOnRepeat.checked =
+      !!songSettings.advanceKeyOnRepeat;
+    domElements.songAdvanceKeyOnSongChange.checked =
+      !!songSettings.advanceKeyOnSongChange;
     domElements.songFinishAction.value = songSettings.finishAction;
     domElements.songRepeatCount.value = String(songSettings.repeatCount);
     domElements.songCountGoals.checked = !!songSettings.countChordsTowardGoals;
+    notifySongsSettingsChange();
   }
   if (settings.voicing) {
     setRadioValue("voicingMode", settings.voicing.mode);
@@ -3545,6 +3709,9 @@ function settingsStoreFactory() {
       this.watchElement(domElements.randomProgressionCount, "input");
       this.watchElement(domElements.songFinishAction);
       this.watchElement(domElements.songRepeatCount, "input");
+      this.watchElement(domElements.songUseOriginalKey);
+      this.watchElement(domElements.songAdvanceKeyOnRepeat);
+      this.watchElement(domElements.songAdvanceKeyOnSongChange);
       this.watchElement(domElements.songCountGoals);
       Object.values(domElements.statGoals || {}).forEach((group) => {
         if (!group) return;

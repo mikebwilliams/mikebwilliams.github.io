@@ -140,6 +140,36 @@ test("Songs tab restores the last selected song after reload", async ({
   await expect(page.locator("#txtCadence")).toContainText("Alpha Study");
 });
 
+test("Songs tab can practice a song in the current key instead of the original key", async ({
+  page,
+}) => {
+  const songUrl =
+    "irealbook://Transpose Study=Doe Jane=Medium Swing=Bb=n=[*AT44Bb^7 |G-7 |C7 Z";
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.click("label[for='tabModeSongs']");
+  await page.fill("#inputSongsUrl", songUrl);
+  await page.click("#btnSongsImport");
+
+  await expect(page.locator("#txtCurrentKey")).toHaveText("Bb");
+  await expect(
+    page.locator("#txtProgression .songMeasure").nth(0),
+  ).toContainText("B♭Δ7");
+
+  await page.uncheck("#chkSongUseOriginalKey");
+
+  await expect(page.locator("#txtCurrentKey")).toHaveText("C");
+  await expect(
+    page.locator("#txtProgression .songMeasure").nth(0),
+  ).toContainText("CΔ7");
+  await expect(
+    page.locator("#txtProgression .songMeasure").nth(1),
+  ).toContainText("A-7");
+});
+
 test("Songs tab advances to the next favorite after the configured repeat count", async ({
   page,
 }) => {
@@ -171,4 +201,60 @@ test("Songs tab advances to the next favorite after the configured repeat count"
 
   await expect(page.locator("#selectSong")).toHaveValue(/beta-study--jane-doe/);
   await expect(page.locator("#txtCadence")).toContainText("Beta Study");
+});
+
+test("Songs tab can advance key on repeat and on song change", async ({
+  page,
+}) => {
+  const firstSongUrl =
+    "irealbook://Alpha Study=Doe Jane=Medium Swing=Bb=n=[*AT44Bb^7 Z";
+  const secondSongUrl =
+    "irealbook://Beta Study=Doe Jane=Medium Swing=Bb=n=[*AT44Bb^7 Z";
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.click("label[for='tabModeSongs']");
+  await page.selectOption("#selectFlow", "ascendingHalfSteps");
+  await page.selectOption("#selectFlowStart", "C");
+
+  await page.fill("#inputSongsUrl", firstSongUrl);
+  await page.click("#btnSongsImport");
+  await page.fill("#inputSongsUrl", secondSongUrl);
+  await page.click("#btnSongsImport");
+
+  await page.selectOption("#selectSong", { label: "Alpha Study - Jane Doe" });
+  await page.uncheck("#chkSongUseOriginalKey");
+  await page.check("#chkSongAdvanceKeyOnRepeat");
+  await page.check("#chkSongAdvanceKeyOnSongChange");
+  await page.selectOption("#selectSongFinishAction", "nextSong");
+  await page.fill("#inputSongRepeatCount", "2");
+
+  await expect(page.locator("#txtCurrentKey")).toHaveText("C");
+  await expect(
+    page.locator("#txtProgression .songMeasure").nth(0),
+  ).toContainText("CΔ7");
+
+  await page.evaluate(() => {
+    nextChord(false);
+  });
+
+  await expect(page.locator("#txtCurrentKey")).toHaveText("C#");
+  await expect(
+    page.locator("#txtProgression .songMeasure").nth(0),
+  ).toContainText("C♯Δ7");
+  await expect(page.locator("#selectSong")).toHaveValue(
+    /alpha-study--jane-doe/,
+  );
+
+  await page.evaluate(() => {
+    nextChord(false);
+  });
+
+  await expect(page.locator("#selectSong")).toHaveValue(/beta-study--jane-doe/);
+  await expect(page.locator("#txtCurrentKey")).toHaveText("D");
+  await expect(
+    page.locator("#txtProgression .songMeasure").nth(0),
+  ).toContainText("DΔ7");
 });

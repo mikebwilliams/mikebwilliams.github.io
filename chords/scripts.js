@@ -580,7 +580,9 @@ function renderSongChordLabelHtml(label) {
 }
 
 function buildSongChartHtml(song, activeEntry, completedEntries, hideLabels) {
-  const rows = buildSongDisplayRows(song);
+  const rows = buildSongDisplayRows(song, 4, {
+    targetKey: getCurrentSongTargetKey(song),
+  });
   if (!rows.length) return "";
 
   const completedKeys = new Set(
@@ -848,12 +850,34 @@ function updateResultCounters({
 
 function getSongPracticeSettings() {
   return logicSanitizeSongsPracticeSettings({
+    useOriginalKey: dom.songUseOriginalKey
+      ? !!dom.songUseOriginalKey.checked
+      : true,
+    advanceKeyOnRepeat: dom.songAdvanceKeyOnRepeat
+      ? !!dom.songAdvanceKeyOnRepeat.checked
+      : false,
+    advanceKeyOnSongChange: dom.songAdvanceKeyOnSongChange
+      ? !!dom.songAdvanceKeyOnSongChange.checked
+      : false,
     finishAction: dom.songFinishAction ? dom.songFinishAction.value : "nothing",
     repeatCount: dom.songRepeatCount ? dom.songRepeatCount.value : 3,
     countChordsTowardGoals: dom.songCountGoals
       ? !!dom.songCountGoals.checked
       : true,
   });
+}
+
+function getCurrentSongTargetKey(song = currentSong) {
+  if (!song || typeof song !== "object") return "";
+  const settings = getSongPracticeSettings();
+  if (settings.useOriginalKey) return song.key || "";
+  return (Array.isArray(keys) && keys[keyIndex]) || song.key || "";
+}
+
+function shouldAdvanceSongKey(settingName) {
+  const settings = getSongPracticeSettings();
+  if (settings.useOriginalKey) return false;
+  return !!settings[settingName];
 }
 
 function recordSongChordCompletion() {
@@ -1548,6 +1572,7 @@ function nextChord(skip = false) {
       } else if (modeIsSongs()) {
         shouldAdvanceKey = false;
         let shouldFinishSong = !!skip;
+        let shouldAdvanceSongKeyOnRepeat = false;
         if (skip) {
           currentSongCompletedPasses = 0;
         } else {
@@ -1558,9 +1583,23 @@ function nextChord(skip = false) {
             shouldFinishSong = true;
           } else {
             shouldResetIncorrect = false;
+            shouldAdvanceSongKeyOnRepeat =
+              shouldAdvanceSongKey("advanceKeyOnRepeat");
           }
         }
+        if (shouldAdvanceSongKeyOnRepeat) {
+          nextKey();
+        }
         if (shouldFinishSong) {
+          const previousSongId = currentSongId;
+          const nextSongId = chooseSongAfterFinish();
+          const shouldAdvanceSongKeyOnChange =
+            nextSongId && nextSongId !== previousSongId
+              ? shouldAdvanceSongKey("advanceKeyOnSongChange")
+              : false;
+          if (shouldAdvanceSongKeyOnChange) {
+            nextKey();
+          }
           updateResultCounters({
             wasIncorrect: isIncorrect,
             skipCorrect: skip,
@@ -1568,7 +1607,7 @@ function nextChord(skip = false) {
             incorrectElement: dom.cntProgsIncorrect,
             category: "progressions",
           });
-          applySelectedSong(chooseSongAfterFinish());
+          applySelectedSong(nextSongId);
         }
       } else if (modeIsJazz()) {
         // Handle Jazz Brick spaced repetition using unified queue
@@ -1656,7 +1695,10 @@ function updateDisplay() {
     dom.chordDisplay.classList.remove("incorrect");
   }
 
-  dom.currentKey.textContent = keys[keyIndex];
+  dom.currentKey.textContent =
+    modeIsSongs() && currentSong
+      ? getCurrentSongTargetKey(currentSong)
+      : keys[keyIndex];
 
   if (Array.isArray(currentProgression)) {
     const progressionLabel = (entry) =>
@@ -1975,11 +2017,21 @@ function generateProgression() {
       keys = [];
       return;
     }
+    const songSettings = getSongPracticeSettings();
     currentSong = song;
-    currentProgression = buildPlayableSongEntries(song);
+    if (songSettings.useOriginalKey) {
+      keys = [song.key];
+      keyIndex = 0;
+    } else if (!Array.isArray(keys) || !keys.length) {
+      keys = [song.key];
+      keyIndex = 0;
+    } else if (keyIndex < 0 || keyIndex >= keys.length) {
+      keyIndex = 0;
+    }
+    currentProgression = buildPlayableSongEntries(song, {
+      targetKey: getCurrentSongTargetKey(song),
+    });
     currentProgressionName = song.title;
-    keys = [song.key];
-    keyIndex = 0;
   }
 }
 
