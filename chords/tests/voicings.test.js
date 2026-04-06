@@ -34,7 +34,7 @@ const expectedUpperIntervals = {
   m7: { third: 3, seventh: 10, ninth: 2, fifth: 7 },
   M7: { third: 4, seventh: 11, ninth: 2, fifth: 7 },
   mM7: { third: 3, seventh: 11, ninth: 2, fifth: 7 },
-  dim7: { third: 3, seventh: 9, ninth: 0, fifth: 6 },
+  dim7: { third: 3, seventh: 9, ninth: 1, fifth: 6 },
   m7b5: { third: 3, seventh: 10, ninth: 2, fifth: 6 },
   aug7: { third: 4, seventh: 10, ninth: 2, fifth: 8 },
   augM7: { third: 4, seventh: 11, ninth: 2, fifth: 8 },
@@ -253,6 +253,19 @@ const upperOneOrders = {
       expectUpper(mode, chordSuffix, builder);
     });
   });
+});
+
+test("fully diminished Type A/B upper voicings use a flat 2", () => {
+  assertNormalizedEqual(
+    computeUpperVoicingForMode("Cdim7", "upper:typeA"),
+    [3, 9, 1, 6],
+    "Cdim7 Type A should use b2, not the root",
+  );
+  assertNormalizedEqual(
+    computeUpperVoicingForMode("Cdim7", "upper:typeB"),
+    [9, 3, 6, 1],
+    "Cdim7 Type B should use b2, not the root",
+  );
 });
 
 ["upper1:typeA", "upper1:typeB", "upper1:either"].forEach((mode) => {

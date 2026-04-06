@@ -812,7 +812,7 @@ function getTargetUpperIntervals(chordInternalName) {
   const hasSharp9 = /(\+9|#9)/.test(chordType);
   const hasFlat9 = /b9/.test(chordType);
   let ninthInterval = 14;
-  if (/dim7/.test(chordType)) ninthInterval = 0;
+  if (/dim7/.test(chordType)) ninthInterval = 13;
   if (hasSharp9) ninthInterval = 15;
   else if (hasFlat9) ninthInterval = 13;
   const ninth = normalizePitchClass(rootVal + ninthInterval);
