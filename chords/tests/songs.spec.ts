@@ -258,3 +258,52 @@ test("Songs tab can advance key on repeat and on song change", async ({
     page.locator("#txtProgression .songMeasure").nth(0),
   ).toContainText("DΔ7");
 });
+
+test("Songs tab can sync measure timing to the metronome", async ({ page }) => {
+  const songUrl =
+    "irealbook://Meter Study=Doe Jane=Medium Swing=C=n=[*AT44C7,G7 |F7 Z";
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.click("label[for='tabModeSongs']");
+  await page.fill("#inputSongsUrl", songUrl);
+  await page.click("#btnSongsImport");
+
+  await page.click("#panelMetronome > summary");
+  await page.fill("#inputMetronomeTempoNumber", "240");
+  await page.locator("#inputMetronomeTempoNumber").blur();
+  await page.check("#chkMetronomeSyncSongs");
+
+  await expect(page.locator("#inputMetronomeBeatsPerMeasure")).toBeDisabled();
+  await expect(page.locator("#txtMetronomeStatus")).toContainText(
+    "Song sync active",
+  );
+  await expect(page.locator(".metronomePulse")).toHaveCount(4);
+
+  const firstChord = page.locator("#txtProgression .songMeasureChord").nth(0);
+  const secondChord = page.locator("#txtProgression .songMeasureChord").nth(1);
+  const thirdChord = page.locator("#txtProgression .songMeasureChord").nth(2);
+
+  await page.click("#btnMetronomeToggle");
+  await expect(firstChord).toHaveClass(/songMeasureChord--current/);
+
+  await page.evaluate(() => {
+    [48, 52, 55, 58].forEach((note) => handleKeyPressed(note));
+    checkChord();
+    [48, 52, 55, 58].forEach((note) => handleKeyReleased(note));
+    checkChord();
+  });
+
+  await expect(firstChord).toHaveClass(/songMeasureChord--complete/);
+  await expect(secondChord).toHaveClass(/songMeasureChord--current/);
+
+  await page.waitForTimeout(1100);
+
+  await expect(firstChord).toHaveClass(/songMeasureChord--complete/);
+  await expect(secondChord).toHaveClass(/songMeasureChord--missed/);
+  await expect(thirdChord).toHaveClass(/songMeasureChord--current/);
+
+  await page.click("#btnMetronomeToggle");
+});

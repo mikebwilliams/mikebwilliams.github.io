@@ -571,6 +571,7 @@ const domElements = {
   metronomeBeatsInput: requireElement("inputMetronomeBeatsPerMeasure"),
   metronomeXMeasuresInput: requireElement("inputMetronomeXMeasures"),
   metronomeYMeasuresInput: requireElement("inputMetronomeYMeasures"),
+  metronomeSyncSongs: requireElement("chkMetronomeSyncSongs"),
   metronomeTempoDisplay: requireElement("txtMetronomeTempo"),
   metronomeMeasureDisplay: requireElement("txtMetronomeMeasure"),
   metronomeBeatDisplay: requireElement("txtMetronomeBeat"),
@@ -1789,6 +1790,11 @@ function sanitizeMetronomeSettings(source) {
       256,
       DEFAULT_METRONOME_SETTINGS.yMeasures,
     ),
+    syncToSongs:
+      !!settings &&
+      Object.prototype.hasOwnProperty.call(settings, "syncToSongs")
+        ? !!settings.syncToSongs
+        : false,
   };
 }
 
@@ -2778,6 +2784,61 @@ function buildSongDisplayRows(song, barsPerRow = 4, options = {}) {
   return rows;
 }
 
+function parseSongMeasureBeats(timeSignature) {
+  const normalized = normalizeTextValue(timeSignature);
+  const parts = normalized.split("/");
+  const beats = parseInt(parts[0], 10);
+  if (!Number.isFinite(beats) || beats < 1) return 4;
+  return beats;
+}
+
+function buildSongPracticeTimeline(song, options = {}) {
+  if (!song || typeof song !== "object") return [];
+  const chart =
+    song.chart && Array.isArray(song.chart.measures)
+      ? song.chart
+      : song.raw && typeof song.raw.decodedMusic === "string"
+        ? parseIRealProChart(song.raw.decodedMusic, { alreadyDecoded: true })
+        : null;
+  if (!chart || !Array.isArray(chart.measures)) return [];
+
+  const entries = buildPlayableSongEntries(song, options);
+  const entriesByMeasure = new Map();
+  entries.forEach((entry, sequenceIndex) => {
+    if (!entry || entry.kind !== "songChord") return;
+    const measureIndex = parseInt(entry.measureIndex, 10);
+    if (!Number.isFinite(measureIndex) || measureIndex < 0) return;
+    if (!entriesByMeasure.has(measureIndex)) {
+      entriesByMeasure.set(measureIndex, []);
+    }
+    entriesByMeasure.get(measureIndex).push({
+      ...cloneSongChordEntry(entry),
+      sequenceIndex,
+    });
+  });
+
+  let phraseMeasure = 0;
+  return chart.measures.map((measure, measureIndex) => {
+    const section = normalizeTextValue(measure.section);
+    if (measureIndex === 0 || section) {
+      phraseMeasure = 0;
+    }
+    phraseMeasure = (phraseMeasure % 4) + 1;
+    return {
+      measureIndex,
+      beatsPerMeasure: parseSongMeasureBeats(measure.timeSignature),
+      timeSignature: normalizeTextValue(measure.timeSignature) || "4/4",
+      section,
+      phraseMeasure,
+      phraseLength: 4,
+      chordTargets: (entriesByMeasure.get(measureIndex) || []).map((entry) => ({
+        ...cloneSongChordEntry(entry),
+        progressionIndex: entry.sequenceIndex,
+      })),
+    };
+  });
+}
+
 function compactIRealProSongForStorage(song) {
   if (!song || typeof song !== "object") return null;
   const title = normalizeTextValue(song.title);
@@ -3574,6 +3635,7 @@ function captureSimpleSettings() {
       beatsPerMeasure: domElements.metronomeBeatsInput.value,
       xMeasures: domElements.metronomeXMeasuresInput.value,
       yMeasures: domElements.metronomeYMeasuresInput.value,
+      syncToSongs: !!domElements.metronomeSyncSongs.checked,
     }),
     songs: sanitizeSongsPracticeSettings({
       useOriginalKey: !!domElements.songUseOriginalKey.checked,
@@ -3675,6 +3737,7 @@ function applySimpleSettings(settings) {
     domElements.metronomeBeatsInput.value = String(metronome.beatsPerMeasure);
     domElements.metronomeXMeasuresInput.value = String(metronome.xMeasures);
     domElements.metronomeYMeasuresInput.value = String(metronome.yMeasures);
+    domElements.metronomeSyncSongs.checked = !!metronome.syncToSongs;
     notifyMetronomeSettingsChange();
   }
   if (settings.songs) {
@@ -3863,6 +3926,7 @@ function settingsStoreFactory() {
       this.watchElement(domElements.metronomeBeatsInput);
       this.watchElement(domElements.metronomeXMeasuresInput);
       this.watchElement(domElements.metronomeYMeasuresInput);
+      this.watchElement(domElements.metronomeSyncSongs);
       this.watchElement(domElements.songFinishAction);
       this.watchElement(domElements.songRepeatCount, "input");
       this.watchElement(domElements.songUseOriginalKey);
@@ -3927,6 +3991,7 @@ if (appGlobals.root) {
   appGlobals.root.songsStore = songsStore;
 }
 appGlobals.sanitizeMetronomeSettings = sanitizeMetronomeSettings;
+appGlobals.buildSongPracticeTimeline = buildSongPracticeTimeline;
 appGlobals.getMetronomeTickType = getMetronomeTickType;
 appGlobals.getMetronomeCompletedMeasures = getMetronomeCompletedMeasures;
 appGlobals.getMetronomeDisplayedMeasure = getMetronomeDisplayedMeasure;
@@ -3935,6 +4000,7 @@ appGlobals.sanitizeSongsPracticeSettings = sanitizeSongsPracticeSettings;
 appGlobals.pickSongIdForFinishAction = pickSongIdForFinishAction;
 if (appGlobals.root) {
   appGlobals.root.sanitizeMetronomeSettings = sanitizeMetronomeSettings;
+  appGlobals.root.buildSongPracticeTimeline = buildSongPracticeTimeline;
   appGlobals.root.getMetronomeTickType = getMetronomeTickType;
   appGlobals.root.getMetronomeCompletedMeasures = getMetronomeCompletedMeasures;
   appGlobals.root.getMetronomeDisplayedMeasure = getMetronomeDisplayedMeasure;
@@ -3981,6 +4047,7 @@ const dataExports = {
   parseIRealProPlaylist,
   parseIRealProSource,
   buildPlayableSongEntries,
+  buildSongPracticeTimeline,
   buildSongDisplayRows,
   formatIRealProChordDisplay,
   sanitizeMetronomeSettings,

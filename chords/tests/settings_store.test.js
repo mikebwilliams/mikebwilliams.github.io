@@ -60,6 +60,7 @@ test("settings store saves and loads presets round-trip", () => {
   dom.metronomeBeatsInput.value = "7";
   dom.metronomeXMeasuresInput.value = "3";
   dom.metronomeYMeasuresInput.value = "5";
+  dom.metronomeSyncSongs.checked = true;
   dom.highlightCorrectKeys.checked = true;
   dom.highlightDelay.value = "5";
   dom.hideProgressionChordNames.checked = true;
@@ -105,6 +106,7 @@ test("settings store saves and loads presets round-trip", () => {
   dom.metronomeBeatsInput.value = "4";
   dom.metronomeXMeasuresInput.value = "4";
   dom.metronomeYMeasuresInput.value = "8";
+  dom.metronomeSyncSongs.checked = false;
   dom.highlightCorrectKeys.checked = false;
   dom.highlightDelay.value = "3";
   dom.hideProgressionChordNames.checked = false;
@@ -141,6 +143,7 @@ test("settings store saves and loads presets round-trip", () => {
   assert.strictEqual(dom.metronomeBeatsInput.value, "7");
   assert.strictEqual(dom.metronomeXMeasuresInput.value, "3");
   assert.strictEqual(dom.metronomeYMeasuresInput.value, "5");
+  assert.strictEqual(dom.metronomeSyncSongs.checked, true);
   assert.strictEqual(dom.highlightCorrectKeys.checked, true);
   assert.strictEqual(dom.highlightDelay.value, "5");
   assert.strictEqual(dom.randomizeSpellings.checked, false);

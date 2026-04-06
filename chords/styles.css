@@ -437,6 +437,10 @@ main.page {
   color: green;
 }
 
+.songMeasureChord--missed {
+  color: #d65353;
+}
+
 .songMeasureComments {
   margin-top: auto;
   font-size: 0.62em;
@@ -909,6 +913,16 @@ details.challengeCollapsible > summary .summaryActions {
   grid-template-columns: minmax(0, 1fr) 96px;
   gap: 12px;
   align-items: center;
+}
+
+.metronomeToggleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.metronomeToggleRow input[type="checkbox"] {
+  margin: 0;
 }
 
 .metronomeLegend {

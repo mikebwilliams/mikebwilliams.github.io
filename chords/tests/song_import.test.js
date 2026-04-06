@@ -3,6 +3,7 @@ const assert = require("assert");
 const {
   parseIRealProSource,
   buildPlayableSongEntries,
+  buildSongPracticeTimeline,
   buildSongDisplayRows,
   formatIRealProChordDisplay,
 } = require("../data.js");
@@ -142,6 +143,67 @@ test("buildSongDisplayRows transposes displayed chord labels when requested", ()
       measure.chords.map((chord) => chord.label).join(" "),
     ),
     ["CΔ7", "A-7", "D7", "G7"],
+  );
+});
+
+test("buildSongPracticeTimeline tracks time signatures, phrases, and ordered chord targets", () => {
+  const source =
+    "irealb://Timeline Study=Doe Jane==Medium Swing=C==[*A T44C7,G7 |F7 |Bb7 |E7 |*B T34A-7,D7 |G7 Z==0=0";
+  const parsed = parseIRealProSource(source);
+  const timeline = buildSongPracticeTimeline(parsed.songs[0]);
+
+  assert.deepStrictEqual(
+    timeline.map((measure) => ({
+      measureIndex: measure.measureIndex,
+      beatsPerMeasure: measure.beatsPerMeasure,
+      section: measure.section,
+      phraseMeasure: measure.phraseMeasure,
+      chordLabels: measure.chordTargets.map((entry) => entry.label),
+    })),
+    [
+      {
+        measureIndex: 0,
+        beatsPerMeasure: 4,
+        section: "A",
+        phraseMeasure: 1,
+        chordLabels: ["C7", "G7"],
+      },
+      {
+        measureIndex: 1,
+        beatsPerMeasure: 4,
+        section: "",
+        phraseMeasure: 2,
+        chordLabels: ["F7"],
+      },
+      {
+        measureIndex: 2,
+        beatsPerMeasure: 4,
+        section: "",
+        phraseMeasure: 3,
+        chordLabels: ["B♭7"],
+      },
+      {
+        measureIndex: 3,
+        beatsPerMeasure: 4,
+        section: "",
+        phraseMeasure: 4,
+        chordLabels: ["E7"],
+      },
+      {
+        measureIndex: 4,
+        beatsPerMeasure: 3,
+        section: "B",
+        phraseMeasure: 1,
+        chordLabels: ["A-7", "D7"],
+      },
+      {
+        measureIndex: 5,
+        beatsPerMeasure: 3,
+        section: "",
+        phraseMeasure: 2,
+        chordLabels: ["G7"],
+      },
+    ],
   );
 });
 

@@ -56,6 +56,7 @@ const logicSanitizeMetronomeSettings =
       0,
       Math.min(256, parseInt(source && source.yMeasures, 10) || 8),
     ),
+    syncToSongs: !!(source && source.syncToSongs),
   }));
 const logicSanitizeSongsPracticeSettings =
   sharedGlobals.sanitizeSongsPracticeSettings ||
@@ -81,6 +82,57 @@ const logicPickSongIdForFinishAction =
     return (
       songs.find((song) => song && song.id === currentId)?.id || songs[0].id
     );
+  });
+const logicBuildSongPracticeTimeline =
+  sharedGlobals.buildSongPracticeTimeline ||
+  runtimeRoot.buildSongPracticeTimeline ||
+  ((song) => {
+    if (!song || !Array.isArray(song.chart && song.chart.measures)) return [];
+    const groupedEntries = new Map();
+    (Array.isArray(currentProgression) ? currentProgression : []).forEach(
+      (entry, sequenceIndex) => {
+        if (!entry || entry.kind !== "songChord") return;
+        const measureIndex = parseInt(entry.measureIndex, 10);
+        if (!Number.isFinite(measureIndex) || measureIndex < 0) return;
+        if (!groupedEntries.has(measureIndex)) {
+          groupedEntries.set(measureIndex, []);
+        }
+        groupedEntries.get(measureIndex).push({
+          ...entry,
+          progressionIndex: sequenceIndex,
+        });
+      },
+    );
+    let phraseMeasure = 0;
+    return song.chart.measures.map((measure, measureIndex) => {
+      const section =
+        measure && typeof measure.section === "string"
+          ? measure.section.trim()
+          : "";
+      if (measureIndex === 0 || section) {
+        phraseMeasure = 0;
+      }
+      phraseMeasure = (phraseMeasure % 4) + 1;
+      const timeSignature =
+        measure && typeof measure.timeSignature === "string"
+          ? measure.timeSignature.trim()
+          : "4/4";
+      const beatsPerMeasure = Math.max(
+        1,
+        parseInt(timeSignature.split("/")[0], 10) || 4,
+      );
+      return {
+        measureIndex,
+        beatsPerMeasure,
+        timeSignature,
+        section,
+        phraseMeasure,
+        phraseLength: 4,
+        chordTargets: (groupedEntries.get(measureIndex) || []).map((entry) => ({
+          ...entry,
+        })),
+      };
+    });
   });
 const documentAvailable =
   "hasDocument" in sharedGlobals
@@ -156,6 +208,17 @@ const metronomeState = {
   tempoEntryBuffer: "",
   tempoEntryTimeoutId: null,
 };
+
+const songMetronomeState = {
+  timeline: [],
+  currentMeasureIndex: 0,
+  currentChordIndexInMeasure: 0,
+  chordStatuses: {},
+  hasStarted: false,
+  transportMeasureOffset: 0,
+};
+
+let pendingSuccessAdvanceAction = null;
 
 const statCategoryConfig = {
   chords: {
@@ -489,6 +552,65 @@ function getMetronomeSettingsFromDom() {
     yMeasures: dom.metronomeYMeasuresInput
       ? dom.metronomeYMeasuresInput.value
       : 8,
+    syncToSongs:
+      dom.metronomeSyncSongs && dom.metronomeSyncSongs.checked ? true : false,
+  });
+}
+
+function getSongMetronomeMeasureForTransport(measureNumber) {
+  if (
+    !Array.isArray(songMetronomeState.timeline) ||
+    !songMetronomeState.timeline.length
+  ) {
+    return null;
+  }
+  const transportIndex =
+    Math.max(1, parseInt(measureNumber, 10) || 1) -
+    1 -
+    songMetronomeState.transportMeasureOffset;
+  return (
+    songMetronomeState.timeline[
+      ((transportIndex % songMetronomeState.timeline.length) +
+        songMetronomeState.timeline.length) %
+        songMetronomeState.timeline.length
+    ] || null
+  );
+}
+
+function getMetronomeBeatCountForMeasure(measureNumber) {
+  if (isSongMetronomeSyncActive()) {
+    const measure = getSongMetronomeMeasureForTransport(measureNumber);
+    if (measure && measure.beatsPerMeasure) {
+      return Math.max(1, parseInt(measure.beatsPerMeasure, 10) || 4);
+    }
+  }
+  return Math.max(1, parseInt(metronomeState.beatsPerMeasure, 10) || 4);
+}
+
+function getMetronomeTickTypeForBeat(beatInMeasure, measureNumber) {
+  if (isSongMetronomeSyncActive()) {
+    if (beatInMeasure !== 0) return "normal";
+    const measure = getSongMetronomeMeasureForTransport(measureNumber);
+    if (measure && measure.phraseMeasure === measure.phraseLength) {
+      return "x";
+    }
+    return "measure";
+  }
+  return logicGetMetronomeTickType(beatInMeasure, measureNumber, {
+    xMeasures: metronomeState.xMeasures,
+    yMeasures: metronomeState.yMeasures,
+  });
+}
+
+function updateMetronomeControlAvailability() {
+  const synced = isSongMetronomeSyncActive();
+  [
+    dom.metronomeBeatsInput,
+    dom.metronomeXMeasuresInput,
+    dom.metronomeYMeasuresInput,
+  ].forEach((input) => {
+    if (!input) return;
+    input.disabled = synced;
   });
 }
 
@@ -546,6 +668,18 @@ function renderMetronomePulseGrid() {
 
 function updateMetronomeStatus() {
   if (!dom.metronomeStatus) return;
+  if (isSongMetronomeSyncActive()) {
+    const measure = getSongMetronomeMeasure();
+    const timeSignature = measure ? measure.timeSignature || "4/4" : "4/4";
+    let message =
+      `Song sync active. Time signature follows the chart (${timeSignature}). ` +
+      "Special click every 4 bars, resetting at section markers when present.";
+    if (metronomeState.tempoEntryBuffer) {
+      message += ` Pending tempo: ${metronomeState.tempoEntryBuffer}. Press Enter to apply, Backspace to edit, Escape to clear.`;
+    }
+    dom.metronomeStatus.textContent = message;
+    return;
+  }
   const xText =
     metronomeState.xMeasures > 0
       ? `every ${metronomeState.xMeasures} measures`
@@ -570,13 +704,15 @@ function updateMetronomeReadout() {
     dom.metronomeTempoDisplay.textContent = String(metronomeState.tempo);
   }
   if (dom.metronomeMeasureDisplay) {
-    dom.metronomeMeasureDisplay.textContent = String(
-      logicGetMetronomeDisplayedMeasure(
-        metronomeState.currentMeasure,
-        metronomeState.xMeasures,
-        metronomeState.yMeasures,
-      ),
-    );
+    dom.metronomeMeasureDisplay.textContent = isSongMetronomeSyncActive()
+      ? String(songMetronomeState.currentMeasureIndex + 1)
+      : String(
+          logicGetMetronomeDisplayedMeasure(
+            metronomeState.currentMeasure,
+            metronomeState.xMeasures,
+            metronomeState.yMeasures,
+          ),
+        );
   }
   if (dom.metronomeBeatDisplay) {
     dom.metronomeBeatDisplay.textContent = String(
@@ -592,17 +728,27 @@ function updateMetronomeReadout() {
     );
   }
   if (dom.metronomeXRepeatDisplay) {
-    dom.metronomeXRepeatDisplay.textContent = logicGetMetronomeCycleDisplay(
-      metronomeState.currentMeasure,
-      metronomeState.xMeasures,
-    );
+    if (isSongMetronomeSyncActive()) {
+      const measure = getSongMetronomeMeasure();
+      dom.metronomeXRepeatDisplay.textContent = measure
+        ? `${measure.phraseMeasure} / ${measure.phraseLength}`
+        : "1 / 4";
+    } else {
+      dom.metronomeXRepeatDisplay.textContent = logicGetMetronomeCycleDisplay(
+        metronomeState.currentMeasure,
+        metronomeState.xMeasures,
+      );
+    }
   }
   if (dom.metronomeYRepeatDisplay) {
-    dom.metronomeYRepeatDisplay.textContent = logicGetMetronomeCycleDisplay(
-      metronomeState.currentMeasure,
-      metronomeState.yMeasures,
-    );
+    dom.metronomeYRepeatDisplay.textContent = isSongMetronomeSyncActive()
+      ? "Off"
+      : logicGetMetronomeCycleDisplay(
+          metronomeState.currentMeasure,
+          metronomeState.yMeasures,
+        );
   }
+  updateMetronomeControlAvailability();
   updateMetronomeStatus();
 }
 
@@ -678,9 +824,15 @@ function scheduleMetronomeVisual(beatInMeasure, measureNumber, tickType, time) {
   const timeoutId = window.setTimeout(() => {
     metronomeState.visualTimeouts.delete(timeoutId);
     if (!metronomeState.isRunning) return;
+    const beatsForMeasure = getMetronomeBeatCountForMeasure(measureNumber);
+    if (metronomeState.beatsPerMeasure !== beatsForMeasure) {
+      metronomeState.beatsPerMeasure = beatsForMeasure;
+      renderMetronomePulseGrid();
+    }
     metronomeState.currentBeatInMeasure = beatInMeasure;
     metronomeState.currentMeasure = measureNumber;
     metronomeState.hasPlayedNote = true;
+    handleSongMetronomeBeat(beatInMeasure);
     updateMetronomeReadout();
     flashMetronomePulse(beatInMeasure, tickType);
   }, delayMs);
@@ -697,7 +849,10 @@ function queueNextMetronomeBeatFromCurrentPosition() {
   metronomeState.nextBeatInMeasure = metronomeState.currentBeatInMeasure + 1;
   metronomeState.nextMeasure = metronomeState.currentMeasure;
 
-  if (metronomeState.nextBeatInMeasure >= metronomeState.beatsPerMeasure) {
+  if (
+    metronomeState.nextBeatInMeasure >=
+    getMetronomeBeatCountForMeasure(metronomeState.currentMeasure)
+  ) {
     metronomeState.nextBeatInMeasure = 0;
     metronomeState.nextMeasure += 1;
   }
@@ -706,10 +861,8 @@ function queueNextMetronomeBeatFromCurrentPosition() {
 function scheduleMetronomeNote() {
   const beatInMeasure = metronomeState.nextBeatInMeasure;
   const measureNumber = metronomeState.nextMeasure;
-  const tickType = logicGetMetronomeTickType(beatInMeasure, measureNumber, {
-    xMeasures: metronomeState.xMeasures,
-    yMeasures: metronomeState.yMeasures,
-  });
+  const tickType = getMetronomeTickTypeForBeat(beatInMeasure, measureNumber);
+  const beatsForMeasure = getMetronomeBeatCountForMeasure(measureNumber);
 
   playMetronomeTick(metronomeState.nextNoteTime, tickType);
   scheduleMetronomeVisual(
@@ -721,7 +874,7 @@ function scheduleMetronomeNote() {
 
   metronomeState.nextNoteTime += 60 / metronomeState.tempo;
   metronomeState.nextBeatInMeasure += 1;
-  if (metronomeState.nextBeatInMeasure >= metronomeState.beatsPerMeasure) {
+  if (metronomeState.nextBeatInMeasure >= beatsForMeasure) {
     metronomeState.nextBeatInMeasure = 0;
     metronomeState.nextMeasure += 1;
   }
@@ -781,9 +934,18 @@ function setMetronomeTempo(value, options = {}) {
 function syncMetronomeSettings(options = {}) {
   const settings = getMetronomeSettingsFromDom();
   metronomeState.tempo = settings.tempo;
-  metronomeState.beatsPerMeasure = settings.beatsPerMeasure;
-  metronomeState.xMeasures = settings.xMeasures;
-  metronomeState.yMeasures = settings.yMeasures;
+  if (isSongMetronomeSyncActive()) {
+    const currentMeasure = getSongMetronomeMeasure();
+    metronomeState.beatsPerMeasure = currentMeasure
+      ? currentMeasure.beatsPerMeasure
+      : 4;
+    metronomeState.xMeasures = 4;
+    metronomeState.yMeasures = 0;
+  } else {
+    metronomeState.beatsPerMeasure = settings.beatsPerMeasure;
+    metronomeState.xMeasures = settings.xMeasures;
+    metronomeState.yMeasures = settings.yMeasures;
+  }
 
   if (dom.metronomeTempoInput) {
     dom.metronomeTempoInput.value = String(settings.tempo);
@@ -791,20 +953,26 @@ function syncMetronomeSettings(options = {}) {
   if (dom.metronomeTempoNumberInput) {
     dom.metronomeTempoNumberInput.value = String(settings.tempo);
   }
-  if (dom.metronomeBeatsInput) {
+  if (dom.metronomeBeatsInput && !isSongMetronomeSyncActive()) {
     dom.metronomeBeatsInput.value = String(settings.beatsPerMeasure);
   }
-  if (dom.metronomeXMeasuresInput) {
+  if (dom.metronomeXMeasuresInput && !isSongMetronomeSyncActive()) {
     dom.metronomeXMeasuresInput.value = String(settings.xMeasures);
   }
-  if (dom.metronomeYMeasuresInput) {
+  if (dom.metronomeYMeasuresInput && !isSongMetronomeSyncActive()) {
     dom.metronomeYMeasuresInput.value = String(settings.yMeasures);
   }
 
-  if (metronomeState.currentBeatInMeasure >= metronomeState.beatsPerMeasure) {
+  if (
+    metronomeState.currentBeatInMeasure >=
+    getMetronomeBeatCountForMeasure(metronomeState.currentMeasure)
+  ) {
     metronomeState.currentBeatInMeasure = 0;
   }
-  if (metronomeState.nextBeatInMeasure >= metronomeState.beatsPerMeasure) {
+  if (
+    metronomeState.nextBeatInMeasure >=
+    getMetronomeBeatCountForMeasure(metronomeState.nextMeasure)
+  ) {
     metronomeState.nextBeatInMeasure = 0;
     metronomeState.nextMeasure += 1;
   }
@@ -874,6 +1042,7 @@ async function startMetronome() {
     return;
   }
 
+  syncMetronomeSettings();
   metronomeState.isRunning = true;
   metronomeState.nextNoteTime = metronomeState.audioContext.currentTime + 0.05;
   queueNextMetronomeBeatFromCurrentPosition();
@@ -916,6 +1085,15 @@ async function resetMetronomeCount() {
   metronomeState.currentMeasure = 1;
   metronomeState.nextBeatInMeasure = 0;
   metronomeState.nextMeasure = 1;
+  if (isSongMetronomeSyncEnabled()) {
+    songMetronomeState.currentMeasureIndex = 0;
+    songMetronomeState.currentChordIndexInMeasure = 0;
+    songMetronomeState.chordStatuses = {};
+    songMetronomeState.hasStarted = false;
+    songMetronomeState.transportMeasureOffset = 0;
+    loadCurrentProgressionChord();
+    updateDisplay();
+  }
   updateMetronomeReadout();
   clearMetronomePulseHighlights();
   if (wasRunning) {
@@ -1102,6 +1280,70 @@ function getSongChordPositionKey(measureIndex, chordIndex) {
   return `${measureIndex}:${chordIndex}`;
 }
 
+function isSongMetronomeSyncEnabled() {
+  return !!(dom.metronomeSyncSongs && dom.metronomeSyncSongs.checked);
+}
+
+function isSongMetronomeSyncActive() {
+  return (
+    isSongMetronomeSyncEnabled() &&
+    modeIsSongs() &&
+    !!currentSong &&
+    Array.isArray(songMetronomeState.timeline) &&
+    songMetronomeState.timeline.length > 0
+  );
+}
+
+function resetSongMetronomeState() {
+  songMetronomeState.timeline = [];
+  songMetronomeState.currentMeasureIndex = 0;
+  songMetronomeState.currentChordIndexInMeasure = 0;
+  songMetronomeState.chordStatuses = {};
+  songMetronomeState.hasStarted = false;
+  songMetronomeState.transportMeasureOffset = 0;
+}
+
+function rebuildSongMetronomeTimeline() {
+  resetSongMetronomeState();
+  if (!modeIsSongs() || !currentSong) return;
+  songMetronomeState.timeline = logicBuildSongPracticeTimeline(currentSong, {
+    targetKey: getCurrentSongTargetKey(currentSong),
+  });
+}
+
+function getSongMetronomeMeasure(
+  index = songMetronomeState.currentMeasureIndex,
+) {
+  if (
+    !Array.isArray(songMetronomeState.timeline) ||
+    index < 0 ||
+    index >= songMetronomeState.timeline.length
+  ) {
+    return null;
+  }
+  return songMetronomeState.timeline[index];
+}
+
+function getSongMetronomeCurrentTarget() {
+  const measure = getSongMetronomeMeasure();
+  if (!measure || !Array.isArray(measure.chordTargets)) return null;
+  if (
+    songMetronomeState.currentChordIndexInMeasure < 0 ||
+    songMetronomeState.currentChordIndexInMeasure >= measure.chordTargets.length
+  ) {
+    return null;
+  }
+  return measure.chordTargets[songMetronomeState.currentChordIndexInMeasure];
+}
+
+function getSongMetronomeActiveChordKey() {
+  if (!songMetronomeState.hasStarted) return "";
+  const target = getSongMetronomeCurrentTarget();
+  if (!target) return "";
+  const key = getSongChordPositionKey(target.measureIndex, target.chordIndex);
+  return songMetronomeState.chordStatuses[key] === "complete" ? "" : key;
+}
+
 function getSongMeasureBarLabel(bar, location) {
   if (!bar || typeof bar !== "object") return "";
   if (bar.kind === "repeatStart") {
@@ -1166,22 +1408,42 @@ function renderSongChordLabelHtml(label) {
   );
 }
 
-function buildSongChartHtml(song, activeEntry, completedEntries, hideLabels) {
+function buildSongChartHtml(
+  song,
+  activeEntry,
+  completedEntries,
+  hideLabels,
+  songSyncState = null,
+) {
   const rows = buildSongDisplayRows(song, 4, {
     targetKey: getCurrentSongTargetKey(song),
   });
   if (!rows.length) return "";
 
-  const completedKeys = new Set(
-    (Array.isArray(completedEntries) ? completedEntries : [])
-      .filter(isSongChordEntry)
-      .map((entry) =>
-        getSongChordPositionKey(entry.measureIndex, entry.chordIndex),
-      ),
-  );
-  const activeKey = isSongChordEntry(activeEntry)
-    ? getSongChordPositionKey(activeEntry.measureIndex, activeEntry.chordIndex)
-    : "";
+  const isSyncedSongChart =
+    !!songSyncState &&
+    Array.isArray(songSyncState.timeline) &&
+    songSyncState.timeline.length > 0;
+  const completedKeys = isSyncedSongChart
+    ? new Set()
+    : new Set(
+        (Array.isArray(completedEntries) ? completedEntries : [])
+          .filter(isSongChordEntry)
+          .map((entry) =>
+            getSongChordPositionKey(entry.measureIndex, entry.chordIndex),
+          ),
+      );
+  const activeKey = isSyncedSongChart
+    ? getSongMetronomeActiveChordKey()
+    : isSongChordEntry(activeEntry)
+      ? getSongChordPositionKey(
+          activeEntry.measureIndex,
+          activeEntry.chordIndex,
+        )
+      : "";
+  const syncedStatuses = isSyncedSongChart
+    ? songSyncState.chordStatuses || {}
+    : null;
 
   return `<table class="songChart"><tbody>${rows
     .map(
@@ -1219,6 +1481,16 @@ function buildSongChartHtml(song, activeEntry, completedEntries, hideLabels) {
                     const classes = ["chord", "songMeasureChord"];
                     if (key === activeKey) {
                       classes.push("songMeasureChord--current");
+                    } else if (
+                      syncedStatuses &&
+                      syncedStatuses[key] === "missed"
+                    ) {
+                      classes.push("songMeasureChord--missed");
+                    } else if (
+                      syncedStatuses &&
+                      syncedStatuses[key] === "complete"
+                    ) {
+                      classes.push("songMeasureChord--complete");
                     } else if (completedKeys.has(key)) {
                       classes.push("songMeasureChord--complete");
                     }
@@ -1392,8 +1664,10 @@ function handleKeyPressed(midiKey) {
     if (keyElement) keyElement.classList.add("correct");
   } else {
     if (keyElement) keyElement.classList.add("incorrect");
-    isIncorrect = true;
-    updateDisplay();
+    if (!(modeIsSongs() && isSongMetronomeSyncActive())) {
+      isIncorrect = true;
+      updateDisplay();
+    }
   }
 }
 
@@ -1513,6 +1787,159 @@ function chooseSongAfterFinish() {
   );
 }
 
+function clearChordFeedbackState() {
+  awaitingKeyRelease = false;
+  pendingSuccessAdvanceAction = null;
+  if (dom.chordDisplay) {
+    dom.chordDisplay.classList.remove("correct");
+    dom.chordDisplay.classList.remove("incorrect");
+  }
+}
+
+function advanceSongWithinCurrentMeasure() {
+  const measure = getSongMetronomeMeasure();
+  if (!measure) return;
+  songMetronomeState.currentChordIndexInMeasure += 1;
+  if (
+    songMetronomeState.currentChordIndexInMeasure >=
+    (measure.chordTargets || []).length
+  ) {
+    songMetronomeState.currentChordIndexInMeasure = Math.max(
+      0,
+      (measure.chordTargets || []).length - 1,
+    );
+  }
+  loadCurrentProgressionChord();
+  updateDisplay();
+}
+
+function handleSongMetronomeCorrectChord() {
+  const target = getSongMetronomeCurrentTarget();
+  if (!target) return;
+  const key = getSongChordPositionKey(target.measureIndex, target.chordIndex);
+  songMetronomeState.chordStatuses[key] = "complete";
+  recordSongChordCompletion();
+
+  const measure = getSongMetronomeMeasure();
+  const hasMoreChords =
+    !!measure &&
+    songMetronomeState.currentChordIndexInMeasure <
+      (measure.chordTargets || []).length - 1;
+  if (!hasMoreChords && measure) {
+    songMetronomeState.currentChordIndexInMeasure = (
+      measure.chordTargets || []
+    ).length;
+  }
+  pendingSuccessAdvanceAction = hasMoreChords
+    ? advanceSongWithinCurrentMeasure
+    : null;
+}
+
+function finalizeSongMeasureFromMetronome() {
+  const measure = getSongMetronomeMeasure();
+  if (!measure) return;
+  const chordTargets = Array.isArray(measure.chordTargets)
+    ? measure.chordTargets
+    : [];
+  let missedAny = false;
+  chordTargets.forEach((target) => {
+    const key = getSongChordPositionKey(target.measureIndex, target.chordIndex);
+    if (songMetronomeState.chordStatuses[key] === "complete") return;
+    songMetronomeState.chordStatuses[key] = "missed";
+    missedAny = true;
+  });
+  if (missedAny) {
+    isIncorrect = true;
+  }
+}
+
+function completeSongPass(skip = false) {
+  let shouldFinishSong = !!skip;
+  let shouldAdvanceSongKeyOnRepeat = false;
+  let shouldResetIncorrect = true;
+
+  if (skip) {
+    currentSongCompletedPasses = 0;
+  } else {
+    currentSongCompletedPasses += 1;
+    const songSettings = getSongPracticeSettings();
+    if (currentSongCompletedPasses >= songSettings.repeatCount) {
+      currentSongCompletedPasses = 0;
+      shouldFinishSong = true;
+    } else {
+      shouldResetIncorrect = false;
+      shouldAdvanceSongKeyOnRepeat = shouldAdvanceSongKey("advanceKeyOnRepeat");
+    }
+  }
+
+  if (shouldAdvanceSongKeyOnRepeat) {
+    nextKey();
+  }
+  if (shouldFinishSong) {
+    const previousSongId = currentSongId;
+    const nextSongId = chooseSongAfterFinish();
+    const shouldAdvanceSongKeyOnChange =
+      nextSongId && nextSongId !== previousSongId
+        ? shouldAdvanceSongKey("advanceKeyOnSongChange")
+        : false;
+    if (shouldAdvanceSongKeyOnChange) {
+      nextKey();
+    }
+    updateResultCounters({
+      wasIncorrect: isIncorrect,
+      skipCorrect: skip,
+      correctElement: dom.cntProgsCorrect,
+      incorrectElement: dom.cntProgsIncorrect,
+      category: "progressions",
+    });
+    applySelectedSong(nextSongId);
+  }
+  return { shouldResetIncorrect };
+}
+
+function startSongMeasureFromMetronome() {
+  songMetronomeState.currentChordIndexInMeasure = 0;
+  songMetronomeState.hasStarted = true;
+  loadCurrentProgressionChord();
+  updateDisplay();
+}
+
+function advanceSongMeasureFromMetronome() {
+  if (!isSongMetronomeSyncActive()) return;
+  clearChordFeedbackState();
+  finalizeSongMeasureFromMetronome();
+  if (
+    songMetronomeState.currentMeasureIndex >=
+    songMetronomeState.timeline.length - 1
+  ) {
+    const { shouldResetIncorrect } = completeSongPass(false);
+    if (shouldResetIncorrect) {
+      isIncorrect = false;
+    }
+    generateProgression();
+    songMetronomeState.currentMeasureIndex = 0;
+    songMetronomeState.currentChordIndexInMeasure = 0;
+    songMetronomeState.hasStarted = false;
+    songMetronomeState.transportMeasureOffset =
+      metronomeState.currentMeasure - 1;
+    startSongMeasureFromMetronome();
+    return;
+  }
+
+  songMetronomeState.currentMeasureIndex += 1;
+  songMetronomeState.currentChordIndexInMeasure = 0;
+  startSongMeasureFromMetronome();
+}
+
+function handleSongMetronomeBeat(beatInMeasure) {
+  if (!isSongMetronomeSyncActive() || beatInMeasure !== 0) return;
+  if (!songMetronomeState.hasStarted) {
+    startSongMeasureFromMetronome();
+    return;
+  }
+  advanceSongMeasureFromMetronome();
+}
+
 function recordChordCompletion() {
   spacedRepHandleResult("chord", currentChordInternalName, isIncorrect);
   updateResultCounters({
@@ -1630,10 +2057,17 @@ function checkChord() {
       return;
     }
 
-    awaitingKeyRelease = false;
-    dom.chordDisplay.classList.remove("correct");
-    dom.chordDisplay.classList.remove("incorrect");
-    nextChord();
+    const advanceAction = pendingSuccessAdvanceAction;
+    clearChordFeedbackState();
+    if (typeof advanceAction === "function") {
+      advanceAction();
+    } else if (!(modeIsSongs() && isSongMetronomeSyncActive())) {
+      nextChord();
+    } else {
+      loadCurrentProgressionChord();
+      updateDisplay();
+    }
+    return;
   }
 
   let sortedCurrentChordNotes = getSortedAnswerNotes();
@@ -1651,12 +2085,17 @@ function checkChord() {
     } else if (modeIsDegrees()) {
       recordDegreeCompletion();
     } else if (modeIsSongs()) {
-      recordSongChordCompletion();
+      if (isSongMetronomeSyncActive()) {
+        handleSongMetronomeCorrectChord();
+      } else {
+        recordSongChordCompletion();
+      }
     }
 
     clearTimeout(highlightTimer);
 
     highlightCorrectKeys();
+    updateDisplay();
   };
 
   if (modeIsChords() || modeIsProgressions() || modeIsJazz() || modeIsSongs()) {
@@ -2006,6 +2445,18 @@ function loadCurrentProgressionChord() {
     return;
   }
 
+  if (modeIsSongs() && isSongMetronomeSyncActive()) {
+    const target = getSongMetronomeCurrentTarget();
+    if (target && Number.isFinite(target.progressionIndex)) {
+      currentIndex = target.progressionIndex;
+    } else {
+      currentChordName = "";
+      currentChordInternalName = "";
+      currentChordNotes = [];
+      return;
+    }
+  }
+
   if (!keys.length && !modeIsSongs()) {
     const available = updateAvailableKeys();
     if (!available || !available.length) {
@@ -2048,14 +2499,9 @@ function loadCurrentProgressionChord() {
 function resetFlow() {
   clearTimeout(highlightTimer);
   highlightTimer = null;
-  awaitingKeyRelease = false;
+  clearChordFeedbackState();
   isIncorrect = false;
   activeKeys = [];
-
-  if (dom.chordDisplay) {
-    dom.chordDisplay.classList.remove("correct");
-    dom.chordDisplay.classList.remove("incorrect");
-  }
 
   const available = updateAvailableKeys();
   if (!available || !available.length) return;
@@ -2086,6 +2532,7 @@ function resetFlow() {
   currentSongCompletedPasses = 0;
   scheduledRepeat = null;
   isIncorrect = false;
+  resetSongMetronomeState();
 
   if (
     modeIsProgressions() ||
@@ -2100,6 +2547,10 @@ function resetFlow() {
     setRandomChord();
   }
 
+  syncMetronomeSettings();
+  if (modeIsSongs() && isSongMetronomeSyncEnabled()) {
+    resetMetronomeCount();
+  }
   highlightCorrectKeys();
   updateDisplay();
 }
@@ -2158,44 +2609,7 @@ function nextChord(skip = false) {
         });
       } else if (modeIsSongs()) {
         shouldAdvanceKey = false;
-        let shouldFinishSong = !!skip;
-        let shouldAdvanceSongKeyOnRepeat = false;
-        if (skip) {
-          currentSongCompletedPasses = 0;
-        } else {
-          currentSongCompletedPasses += 1;
-          const songSettings = getSongPracticeSettings();
-          if (currentSongCompletedPasses >= songSettings.repeatCount) {
-            currentSongCompletedPasses = 0;
-            shouldFinishSong = true;
-          } else {
-            shouldResetIncorrect = false;
-            shouldAdvanceSongKeyOnRepeat =
-              shouldAdvanceSongKey("advanceKeyOnRepeat");
-          }
-        }
-        if (shouldAdvanceSongKeyOnRepeat) {
-          nextKey();
-        }
-        if (shouldFinishSong) {
-          const previousSongId = currentSongId;
-          const nextSongId = chooseSongAfterFinish();
-          const shouldAdvanceSongKeyOnChange =
-            nextSongId && nextSongId !== previousSongId
-              ? shouldAdvanceSongKey("advanceKeyOnSongChange")
-              : false;
-          if (shouldAdvanceSongKeyOnChange) {
-            nextKey();
-          }
-          updateResultCounters({
-            wasIncorrect: isIncorrect,
-            skipCorrect: skip,
-            correctElement: dom.cntProgsCorrect,
-            incorrectElement: dom.cntProgsIncorrect,
-            category: "progressions",
-          });
-          applySelectedSong(nextSongId);
-        }
+        shouldResetIncorrect = completeSongPass(skip).shouldResetIncorrect;
       } else if (modeIsJazz()) {
         // Handle Jazz Brick spaced repetition using unified queue
         spacedRepHandleResult("brick", selectedProgression, isIncorrect);
@@ -2300,6 +2714,7 @@ function updateDisplay() {
         currentProgression[currentIndex],
         currentProgression.slice(0, currentIndex),
         hideNumerals,
+        isSongMetronomeSyncActive() ? songMetronomeState : null,
       );
     } else if (hideNumerals) {
       dom.progressionDisplay.innerHTML = currentProgression
@@ -2591,6 +3006,7 @@ function generateProgression() {
       currentChordInternalName = "";
       currentChordNotes = [];
       keys = [];
+      resetSongMetronomeState();
       return;
     }
     const song = logicSongsStore.getSong(currentSongId);
@@ -2602,6 +3018,7 @@ function generateProgression() {
       currentChordInternalName = "";
       currentChordNotes = [];
       keys = [];
+      resetSongMetronomeState();
       return;
     }
     const songSettings = getSongPracticeSettings();
@@ -2619,6 +3036,7 @@ function generateProgression() {
       targetKey: getCurrentSongTargetKey(song),
     });
     currentProgressionName = song.title;
+    rebuildSongMetronomeTimeline();
   }
 }
 
@@ -2677,6 +3095,20 @@ if (
   });
 });
 
+if (
+  dom.metronomeSyncSongs &&
+  typeof dom.metronomeSyncSongs.addEventListener === "function"
+) {
+  dom.metronomeSyncSongs.addEventListener("change", () => {
+    syncMetronomeSettings({ save: true });
+    if (modeIsSongs()) {
+      resetFlow();
+      return;
+    }
+    resetMetronomeCount();
+  });
+}
+
 if (documentAvailable && typeof document.addEventListener === "function") {
   document.addEventListener("keydown", (event) => {
     handleMetronomeShortcut(event);
@@ -2723,10 +3155,15 @@ function handleTypedVoicingSuccess() {
   if (modeIsChords()) {
     recordChordCompletion();
   } else if (modeIsSongs()) {
-    recordSongChordCompletion();
+    if (isSongMetronomeSyncActive()) {
+      handleSongMetronomeCorrectChord();
+    } else {
+      recordSongChordCompletion();
+    }
   }
   clearTimeout(highlightTimer);
   highlightCorrectKeys();
+  updateDisplay();
 }
 
 function enforceTypedVoicing(activeNotes, mode, requiredLength, intervals) {
