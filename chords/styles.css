@@ -687,6 +687,287 @@ details.challengeCollapsible > summary .summaryActions {
   justify-content: flex-end;
 }
 
+.metronomePanelGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.95fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.metronomePanelMain,
+.metronomeControls {
+  background: linear-gradient(165deg, var(--surface-800), var(--surface-700));
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.metronomePanelMain {
+  padding: 18px;
+}
+
+.metronomeControls {
+  padding: 18px 20px;
+  display: grid;
+  gap: 14px;
+}
+
+.metronomeStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.metronomeStatCard {
+  padding: 14px 15px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(129, 140, 180, 0.18);
+}
+
+.metronomeStatLabel {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.metronomeStatValue {
+  font-size: clamp(1.25rem, 1rem + 1.2vw, 1.85rem);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.metronomeStatValue--compact {
+  font-size: clamp(1rem, 0.86rem + 0.8vw, 1.35rem);
+}
+
+.metronomePulseGrid {
+  --beats-per-measure: 4;
+  display: grid;
+  grid-template-columns: repeat(var(--beats-per-measure), minmax(0, 1fr));
+  gap: 10px;
+}
+
+.metronomePulse {
+  min-height: 72px;
+  border-radius: 18px;
+  border: 1px solid rgba(129, 140, 180, 0.18);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0.04)
+  );
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform var(--transition),
+    border-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.metronomePulse::before {
+  content: "";
+  position: absolute;
+  inset: auto 12px 12px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.metronomePulse span {
+  position: relative;
+  z-index: 1;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.metronomePulse.is-active {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 22px rgba(6, 10, 28, 0.3);
+}
+
+.metronomePulse--normal.is-active {
+  border-color: rgba(140, 169, 255, 0.48);
+  background: linear-gradient(
+    180deg,
+    rgba(140, 169, 255, 0.42),
+    rgba(140, 169, 255, 0.14)
+  );
+}
+
+.metronomePulse--measure.is-active {
+  border-color: rgba(69, 213, 164, 0.48);
+  background: linear-gradient(
+    180deg,
+    rgba(69, 213, 164, 0.36),
+    rgba(69, 213, 164, 0.12)
+  );
+}
+
+.metronomePulse--x.is-active {
+  border-color: rgba(255, 111, 125, 0.54);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 111, 125, 0.38),
+    rgba(255, 111, 125, 0.13)
+  );
+}
+
+.metronomePulse--y.is-active {
+  border-color: rgba(255, 217, 90, 0.62);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 217, 90, 0.42),
+    rgba(255, 217, 90, 0.12)
+  );
+}
+
+.metronomeStatus {
+  margin: 16px 0 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.metronomeField {
+  display: grid;
+  gap: 8px;
+}
+
+.metronomeFieldHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 12px;
+}
+
+.metronomeFieldHeader label {
+  margin: 0;
+  font-weight: 600;
+}
+
+.metronomeHint {
+  font-size: 0.84rem;
+  color: var(--text-dim);
+}
+
+.metronomeField input[type="number"],
+.metronomeTempoRow input[type="number"] {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-soft);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.metronomeField input[type="range"] {
+  width: 100%;
+  appearance: none;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(140, 169, 255, 0.18),
+    rgba(69, 213, 164, 0.24)
+  );
+  outline: none;
+}
+
+.metronomeField input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  cursor: pointer;
+  border: 3px solid var(--accent);
+  box-shadow: 0 6px 16px rgba(6, 10, 28, 0.28);
+}
+
+.metronomeField input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  cursor: pointer;
+  border: 3px solid var(--accent);
+  box-shadow: 0 6px 16px rgba(6, 10, 28, 0.28);
+}
+
+.metronomeTempoRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px;
+  gap: 12px;
+  align-items: center;
+}
+
+.metronomeLegend {
+  display: grid;
+  gap: 10px;
+}
+
+.metronomeLegendItem {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: start;
+  font-size: 0.94rem;
+  line-height: 1.4;
+}
+
+.metronomeLegendSwatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  margin-top: 4px;
+}
+
+.metronomeLegendSwatch--normal {
+  background: var(--accent);
+}
+
+.metronomeLegendSwatch--measure {
+  background: var(--success);
+}
+
+.metronomeLegendSwatch--x {
+  background: var(--danger);
+}
+
+.metronomeLegendSwatch--y {
+  background: var(--warning);
+}
+
+@media (max-width: 860px) {
+  .metronomePanelGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .metronomeStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .metronomeStats {
+    grid-template-columns: 1fr;
+  }
+
+  .metronomeTempoRow {
+    grid-template-columns: 1fr;
+  }
+}
+
 .statsGrid {
   display: grid;
   gap: 18px;

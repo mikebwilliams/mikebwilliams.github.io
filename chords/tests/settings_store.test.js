@@ -54,6 +54,12 @@ test("settings store saves and loads presets round-trip", () => {
   dom.flowSelect.value = "ascendingHalfSteps";
   dom.flowStartSelect.value = "F#";
   dom.keyboardDetails.open = false;
+  dom.metronomeDetails.open = true;
+  dom.metronomeTempoInput.value = "144";
+  dom.metronomeTempoNumberInput.value = "144";
+  dom.metronomeBeatsInput.value = "7";
+  dom.metronomeXMeasuresInput.value = "3";
+  dom.metronomeYMeasuresInput.value = "5";
   dom.highlightCorrectKeys.checked = true;
   dom.highlightDelay.value = "5";
   dom.hideProgressionChordNames.checked = true;
@@ -93,6 +99,12 @@ test("settings store saves and loads presets round-trip", () => {
   dom.flowSelect.value = "descendingWholeSteps";
   dom.flowStartSelect.value = "C";
   dom.keyboardDetails.open = true;
+  dom.metronomeDetails.open = false;
+  dom.metronomeTempoInput.value = "90";
+  dom.metronomeTempoNumberInput.value = "90";
+  dom.metronomeBeatsInput.value = "4";
+  dom.metronomeXMeasuresInput.value = "4";
+  dom.metronomeYMeasuresInput.value = "8";
   dom.highlightCorrectKeys.checked = false;
   dom.highlightDelay.value = "3";
   dom.hideProgressionChordNames.checked = false;
@@ -123,6 +135,12 @@ test("settings store saves and loads presets round-trip", () => {
   assert.strictEqual(dom.flowSelect.value, "ascendingHalfSteps");
   assert.strictEqual(dom.flowStartSelect.value, "F#");
   assert.strictEqual(dom.keyboardDetails.open, false);
+  assert.strictEqual(dom.metronomeDetails.open, true);
+  assert.strictEqual(dom.metronomeTempoInput.value, "144");
+  assert.strictEqual(dom.metronomeTempoNumberInput.value, "144");
+  assert.strictEqual(dom.metronomeBeatsInput.value, "7");
+  assert.strictEqual(dom.metronomeXMeasuresInput.value, "3");
+  assert.strictEqual(dom.metronomeYMeasuresInput.value, "5");
   assert.strictEqual(dom.highlightCorrectKeys.checked, true);
   assert.strictEqual(dom.highlightDelay.value, "5");
   assert.strictEqual(dom.randomizeSpellings.checked, false);

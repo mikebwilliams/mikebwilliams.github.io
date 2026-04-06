@@ -85,3 +85,41 @@ test("Overwrite button saves current settings to the selected preset", async ({
     throw new Error(`${errors.length} console error(s) found`);
   }
 });
+
+test("Metronome panel persists its open state and settings", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.click("#panelMetronome > summary");
+  await expect(page.locator("#panelMetronome")).toHaveAttribute("open", "");
+
+  await page.fill("#inputMetronomeTempoNumber", "144");
+  await page.locator("#inputMetronomeTempoNumber").blur();
+  await page.fill("#inputMetronomeBeatsPerMeasure", "7");
+  await page.locator("#inputMetronomeBeatsPerMeasure").blur();
+  await page.fill("#inputMetronomeXMeasures", "3");
+  await page.locator("#inputMetronomeXMeasures").blur();
+  await page.fill("#inputMetronomeYMeasures", "5");
+  await page.locator("#inputMetronomeYMeasures").blur();
+
+  await expect(page.locator("#txtMetronomeTempo")).toHaveText("144");
+  await expect(page.locator(".metronomePulse")).toHaveCount(7);
+  await expect(page.locator("#txtMetronomeStatus")).toContainText(
+    "every 3 measures",
+  );
+  await expect(page.locator("#txtMetronomeStatus")).toContainText(
+    "every 5 measures",
+  );
+
+  await page.reload();
+
+  await expect(page.locator("#panelMetronome")).toHaveAttribute("open", "");
+  await expect(page.locator("#inputMetronomeTempoNumber")).toHaveValue("144");
+  await expect(page.locator("#inputMetronomeBeatsPerMeasure")).toHaveValue("7");
+  await expect(page.locator("#inputMetronomeXMeasures")).toHaveValue("3");
+  await expect(page.locator("#inputMetronomeYMeasures")).toHaveValue("5");
+  await expect(page.locator(".metronomePulse")).toHaveCount(7);
+});

@@ -80,6 +80,191 @@
             </div>
           </details>
 
+          <details class="challengeCollapsible" id="panelMetronome">
+            <summary>
+              <span class="collapsibleTitle">Metronome</span>
+              <div class="summaryActions">
+                <button id="btnMetronomeToggle" type="button">Start</button>
+                <button id="btnMetronomeReset" type="button">
+                  Reset Count
+                </button>
+              </div>
+            </summary>
+            <div class="challengeCollapsibleBody">
+              <div class="metronomePanelGrid">
+                <section class="metronomePanelMain">
+                  <div class="metronomeStats">
+                    <div class="metronomeStatCard">
+                      <span class="metronomeStatLabel">Tempo</span>
+                      <span class="metronomeStatValue"
+                        ><span id="txtMetronomeTempo">120</span> BPM</span
+                      >
+                    </div>
+                    <div class="metronomeStatCard">
+                      <span class="metronomeStatLabel">Measure</span>
+                      <span class="metronomeStatValue" id="txtMetronomeMeasure"
+                        >1</span
+                      >
+                    </div>
+                    <div class="metronomeStatCard">
+                      <span class="metronomeStatLabel">Beat</span>
+                      <span class="metronomeStatValue" id="txtMetronomeBeat"
+                        >1</span
+                      >
+                    </div>
+                    <div class="metronomeStatCard">
+                      <span class="metronomeStatLabel">Total Measures</span>
+                      <span
+                        class="metronomeStatValue"
+                        id="txtMetronomeTotalMeasures"
+                        >0</span
+                      >
+                    </div>
+                    <div class="metronomeStatCard">
+                      <span class="metronomeStatLabel">X Repeat Count</span>
+                      <span
+                        class="metronomeStatValue metronomeStatValue--compact"
+                        id="txtMetronomeXRepeat"
+                        >1 / 4</span
+                      >
+                    </div>
+                    <div class="metronomeStatCard">
+                      <span class="metronomeStatLabel">Y Repeat Count</span>
+                      <span
+                        class="metronomeStatValue metronomeStatValue--compact"
+                        id="txtMetronomeYRepeat"
+                        >1 / 8</span
+                      >
+                    </div>
+                  </div>
+
+                  <div
+                    class="metronomePulseGrid"
+                    id="panelMetronomePulseGrid"
+                    aria-live="polite"
+                  ></div>
+
+                  <p class="metronomeStatus" id="txtMetronomeStatus">
+                    Downbeat on beat 1. X marker: every 4 measures. Y marker:
+                    every 8 measures. Priority when markers overlap: Y, then X,
+                    then downbeat, then regular beats.
+                  </p>
+                </section>
+
+                <aside class="metronomeControls">
+                  <div class="metronomeField">
+                    <div class="metronomeFieldHeader">
+                      <label for="inputMetronomeTempo">Tempo</label>
+                      <span class="metronomeHint">30-240 BPM</span>
+                    </div>
+                    <div class="metronomeTempoRow">
+                      <input
+                        id="inputMetronomeTempo"
+                        type="range"
+                        min="30"
+                        max="240"
+                        value="120"
+                      />
+                      <input
+                        id="inputMetronomeTempoNumber"
+                        type="number"
+                        min="30"
+                        max="240"
+                        value="120"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="metronomeField">
+                    <div class="metronomeFieldHeader">
+                      <label for="inputMetronomeBeatsPerMeasure"
+                        >Beats Per Measure</label
+                      >
+                      <span class="metronomeHint">Beat 1 is the downbeat</span>
+                    </div>
+                    <input
+                      id="inputMetronomeBeatsPerMeasure"
+                      type="number"
+                      min="1"
+                      max="16"
+                      value="4"
+                    />
+                  </div>
+
+                  <div class="metronomeField">
+                    <div class="metronomeFieldHeader">
+                      <label for="inputMetronomeXMeasures"
+                        >Special Tick Every X Measures</label
+                      >
+                      <span class="metronomeHint">0 disables X</span>
+                    </div>
+                    <input
+                      id="inputMetronomeXMeasures"
+                      type="number"
+                      min="0"
+                      max="256"
+                      value="4"
+                    />
+                  </div>
+
+                  <div class="metronomeField">
+                    <div class="metronomeFieldHeader">
+                      <label for="inputMetronomeYMeasures"
+                        >Special Tick Every Y Measures</label
+                      >
+                      <span class="metronomeHint">0 disables Y</span>
+                    </div>
+                    <input
+                      id="inputMetronomeYMeasures"
+                      type="number"
+                      min="0"
+                      max="256"
+                      value="8"
+                    />
+                  </div>
+
+                  <div class="metronomeLegend" aria-label="Metronome legend">
+                    <div class="metronomeLegendItem">
+                      <span
+                        class="metronomeLegendSwatch metronomeLegendSwatch--normal"
+                      ></span>
+                      <div>
+                        <strong>Regular beat:</strong> non-downbeat beats.
+                      </div>
+                    </div>
+                    <div class="metronomeLegendItem">
+                      <span
+                        class="metronomeLegendSwatch metronomeLegendSwatch--measure"
+                      ></span>
+                      <div>
+                        <strong>Measure downbeat:</strong> beat 1 of each
+                        measure.
+                      </div>
+                    </div>
+                    <div class="metronomeLegendItem">
+                      <span
+                        class="metronomeLegendSwatch metronomeLegendSwatch--x"
+                      ></span>
+                      <div>
+                        <strong>X marker:</strong> overrides the downbeat every
+                        X measures.
+                      </div>
+                    </div>
+                    <div class="metronomeLegendItem">
+                      <span
+                        class="metronomeLegendSwatch metronomeLegendSwatch--y"
+                      ></span>
+                      <div>
+                        <strong>Y marker:</strong> overrides X and the downbeat
+                        every Y measures.
+                      </div>
+                    </div>
+                  </div>
+                </aside>
+              </div>
+            </div>
+          </details>
+
           <details class="challengeCollapsible statsPanel" open>
             <summary>
               <span class="collapsibleTitle">Daily Stats</span>

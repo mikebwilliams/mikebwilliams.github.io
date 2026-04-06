@@ -563,6 +563,22 @@ const domElements = {
   songAdvanceKeyOnSongChange: requireElement("chkSongAdvanceKeyOnSongChange"),
   songCountGoals: requireElement("chkSongCountsTowardGoals"),
   songStatus: requireElement("txtSongsStatus"),
+  metronomeDetails: requireElement("panelMetronome"),
+  metronomeToggleButton: requireElement("btnMetronomeToggle"),
+  metronomeResetButton: requireElement("btnMetronomeReset"),
+  metronomeTempoInput: requireElement("inputMetronomeTempo"),
+  metronomeTempoNumberInput: requireElement("inputMetronomeTempoNumber"),
+  metronomeBeatsInput: requireElement("inputMetronomeBeatsPerMeasure"),
+  metronomeXMeasuresInput: requireElement("inputMetronomeXMeasures"),
+  metronomeYMeasuresInput: requireElement("inputMetronomeYMeasures"),
+  metronomeTempoDisplay: requireElement("txtMetronomeTempo"),
+  metronomeMeasureDisplay: requireElement("txtMetronomeMeasure"),
+  metronomeBeatDisplay: requireElement("txtMetronomeBeat"),
+  metronomeTotalMeasuresDisplay: requireElement("txtMetronomeTotalMeasures"),
+  metronomeXRepeatDisplay: requireElement("txtMetronomeXRepeat"),
+  metronomeYRepeatDisplay: requireElement("txtMetronomeYRepeat"),
+  metronomePulseGrid: requireElement("panelMetronomePulseGrid"),
+  metronomeStatus: requireElement("txtMetronomeStatus"),
   flowSelect: requireElement("selectFlow"),
   flowResetButton: requireElement("btnFlowReset"),
   flowStartSelect: requireElement("selectFlowStart"),
@@ -1475,6 +1491,12 @@ const SONGS_FINISH_ACTIONS = {
 };
 const SONGS_FINISH_ACTION_VALUES = Object.values(SONGS_FINISH_ACTIONS);
 const DEFAULT_SONG_REPEAT_COUNT = 3;
+const DEFAULT_METRONOME_SETTINGS = {
+  tempo: 120,
+  beatsPerMeasure: 4,
+  xMeasures: 4,
+  yMeasures: 8,
+};
 const IREAL_PRO_URI_REGEX = /.*?(irealb(?:ook)?):\/\/([^"]*)/;
 const IREAL_PRO_SCRAMBLE_MARKER = "1r34LbKcu7";
 const IREAL_PRO_CHORD_REGEX =
@@ -1725,6 +1747,91 @@ function sanitizeSongsPracticeSettings(source) {
         ? true
         : !!settings.countChordsTowardGoals,
   };
+}
+
+function sanitizeMetronomeInteger(value, min, max, fallback) {
+  const parsed = parseInt(value, 10);
+  if (!Number.isFinite(parsed)) return fallback;
+  if (parsed < min) return min;
+  if (parsed > max) return max;
+  return parsed;
+}
+
+function sanitizeMetronomeSettings(source) {
+  const settings =
+    source && typeof source === "object"
+      ? source.metronome && typeof source.metronome === "object"
+        ? source.metronome
+        : source
+      : {};
+  return {
+    tempo: sanitizeMetronomeInteger(
+      settings.tempo,
+      30,
+      240,
+      DEFAULT_METRONOME_SETTINGS.tempo,
+    ),
+    beatsPerMeasure: sanitizeMetronomeInteger(
+      settings.beatsPerMeasure,
+      1,
+      16,
+      DEFAULT_METRONOME_SETTINGS.beatsPerMeasure,
+    ),
+    xMeasures: sanitizeMetronomeInteger(
+      settings.xMeasures,
+      0,
+      256,
+      DEFAULT_METRONOME_SETTINGS.xMeasures,
+    ),
+    yMeasures: sanitizeMetronomeInteger(
+      settings.yMeasures,
+      0,
+      256,
+      DEFAULT_METRONOME_SETTINGS.yMeasures,
+    ),
+  };
+}
+
+function getMetronomeTickType(beatInMeasure, measureNumber, source) {
+  const settings = sanitizeMetronomeSettings(source);
+  if (beatInMeasure !== 0) return "normal";
+  if (settings.yMeasures > 0 && measureNumber % settings.yMeasures === 0) {
+    return "y";
+  }
+  if (settings.xMeasures > 0 && measureNumber % settings.xMeasures === 0) {
+    return "x";
+  }
+  return "measure";
+}
+
+function getMetronomeCompletedMeasures(hasPlayedNote, currentMeasure) {
+  if (!hasPlayedNote) return 0;
+  const measureNumber = sanitizeMetronomeInteger(currentMeasure, 1, 1000000, 1);
+  return Math.max(0, measureNumber - 1);
+}
+
+function getMetronomeDisplayedMeasure(currentMeasure, xMeasures, yMeasures) {
+  const measureNumber = sanitizeMetronomeInteger(currentMeasure, 1, 1000000, 1);
+  const xLength = sanitizeMetronomeInteger(xMeasures, 0, 256, 0);
+  const yLength = sanitizeMetronomeInteger(yMeasures, 0, 256, 0);
+  const lastCompletedMeasure = measureNumber - 1;
+  const resetPoints = [0];
+
+  if (xLength > 0) {
+    resetPoints.push(Math.floor(lastCompletedMeasure / xLength) * xLength);
+  }
+  if (yLength > 0) {
+    resetPoints.push(Math.floor(lastCompletedMeasure / yLength) * yLength);
+  }
+
+  return measureNumber - Math.max.apply(null, resetPoints);
+}
+
+function getMetronomeCycleDisplay(currentMeasure, length) {
+  const cycleLength = sanitizeMetronomeInteger(length, 0, 256, 0);
+  if (cycleLength <= 0) return "Off";
+  const measureNumber = sanitizeMetronomeInteger(currentMeasure, 1, 1000000, 1);
+  return `${((measureNumber - 1) % cycleLength) + 1} / ${cycleLength}`;
 }
 
 function pickRandomSongId(songs, currentSongId, randomValue = Math.random()) {
@@ -3411,6 +3518,23 @@ function notifySongsSettingsChange() {
   }
 }
 
+function notifyMetronomeSettingsChange() {
+  const candidates = [
+    globalRoot && typeof globalRoot.syncMetronomeSettings === "function"
+      ? globalRoot.syncMetronomeSettings
+      : null,
+    appGlobals && typeof appGlobals.syncMetronomeSettings === "function"
+      ? appGlobals.syncMetronomeSettings
+      : null,
+  ];
+  const handler = candidates.find((fn) => typeof fn === "function");
+  if (handler) {
+    try {
+      handler();
+    } catch (_) {}
+  }
+}
+
 function captureSimpleSettings() {
   return {
     mode: getRadioValue("mode", "tabChords"),
@@ -3422,6 +3546,9 @@ function captureSimpleSettings() {
       showKeyboard: domElements.keyboardDetails
         ? !!domElements.keyboardDetails.open
         : true,
+      showMetronome: domElements.metronomeDetails
+        ? !!domElements.metronomeDetails.open
+        : false,
       highlightKeys: !!domElements.highlightCorrectKeys.checked,
       highlightDelay: parseFloat(domElements.highlightDelay.value) || 3,
       hideProgressionNames: !!domElements.hideProgressionChordNames.checked,
@@ -3442,6 +3569,12 @@ function captureSimpleSettings() {
         domElements.customProgressionInput.value || "I-II-iii-IV-V-vi-viio-I",
       randomCount: parseInt(domElements.randomProgressionCount.value, 10) || 5,
     },
+    metronome: sanitizeMetronomeSettings({
+      tempo: domElements.metronomeTempoInput.value,
+      beatsPerMeasure: domElements.metronomeBeatsInput.value,
+      xMeasures: domElements.metronomeXMeasuresInput.value,
+      yMeasures: domElements.metronomeYMeasuresInput.value,
+    }),
     songs: sanitizeSongsPracticeSettings({
       useOriginalKey: !!domElements.songUseOriginalKey.checked,
       advanceKeyOnRepeat: !!domElements.songAdvanceKeyOnRepeat.checked,
@@ -3508,6 +3641,11 @@ function applySimpleSettings(settings) {
         domElements.keyboardDetails.open = !!display.showKeyboard;
       }
     }
+    if (domElements.metronomeDetails) {
+      if (Object.prototype.hasOwnProperty.call(display, "showMetronome")) {
+        domElements.metronomeDetails.open = !!display.showMetronome;
+      }
+    }
     domElements.highlightCorrectKeys.checked = !!display.highlightKeys;
     domElements.highlightDelay.value = String(display.highlightDelay);
     domElements.hideProgressionChordNames.checked =
@@ -3529,6 +3667,15 @@ function applySimpleSettings(settings) {
     domElements.randomProgressionCount.value = String(
       settings.progression.randomCount,
     );
+  }
+  if (settings.metronome) {
+    const metronome = sanitizeMetronomeSettings(settings.metronome);
+    domElements.metronomeTempoInput.value = String(metronome.tempo);
+    domElements.metronomeTempoNumberInput.value = String(metronome.tempo);
+    domElements.metronomeBeatsInput.value = String(metronome.beatsPerMeasure);
+    domElements.metronomeXMeasuresInput.value = String(metronome.xMeasures);
+    domElements.metronomeYMeasuresInput.value = String(metronome.yMeasures);
+    notifyMetronomeSettingsChange();
   }
   if (settings.songs) {
     const songSettings = sanitizeSongsPracticeSettings(settings.songs);
@@ -3699,6 +3846,7 @@ function settingsStoreFactory() {
       this.watchElement(domElements.flowSelect);
       this.watchElement(domElements.flowStartSelect);
       this.watchElement(domElements.keyboardDetails, "toggle");
+      this.watchElement(domElements.metronomeDetails, "toggle");
       this.watchElement(domElements.highlightCorrectKeys);
       this.watchElement(domElements.highlightDelay, "input");
       this.watchElement(domElements.hideProgressionChordNames);
@@ -3710,6 +3858,11 @@ function settingsStoreFactory() {
       this.watchElement(domElements.progressionSelect);
       this.watchElement(domElements.customProgressionInput, "input");
       this.watchElement(domElements.randomProgressionCount, "input");
+      this.watchElement(domElements.metronomeTempoInput, "input");
+      this.watchElement(domElements.metronomeTempoNumberInput);
+      this.watchElement(domElements.metronomeBeatsInput);
+      this.watchElement(domElements.metronomeXMeasuresInput);
+      this.watchElement(domElements.metronomeYMeasuresInput);
       this.watchElement(domElements.songFinishAction);
       this.watchElement(domElements.songRepeatCount, "input");
       this.watchElement(domElements.songUseOriginalKey);
@@ -3773,9 +3926,19 @@ appGlobals.songsStore = songsStore;
 if (appGlobals.root) {
   appGlobals.root.songsStore = songsStore;
 }
+appGlobals.sanitizeMetronomeSettings = sanitizeMetronomeSettings;
+appGlobals.getMetronomeTickType = getMetronomeTickType;
+appGlobals.getMetronomeCompletedMeasures = getMetronomeCompletedMeasures;
+appGlobals.getMetronomeDisplayedMeasure = getMetronomeDisplayedMeasure;
+appGlobals.getMetronomeCycleDisplay = getMetronomeCycleDisplay;
 appGlobals.sanitizeSongsPracticeSettings = sanitizeSongsPracticeSettings;
 appGlobals.pickSongIdForFinishAction = pickSongIdForFinishAction;
 if (appGlobals.root) {
+  appGlobals.root.sanitizeMetronomeSettings = sanitizeMetronomeSettings;
+  appGlobals.root.getMetronomeTickType = getMetronomeTickType;
+  appGlobals.root.getMetronomeCompletedMeasures = getMetronomeCompletedMeasures;
+  appGlobals.root.getMetronomeDisplayedMeasure = getMetronomeDisplayedMeasure;
+  appGlobals.root.getMetronomeCycleDisplay = getMetronomeCycleDisplay;
   appGlobals.root.sanitizeSongsPracticeSettings = sanitizeSongsPracticeSettings;
   appGlobals.root.pickSongIdForFinishAction = pickSongIdForFinishAction;
 }
@@ -3820,6 +3983,11 @@ const dataExports = {
   buildPlayableSongEntries,
   buildSongDisplayRows,
   formatIRealProChordDisplay,
+  sanitizeMetronomeSettings,
+  getMetronomeTickType,
+  getMetronomeCompletedMeasures,
+  getMetronomeDisplayedMeasure,
+  getMetronomeCycleDisplay,
   sanitizeSongsPracticeSettings,
   pickSongIdForFinishAction,
   settingsStore,

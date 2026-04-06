@@ -36,6 +36,27 @@ const logicSettingsStore =
   sharedGlobals.settingsStore || runtimeRoot.settingsStore || null;
 const logicSongsStore =
   sharedGlobals.songsStore || runtimeRoot.songsStore || null;
+const logicSanitizeMetronomeSettings =
+  sharedGlobals.sanitizeMetronomeSettings ||
+  runtimeRoot.sanitizeMetronomeSettings ||
+  ((source) => ({
+    tempo: Math.max(
+      30,
+      Math.min(240, parseInt(source && source.tempo, 10) || 120),
+    ),
+    beatsPerMeasure: Math.max(
+      1,
+      Math.min(16, parseInt(source && source.beatsPerMeasure, 10) || 4),
+    ),
+    xMeasures: Math.max(
+      0,
+      Math.min(256, parseInt(source && source.xMeasures, 10) || 4),
+    ),
+    yMeasures: Math.max(
+      0,
+      Math.min(256, parseInt(source && source.yMeasures, 10) || 8),
+    ),
+  }));
 const logicSanitizeSongsPracticeSettings =
   sharedGlobals.sanitizeSongsPracticeSettings ||
   runtimeRoot.sanitizeSongsPracticeSettings ||
@@ -65,6 +86,76 @@ const documentAvailable =
   "hasDocument" in sharedGlobals
     ? !!sharedGlobals.hasDocument
     : typeof document !== "undefined";
+const logicGetMetronomeTickType =
+  sharedGlobals.getMetronomeTickType ||
+  runtimeRoot.getMetronomeTickType ||
+  ((beatInMeasure, measureNumber, settings) => {
+    if (beatInMeasure !== 0) return "normal";
+    if (
+      settings &&
+      settings.yMeasures > 0 &&
+      measureNumber % settings.yMeasures === 0
+    ) {
+      return "y";
+    }
+    if (
+      settings &&
+      settings.xMeasures > 0 &&
+      measureNumber % settings.xMeasures === 0
+    ) {
+      return "x";
+    }
+    return "measure";
+  });
+const logicGetMetronomeCompletedMeasures =
+  sharedGlobals.getMetronomeCompletedMeasures ||
+  runtimeRoot.getMetronomeCompletedMeasures ||
+  ((hasPlayedNote, currentMeasure) =>
+    hasPlayedNote ? Math.max(0, (parseInt(currentMeasure, 10) || 1) - 1) : 0);
+const logicGetMetronomeDisplayedMeasure =
+  sharedGlobals.getMetronomeDisplayedMeasure ||
+  runtimeRoot.getMetronomeDisplayedMeasure ||
+  ((currentMeasure, xMeasures, yMeasures) => {
+    const measureNumber = Math.max(1, parseInt(currentMeasure, 10) || 1);
+    const lastCompletedMeasure = measureNumber - 1;
+    const resetPoints = [0];
+    const x = Math.max(0, parseInt(xMeasures, 10) || 0);
+    const y = Math.max(0, parseInt(yMeasures, 10) || 0);
+    if (x > 0) resetPoints.push(Math.floor(lastCompletedMeasure / x) * x);
+    if (y > 0) resetPoints.push(Math.floor(lastCompletedMeasure / y) * y);
+    return measureNumber - Math.max.apply(null, resetPoints);
+  });
+const logicGetMetronomeCycleDisplay =
+  sharedGlobals.getMetronomeCycleDisplay ||
+  runtimeRoot.getMetronomeCycleDisplay ||
+  ((currentMeasure, length) => {
+    const cycleLength = Math.max(0, parseInt(length, 10) || 0);
+    if (cycleLength <= 0) return "Off";
+    const measureNumber = Math.max(1, parseInt(currentMeasure, 10) || 1);
+    return `${((measureNumber - 1) % cycleLength) + 1} / ${cycleLength}`;
+  });
+
+const metronomeState = {
+  tempo: 120,
+  beatsPerMeasure: 4,
+  xMeasures: 4,
+  yMeasures: 8,
+  isRunning: false,
+  hasPlayedNote: false,
+  currentBeatInMeasure: 0,
+  currentMeasure: 1,
+  nextMeasure: 1,
+  nextBeatInMeasure: 0,
+  nextNoteTime: 0,
+  schedulerTimer: null,
+  audioContext: null,
+  lookaheadMs: 25,
+  scheduleAheadTime: 0.1,
+  lastPulseTimeout: null,
+  visualTimeouts: new Set(),
+  tempoEntryBuffer: "",
+  tempoEntryTimeoutId: null,
+};
 
 const statCategoryConfig = {
   chords: {
@@ -369,8 +460,12 @@ function initializeDailyStats() {
 initializeDailyStats();
 
 sharedGlobals.resetDailyStats = resetDailyStats;
+sharedGlobals.syncMetronomeSettings = syncMetronomeSettings;
 if (runtimeRoot && !runtimeRoot.resetDailyStats) {
   runtimeRoot.resetDailyStats = resetDailyStats;
+}
+if (runtimeRoot && !runtimeRoot.syncMetronomeSettings) {
+  runtimeRoot.syncMetronomeSettings = syncMetronomeSettings;
 }
 
 function syncSettingsStore() {
@@ -380,6 +475,498 @@ function syncSettingsStore() {
   ) {
     logicSettingsStore.syncFromDom();
   }
+}
+
+function getMetronomeSettingsFromDom() {
+  return logicSanitizeMetronomeSettings({
+    tempo: dom.metronomeTempoInput ? dom.metronomeTempoInput.value : 120,
+    beatsPerMeasure: dom.metronomeBeatsInput
+      ? dom.metronomeBeatsInput.value
+      : 4,
+    xMeasures: dom.metronomeXMeasuresInput
+      ? dom.metronomeXMeasuresInput.value
+      : 4,
+    yMeasures: dom.metronomeYMeasuresInput
+      ? dom.metronomeYMeasuresInput.value
+      : 8,
+  });
+}
+
+function isMetronomeTypingTarget(target) {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+  return (
+    target.isContentEditable ||
+    ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)
+  );
+}
+
+function isMetronomeEnterKey(event) {
+  return (
+    event.key === "Enter" ||
+    event.code === "Enter" ||
+    event.code === "NumpadEnter"
+  );
+}
+
+function getMetronomeDigitFromKeyEvent(event) {
+  if (event.ctrlKey || event.metaKey || event.altKey) return null;
+
+  const numpadCodeMatch = event.code.match(/^Numpad(\d)$/);
+  if (numpadCodeMatch) return numpadCodeMatch[1];
+
+  const digitCodeMatch = event.code.match(/^Digit(\d)$/);
+  if (digitCodeMatch) return digitCodeMatch[1];
+
+  return /^\d$/.test(event.key) ? event.key : null;
+}
+
+function renderMetronomePulseGrid() {
+  if (!dom.metronomePulseGrid || !documentAvailable) return;
+
+  dom.metronomePulseGrid.style.setProperty(
+    "--beats-per-measure",
+    String(metronomeState.beatsPerMeasure),
+  );
+  dom.metronomePulseGrid.innerHTML = "";
+
+  for (let index = 0; index < metronomeState.beatsPerMeasure; index += 1) {
+    const pulse = document.createElement("div");
+    pulse.className = "metronomePulse";
+    pulse.dataset.beat = String(index);
+
+    const label = document.createElement("span");
+    label.textContent = String(index + 1);
+    pulse.appendChild(label);
+
+    dom.metronomePulseGrid.appendChild(pulse);
+  }
+}
+
+function updateMetronomeStatus() {
+  if (!dom.metronomeStatus) return;
+  const xText =
+    metronomeState.xMeasures > 0
+      ? `every ${metronomeState.xMeasures} measures`
+      : "disabled";
+  const yText =
+    metronomeState.yMeasures > 0
+      ? `every ${metronomeState.yMeasures} measures`
+      : "disabled";
+  let message =
+    `Downbeat on beat 1. X marker: ${xText}. Y marker: ${yText}. ` +
+    "Priority when markers overlap: Y, then X, then downbeat, then regular beats.";
+
+  if (metronomeState.tempoEntryBuffer) {
+    message += ` Pending tempo: ${metronomeState.tempoEntryBuffer}. Press Enter to apply, Backspace to edit, Escape to clear.`;
+  }
+
+  dom.metronomeStatus.textContent = message;
+}
+
+function updateMetronomeReadout() {
+  if (dom.metronomeTempoDisplay) {
+    dom.metronomeTempoDisplay.textContent = String(metronomeState.tempo);
+  }
+  if (dom.metronomeMeasureDisplay) {
+    dom.metronomeMeasureDisplay.textContent = String(
+      logicGetMetronomeDisplayedMeasure(
+        metronomeState.currentMeasure,
+        metronomeState.xMeasures,
+        metronomeState.yMeasures,
+      ),
+    );
+  }
+  if (dom.metronomeBeatDisplay) {
+    dom.metronomeBeatDisplay.textContent = String(
+      metronomeState.currentBeatInMeasure + 1,
+    );
+  }
+  if (dom.metronomeTotalMeasuresDisplay) {
+    dom.metronomeTotalMeasuresDisplay.textContent = String(
+      logicGetMetronomeCompletedMeasures(
+        metronomeState.hasPlayedNote,
+        metronomeState.currentMeasure,
+      ),
+    );
+  }
+  if (dom.metronomeXRepeatDisplay) {
+    dom.metronomeXRepeatDisplay.textContent = logicGetMetronomeCycleDisplay(
+      metronomeState.currentMeasure,
+      metronomeState.xMeasures,
+    );
+  }
+  if (dom.metronomeYRepeatDisplay) {
+    dom.metronomeYRepeatDisplay.textContent = logicGetMetronomeCycleDisplay(
+      metronomeState.currentMeasure,
+      metronomeState.yMeasures,
+    );
+  }
+  updateMetronomeStatus();
+}
+
+function clearMetronomePulseHighlights() {
+  if (metronomeState.lastPulseTimeout) {
+    clearTimeout(metronomeState.lastPulseTimeout);
+    metronomeState.lastPulseTimeout = null;
+  }
+  if (!dom.metronomePulseGrid || !documentAvailable) return;
+  dom.metronomePulseGrid
+    .querySelectorAll(".metronomePulse")
+    .forEach((pulse) => {
+      pulse.className = "metronomePulse";
+    });
+}
+
+function clearMetronomeScheduledVisuals() {
+  metronomeState.visualTimeouts.forEach((timeoutId) => {
+    clearTimeout(timeoutId);
+  });
+  metronomeState.visualTimeouts.clear();
+}
+
+function flashMetronomePulse(beatInMeasure, tickType) {
+  clearMetronomePulseHighlights();
+  if (!dom.metronomePulseGrid || !documentAvailable) return;
+  const pulse = dom.metronomePulseGrid.querySelector(
+    `[data-beat="${beatInMeasure}"]`,
+  );
+  if (!pulse) return;
+
+  pulse.classList.add(`metronomePulse--${tickType}`, "is-active");
+  metronomeState.lastPulseTimeout = window.setTimeout(() => {
+    pulse.className = "metronomePulse";
+  }, 180);
+}
+
+function playMetronomeTick(time, tickType) {
+  const ctx = metronomeState.audioContext;
+  if (!ctx) return;
+
+  const oscillator = ctx.createOscillator();
+  const gainNode = ctx.createGain();
+  const config = {
+    normal: { frequency: 1200, duration: 0.03, volume: 0.11, type: "square" },
+    measure: {
+      frequency: 1600,
+      duration: 0.05,
+      volume: 0.14,
+      type: "triangle",
+    },
+    x: { frequency: 950, duration: 0.07, volume: 0.17, type: "sawtooth" },
+    y: { frequency: 720, duration: 0.09, volume: 0.19, type: "sawtooth" },
+  }[tickType];
+
+  oscillator.type = config.type;
+  oscillator.frequency.setValueAtTime(config.frequency, time);
+  gainNode.gain.setValueAtTime(0.0001, time);
+  gainNode.gain.exponentialRampToValueAtTime(config.volume, time + 0.002);
+  gainNode.gain.exponentialRampToValueAtTime(0.0001, time + config.duration);
+
+  oscillator.connect(gainNode);
+  gainNode.connect(ctx.destination);
+  oscillator.start(time);
+  oscillator.stop(time + config.duration + 0.01);
+}
+
+function scheduleMetronomeVisual(beatInMeasure, measureNumber, tickType, time) {
+  const ctx = metronomeState.audioContext;
+  if (!ctx) return;
+
+  const delayMs = Math.max(0, (time - ctx.currentTime) * 1000);
+  const timeoutId = window.setTimeout(() => {
+    metronomeState.visualTimeouts.delete(timeoutId);
+    if (!metronomeState.isRunning) return;
+    metronomeState.currentBeatInMeasure = beatInMeasure;
+    metronomeState.currentMeasure = measureNumber;
+    metronomeState.hasPlayedNote = true;
+    updateMetronomeReadout();
+    flashMetronomePulse(beatInMeasure, tickType);
+  }, delayMs);
+  metronomeState.visualTimeouts.add(timeoutId);
+}
+
+function queueNextMetronomeBeatFromCurrentPosition() {
+  if (!metronomeState.hasPlayedNote) {
+    metronomeState.nextBeatInMeasure = 0;
+    metronomeState.nextMeasure = 1;
+    return;
+  }
+
+  metronomeState.nextBeatInMeasure = metronomeState.currentBeatInMeasure + 1;
+  metronomeState.nextMeasure = metronomeState.currentMeasure;
+
+  if (metronomeState.nextBeatInMeasure >= metronomeState.beatsPerMeasure) {
+    metronomeState.nextBeatInMeasure = 0;
+    metronomeState.nextMeasure += 1;
+  }
+}
+
+function scheduleMetronomeNote() {
+  const beatInMeasure = metronomeState.nextBeatInMeasure;
+  const measureNumber = metronomeState.nextMeasure;
+  const tickType = logicGetMetronomeTickType(beatInMeasure, measureNumber, {
+    xMeasures: metronomeState.xMeasures,
+    yMeasures: metronomeState.yMeasures,
+  });
+
+  playMetronomeTick(metronomeState.nextNoteTime, tickType);
+  scheduleMetronomeVisual(
+    beatInMeasure,
+    measureNumber,
+    tickType,
+    metronomeState.nextNoteTime,
+  );
+
+  metronomeState.nextNoteTime += 60 / metronomeState.tempo;
+  metronomeState.nextBeatInMeasure += 1;
+  if (metronomeState.nextBeatInMeasure >= metronomeState.beatsPerMeasure) {
+    metronomeState.nextBeatInMeasure = 0;
+    metronomeState.nextMeasure += 1;
+  }
+}
+
+function runMetronomeScheduler() {
+  if (!metronomeState.audioContext) return;
+  while (
+    metronomeState.nextNoteTime <
+    metronomeState.audioContext.currentTime + metronomeState.scheduleAheadTime
+  ) {
+    scheduleMetronomeNote();
+  }
+}
+
+async function ensureMetronomeAudioContext() {
+  if (!metronomeState.audioContext) {
+    const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextCtor) {
+      throw new Error("This browser does not support Web Audio.");
+    }
+    metronomeState.audioContext = new AudioContextCtor();
+  }
+  if (metronomeState.audioContext.state === "suspended") {
+    await metronomeState.audioContext.resume();
+  }
+}
+
+function clearPendingMetronomeTempoEntry() {
+  if (metronomeState.tempoEntryTimeoutId) {
+    clearTimeout(metronomeState.tempoEntryTimeoutId);
+    metronomeState.tempoEntryTimeoutId = null;
+  }
+  if (!metronomeState.tempoEntryBuffer) return;
+  metronomeState.tempoEntryBuffer = "";
+  updateMetronomeStatus();
+}
+
+function setMetronomeTempo(value, options = {}) {
+  const settings = logicSanitizeMetronomeSettings({ tempo: value });
+  if (options.clearPending !== false) {
+    clearPendingMetronomeTempoEntry();
+  }
+  metronomeState.tempo = settings.tempo;
+  if (dom.metronomeTempoInput) {
+    dom.metronomeTempoInput.value = String(settings.tempo);
+  }
+  if (dom.metronomeTempoNumberInput) {
+    dom.metronomeTempoNumberInput.value = String(settings.tempo);
+  }
+  updateMetronomeReadout();
+  if (options.save) {
+    syncSettingsStore();
+  }
+}
+
+function syncMetronomeSettings(options = {}) {
+  const settings = getMetronomeSettingsFromDom();
+  metronomeState.tempo = settings.tempo;
+  metronomeState.beatsPerMeasure = settings.beatsPerMeasure;
+  metronomeState.xMeasures = settings.xMeasures;
+  metronomeState.yMeasures = settings.yMeasures;
+
+  if (dom.metronomeTempoInput) {
+    dom.metronomeTempoInput.value = String(settings.tempo);
+  }
+  if (dom.metronomeTempoNumberInput) {
+    dom.metronomeTempoNumberInput.value = String(settings.tempo);
+  }
+  if (dom.metronomeBeatsInput) {
+    dom.metronomeBeatsInput.value = String(settings.beatsPerMeasure);
+  }
+  if (dom.metronomeXMeasuresInput) {
+    dom.metronomeXMeasuresInput.value = String(settings.xMeasures);
+  }
+  if (dom.metronomeYMeasuresInput) {
+    dom.metronomeYMeasuresInput.value = String(settings.yMeasures);
+  }
+
+  if (metronomeState.currentBeatInMeasure >= metronomeState.beatsPerMeasure) {
+    metronomeState.currentBeatInMeasure = 0;
+  }
+  if (metronomeState.nextBeatInMeasure >= metronomeState.beatsPerMeasure) {
+    metronomeState.nextBeatInMeasure = 0;
+    metronomeState.nextMeasure += 1;
+  }
+
+  renderMetronomePulseGrid();
+  updateMetronomeReadout();
+  if (options.save) {
+    syncSettingsStore();
+  }
+}
+
+function refreshMetronomeTempoEntryTimeout() {
+  if (metronomeState.tempoEntryTimeoutId) {
+    clearTimeout(metronomeState.tempoEntryTimeoutId);
+  }
+  metronomeState.tempoEntryTimeoutId = window.setTimeout(() => {
+    metronomeState.tempoEntryTimeoutId = null;
+    if (!metronomeState.tempoEntryBuffer) return;
+    metronomeState.tempoEntryBuffer = "";
+    updateMetronomeStatus();
+  }, 3000);
+}
+
+function appendMetronomeTempoDigit(digit) {
+  if (metronomeState.tempoEntryBuffer.length >= 3) {
+    metronomeState.tempoEntryBuffer = digit;
+  } else {
+    metronomeState.tempoEntryBuffer += digit;
+  }
+  updateMetronomeStatus();
+  refreshMetronomeTempoEntryTimeout();
+}
+
+function removeMetronomeTempoDigit() {
+  if (!metronomeState.tempoEntryBuffer) return;
+  metronomeState.tempoEntryBuffer = metronomeState.tempoEntryBuffer.slice(
+    0,
+    -1,
+  );
+  updateMetronomeStatus();
+  if (metronomeState.tempoEntryBuffer) {
+    refreshMetronomeTempoEntryTimeout();
+    return;
+  }
+  clearPendingMetronomeTempoEntry();
+}
+
+function applyPendingMetronomeTempoEntry() {
+  if (!metronomeState.tempoEntryBuffer) return;
+  setMetronomeTempo(Number(metronomeState.tempoEntryBuffer), { save: true });
+}
+
+function adjustMetronomeTempoBy(step) {
+  setMetronomeTempo(metronomeState.tempo + step, { save: true });
+}
+
+async function startMetronome() {
+  try {
+    await ensureMetronomeAudioContext();
+  } catch (error) {
+    if (dom.metronomeStatus) {
+      dom.metronomeStatus.textContent =
+        error && error.message
+          ? error.message
+          : "Unable to start metronome audio.";
+    }
+    return;
+  }
+
+  metronomeState.isRunning = true;
+  metronomeState.nextNoteTime = metronomeState.audioContext.currentTime + 0.05;
+  queueNextMetronomeBeatFromCurrentPosition();
+  metronomeState.schedulerTimer = window.setInterval(
+    runMetronomeScheduler,
+    metronomeState.lookaheadMs,
+  );
+  if (dom.metronomeToggleButton) {
+    dom.metronomeToggleButton.textContent = "Stop";
+  }
+  runMetronomeScheduler();
+}
+
+function stopMetronome() {
+  metronomeState.isRunning = false;
+  if (metronomeState.schedulerTimer) {
+    clearInterval(metronomeState.schedulerTimer);
+    metronomeState.schedulerTimer = null;
+  }
+  clearMetronomeScheduledVisuals();
+  clearMetronomePulseHighlights();
+  if (dom.metronomeToggleButton) {
+    dom.metronomeToggleButton.textContent = "Start";
+  }
+}
+
+async function toggleMetronome() {
+  if (metronomeState.isRunning) {
+    stopMetronome();
+    return;
+  }
+  await startMetronome();
+}
+
+async function resetMetronomeCount() {
+  const wasRunning = metronomeState.isRunning;
+  stopMetronome();
+  metronomeState.hasPlayedNote = false;
+  metronomeState.currentBeatInMeasure = 0;
+  metronomeState.currentMeasure = 1;
+  metronomeState.nextBeatInMeasure = 0;
+  metronomeState.nextMeasure = 1;
+  updateMetronomeReadout();
+  clearMetronomePulseHighlights();
+  if (wasRunning) {
+    await startMetronome();
+  }
+}
+
+async function handleMetronomeShortcut(event) {
+  if (isMetronomeTypingTarget(event.target)) return;
+
+  if (event.code === "Space") {
+    event.preventDefault();
+    await toggleMetronome();
+    return;
+  }
+
+  const digit = getMetronomeDigitFromKeyEvent(event);
+  if (digit !== null) {
+    event.preventDefault();
+    appendMetronomeTempoDigit(digit);
+    return;
+  }
+
+  if (isMetronomeEnterKey(event) && metronomeState.tempoEntryBuffer) {
+    event.preventDefault();
+    applyPendingMetronomeTempoEntry();
+    return;
+  }
+
+  if (event.key === "Backspace" && metronomeState.tempoEntryBuffer) {
+    event.preventDefault();
+    removeMetronomeTempoDigit();
+    return;
+  }
+
+  if (event.key === "Escape" && metronomeState.tempoEntryBuffer) {
+    event.preventDefault();
+    clearPendingMetronomeTempoEntry();
+    return;
+  }
+
+  const increase =
+    event.key === "+" || event.key === "=" || event.code === "NumpadAdd";
+  const decrease =
+    event.key === "-" || event.key === "_" || event.code === "NumpadSubtract";
+
+  if (!increase && !decrease) return;
+
+  event.preventDefault();
+  const step = event.shiftKey ? 5 : 1;
+  adjustMetronomeTempoBy(increase ? step : -step);
 }
 
 function resolveStartValue(startKey) {
@@ -2038,6 +2625,64 @@ function generateProgression() {
 dom.hideProgressionChordNames.addEventListener("change", updateDisplay);
 dom.hideProgressionChordNumerals.addEventListener("change", updateDisplay);
 
+if (
+  dom.metronomeToggleButton &&
+  typeof dom.metronomeToggleButton.addEventListener === "function"
+) {
+  dom.metronomeToggleButton.addEventListener("click", () => {
+    toggleMetronome();
+  });
+}
+
+if (
+  dom.metronomeResetButton &&
+  typeof dom.metronomeResetButton.addEventListener === "function"
+) {
+  dom.metronomeResetButton.addEventListener("click", () => {
+    resetMetronomeCount();
+  });
+}
+
+if (
+  dom.metronomeTempoInput &&
+  typeof dom.metronomeTempoInput.addEventListener === "function"
+) {
+  dom.metronomeTempoInput.addEventListener("input", () => {
+    setMetronomeTempo(dom.metronomeTempoInput.value, { save: true });
+  });
+}
+
+if (
+  dom.metronomeTempoNumberInput &&
+  typeof dom.metronomeTempoNumberInput.addEventListener === "function"
+) {
+  dom.metronomeTempoNumberInput.addEventListener("change", () => {
+    setMetronomeTempo(dom.metronomeTempoNumberInput.value, { save: true });
+  });
+  dom.metronomeTempoNumberInput.addEventListener("keydown", (event) => {
+    if (!isMetronomeEnterKey(event)) return;
+    event.preventDefault();
+    setMetronomeTempo(dom.metronomeTempoNumberInput.value, { save: true });
+  });
+}
+
+[
+  dom.metronomeBeatsInput,
+  dom.metronomeXMeasuresInput,
+  dom.metronomeYMeasuresInput,
+].forEach((input) => {
+  if (!input || typeof input.addEventListener !== "function") return;
+  input.addEventListener("change", () => {
+    syncMetronomeSettings({ save: true });
+  });
+});
+
+if (documentAvailable && typeof document.addEventListener === "function") {
+  document.addEventListener("keydown", (event) => {
+    handleMetronomeShortcut(event);
+  });
+}
+
 function nextProgression() {
   nextChord(true);
 }
@@ -2050,6 +2695,7 @@ if (documentAvailable) {
   populateStartingKeyOptions();
   modeChange();
 }
+syncMetronomeSettings();
 // Apply shell voicing according to selected mode (all chord-based modes)
 function applyShellVoicing(notes) {
   try {
