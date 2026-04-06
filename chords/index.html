@@ -11,8 +11,9 @@
       <section class="surfaceCard heroCard">
         <h2 id="panelHeader">
           <span id="txtCurrentKey"></span><span id="txtChord">Chord</span
-          ><span id="txtCadence"></span><br /><span id="txtProgression"></span>
+          ><span id="txtCadence"></span>
         </h2>
+        <div id="txtProgression"></div>
         <div class="challengeActiveArea">
           <details class="challengeCollapsible" id="panelKeyboard" open>
             <summary>
@@ -855,6 +856,9 @@
           />
           <label for="tabModeProgressions">Progressions</label>
 
+          <input type="radio" id="tabModeSongs" name="mode" value="tabSongs" />
+          <label for="tabModeSongs">Songs</label>
+
           <input
             type="radio"
             id="tabModeScales"
@@ -1122,6 +1126,29 @@
               </div>
             </div>
           </div>
+        </div>
+
+        <div class="tabContent" id="panelModeSongs">
+          <label class="songsFieldLabel" for="selectSong">Saved Songs</label>
+          <select id="selectSong"></select>
+          <div class="songsActions">
+            <button id="btnSongsDelete" type="button">Delete Selected</button>
+            <button id="btnSongsClear" type="button">Clear Songs</button>
+          </div>
+          <label class="songsFieldLabel" for="inputSongsUrl">iReal URL</label>
+          <textarea
+            id="inputSongsUrl"
+            class="songsUrlInput"
+            rows="5"
+            placeholder="Paste an irealb:// or irealbook:// link"
+            spellcheck="false"
+          ></textarea>
+          <div class="songsActions">
+            <button id="btnSongsImport" type="button">Import URL</button>
+          </div>
+          <p id="txtSongsStatus" class="songsStatus">
+            Paste an iReal Pro link to import songs for practice.
+          </p>
         </div>
 
         <div class="tabContent" id="panelModeScales">

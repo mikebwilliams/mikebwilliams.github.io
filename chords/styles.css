@@ -218,10 +218,6 @@ main.page {
   letter-spacing: -0.01em;
 }
 
-#panelHeader br {
-  display: none;
-}
-
 #panelHeader span {
   display: inline-flex;
   align-items: baseline;
@@ -245,13 +241,236 @@ main.page {
 }
 
 #txtProgression {
-  flex-basis: 100%;
   text-align: center;
-  margin-top: 0.6rem;
+  margin-top: -0.6rem;
   font-size: clamp(0.85rem, 0.7rem + 0.8vw, 1.1rem);
   letter-spacing: 0.38em;
   text-transform: uppercase;
   color: var(--text-dim);
+  overflow-x: auto;
+}
+
+#txtProgression .chord {
+  display: inline-flex;
+}
+
+.songChart {
+  width: min(100%, 920px);
+  margin: 0 auto;
+  border-collapse: separate;
+  border-spacing: 6px;
+  table-layout: fixed;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.songMeasure {
+  width: 25%;
+  padding: 4px;
+  border: 1px solid rgba(129, 140, 180, 0.2);
+  border-radius: var(--radius-sm);
+  background: rgba(9, 13, 28, 0.34);
+  vertical-align: top;
+  position: relative;
+  overflow: hidden;
+}
+
+.songMeasureFrame {
+  display: flex;
+  align-items: stretch;
+  min-height: 98px;
+}
+
+.songMeasureRail {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.songMeasureRail--left {
+  padding-right: 2px;
+}
+
+.songMeasureRail--right {
+  padding-left: 2px;
+}
+
+.songMeasureLeftMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  height: 100%;
+}
+
+.songMeasureLeftLower {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  flex: 1 1 auto;
+}
+
+.songMeasureSection {
+  padding-left: 2px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.songMeasureContent {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 0;
+  min-width: 0;
+}
+
+.songMeasureTimeSignature {
+  min-width: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.songMeasureTimeSignaturePart {
+  display: block;
+}
+
+.songMeasureTimeSignatureDivider {
+  width: 16px;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(220, 228, 255, 0.82);
+}
+
+.songMeasureBar {
+  min-width: 14px;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 3px;
+  height: 100%;
+}
+
+.songMeasureBarLine {
+  width: 2px;
+  border-radius: 999px;
+  background: rgba(220, 228, 255, 0.75);
+  min-height: 100%;
+}
+
+.songMeasureBarLine--thin {
+  width: 2px;
+}
+
+.songMeasureBarLine--thick {
+  width: 4px;
+  background: rgba(244, 245, 255, 0.92);
+}
+
+.songMeasureBarDots {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+
+.songMeasureBarDots span {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(244, 245, 255, 0.92);
+}
+
+.songMeasureChords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 22px;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+  text-align: center;
+  min-height: 4.7em;
+  width: 100%;
+  flex: 1 1 auto;
+}
+
+.songMeasureChord {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  font-family:
+    "Aptos Narrow", "Arial Narrow", "Liberation Sans Narrow", var(--font-base);
+  font-size: 2em;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  line-height: 0.96;
+  color: var(--text-primary);
+}
+
+.songMeasureAccidental {
+  display: inline-block;
+  margin-left: -0.12em;
+  margin-right: -0.14em;
+  transform: translateX(-0.03em);
+}
+
+.songMeasureChord--current {
+  color: #0077ff;
+}
+
+.songMeasureChord--complete {
+  color: green;
+}
+
+.songMeasureComments {
+  margin-top: auto;
+  font-size: 0.62em;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.songMeasurePlaceholder {
+  display: inline-flex;
+  min-width: 1ch;
+}
+
+@media (max-width: 760px) {
+  .songChart {
+    border-spacing: 5px;
+  }
+
+  .songChartRow {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .songMeasure {
+    width: 100%;
+    display: block;
+  }
+}
+
+@media (max-width: 480px) {
+  .songChartRow {
+    grid-template-columns: 1fr;
+  }
 }
 
 #panelPiano {
@@ -911,6 +1130,7 @@ input[type="text"]:focus {
 
 #panelModeChords button,
 #panelModeProgressions button,
+#panelModeSongs button,
 #panelModeJazz button {
   margin: 4px 6px;
 }
@@ -923,6 +1143,35 @@ input[type="text"]:focus {
 #panelModeProgressions input[type="number"],
 #panelModeProgressions input[type="text"] {
   margin-left: 6px;
+}
+
+.songsFieldLabel {
+  display: block;
+  margin: 10px 0 6px;
+  font-weight: 600;
+}
+
+.songsUrlInput,
+#selectSong {
+  width: 100%;
+  max-width: 720px;
+}
+
+.songsUrlInput {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.songsActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 14px;
+}
+
+.songsStatus {
+  margin: 10px 0 0;
+  color: var(--text-muted);
 }
 
 #panelModeDegrees {

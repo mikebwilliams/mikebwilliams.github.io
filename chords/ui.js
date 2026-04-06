@@ -16,10 +16,16 @@ const uiWorkoutStore =
   uiRoot.workoutStore ||
   (uiRoot.appGlobals ? uiRoot.appGlobals.workoutStore : null) ||
   null;
+const uiSongsStore =
+  uiGlobals.songsStore ||
+  uiRoot.songsStore ||
+  (uiRoot.appGlobals ? uiRoot.appGlobals.songsStore : null) ||
+  null;
 
 const modeStatCategoryMap = {
   tabChords: "chords",
   tabProgressions: "progressions",
+  tabSongs: "progressions",
   tabDegrees: "degrees",
   tabScales: "scales",
   tabJazz: "bricks",
@@ -220,6 +226,10 @@ function modeIsProgressions() {
   return getSelectedMode() === "tabProgressions";
 }
 
+function modeIsSongs() {
+  return getSelectedMode() === "tabSongs";
+}
+
 function modeIsScales() {
   return getSelectedMode() === "tabScales";
 }
@@ -282,6 +292,7 @@ const toggleMinorChords = (state) =>
 const modeSectionsByTab = {
   tabChords: ["chordOptions"],
   tabProgressions: ["progressionOptions"],
+  tabSongs: ["songsOptions"],
   tabDegrees: ["progressionOptions", "degreesOptions"],
   tabScales: ["scalesOptions"],
   tabJazz: ["jazzOptions"],
@@ -313,6 +324,122 @@ dom.skipButton.addEventListener("click", () => nextProgression());
 dom.playAnswerButton.addEventListener("click", () => playAnswerNotes());
 
 dom.progressionSelect.addEventListener("change", () => nextProgression());
+
+function setSongsStatus(message) {
+  if (!dom.songStatus) return;
+  dom.songStatus.textContent = message;
+}
+
+function refreshSongSelect(selectedId = "") {
+  if (!dom.songSelect || !uiSongsStore) return;
+  const songs = uiSongsStore.listSongs();
+  const fallbackId = songs[0] ? songs[0].id : "";
+  const storedId =
+    typeof uiSongsStore.getLastSelection === "function"
+      ? uiSongsStore.getLastSelection()
+      : "";
+  const targetId = selectedId || storedId || dom.songSelect.value || fallbackId;
+  dom.songSelect.innerHTML = "";
+
+  if (!songs.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "No songs imported";
+    dom.songSelect.appendChild(option);
+    dom.songSelect.value = "";
+    if (typeof uiSongsStore.setLastSelection === "function") {
+      uiSongsStore.setLastSelection("");
+    }
+    if (dom.songDeleteButton) dom.songDeleteButton.disabled = true;
+    if (dom.songClearButton) dom.songClearButton.disabled = true;
+    return;
+  }
+
+  songs.forEach((song) => {
+    const option = document.createElement("option");
+    option.value = song.id;
+    option.textContent = `${song.title} - ${song.composer}`;
+    dom.songSelect.appendChild(option);
+  });
+
+  dom.songSelect.value = songs.some((song) => song.id === targetId)
+    ? targetId
+    : fallbackId;
+  if (typeof uiSongsStore.setLastSelection === "function") {
+    uiSongsStore.setLastSelection(dom.songSelect.value);
+  }
+
+  if (dom.songDeleteButton) dom.songDeleteButton.disabled = false;
+  if (dom.songClearButton) dom.songClearButton.disabled = false;
+}
+
+function handleSongImport() {
+  if (!dom.songUrlInput || !uiSongsStore) return;
+  const source = dom.songUrlInput.value.trim();
+  if (!source) {
+    setSongsStatus("Paste an iReal Pro URL to import.");
+    return;
+  }
+  try {
+    const result = uiSongsStore.importSource(source);
+    refreshSongSelect(result.selectedSongId);
+    dom.songUrlInput.value = "";
+    if (dom.modeRadios.tabSongs) {
+      dom.modeRadios.tabSongs.checked = true;
+    }
+    setSongsStatus(
+      result.importedCount === 1
+        ? "Imported 1 song."
+        : `Imported ${result.importedCount} songs.`,
+    );
+    modeChange();
+  } catch (error) {
+    setSongsStatus(error && error.message ? error.message : "Import failed.");
+  }
+}
+
+function handleSongDelete() {
+  if (!dom.songSelect || !uiSongsStore) return;
+  const songId = dom.songSelect.value;
+  if (!songId) return;
+  uiSongsStore.deleteSong(songId);
+  refreshSongSelect();
+  setSongsStatus("Deleted selected song.");
+  if (modeIsSongs()) {
+    resetFlow();
+  }
+}
+
+function handleSongClear() {
+  if (!uiSongsStore) return;
+  uiSongsStore.clearAll();
+  refreshSongSelect();
+  setSongsStatus("Cleared imported songs.");
+  if (modeIsSongs()) {
+    resetFlow();
+  }
+}
+
+if (dom.songImportButton) {
+  dom.songImportButton.addEventListener("click", handleSongImport);
+}
+if (dom.songDeleteButton) {
+  dom.songDeleteButton.addEventListener("click", handleSongDelete);
+}
+if (dom.songClearButton) {
+  dom.songClearButton.addEventListener("click", handleSongClear);
+}
+if (dom.songSelect) {
+  dom.songSelect.addEventListener("change", () => {
+    if (uiSongsStore && typeof uiSongsStore.setLastSelection === "function") {
+      uiSongsStore.setLastSelection(dom.songSelect.value);
+    }
+    if (modeIsSongs()) {
+      resetFlow();
+    }
+  });
+}
+refreshSongSelect();
 
 [
   { key: "allOn", handler: () => toggleAllChords(true) },

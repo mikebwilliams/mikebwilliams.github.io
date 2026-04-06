@@ -17,6 +17,8 @@ let currentIndex = 0;
 let keyIndex = 0;
 let keys = [];
 let selectedProgression = "";
+let currentSongId = "";
+let currentSong = null;
 let currentShellVoicingAlternates = null;
 
 const DEFAULT_START_KEY = "C";
@@ -31,6 +33,8 @@ var dom =
   sharedGlobals.domElements || sharedGlobals.dom || runtimeRoot.dom || {};
 const logicSettingsStore =
   sharedGlobals.settingsStore || runtimeRoot.settingsStore || null;
+const logicSongsStore =
+  sharedGlobals.songsStore || runtimeRoot.songsStore || null;
 const documentAvailable =
   "hasDocument" in sharedGlobals
     ? !!sharedGlobals.hasDocument
@@ -463,6 +467,232 @@ function generateChordName(root, chordType) {
   return root + chordType;
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function isSongChordEntry(entry) {
+  return (
+    !!entry &&
+    typeof entry === "object" &&
+    entry.kind === "songChord" &&
+    typeof entry.playableChord === "string"
+  );
+}
+
+function getSongChordPositionKey(measureIndex, chordIndex) {
+  return `${measureIndex}:${chordIndex}`;
+}
+
+function getSongMeasureBarLabel(bar, location) {
+  if (!bar || typeof bar !== "object") return "";
+  if (bar.kind === "repeatStart") {
+    return location === "left" ? "|:" : ":|";
+  }
+  if (bar.kind === "repeatEnd") return ":|";
+  if (bar.kind === "double" || bar.kind === "final") return "||";
+  return "";
+}
+
+function buildSongTimeSignatureHtml(measure) {
+  if (!measure || !measure.showTimeSignature || !measure.timeSignature)
+    return "";
+  const parts = measure.timeSignature.split("/");
+  if (parts.length !== 2) return "";
+  return `<div class="songMeasureTimeSignature" aria-label="${escapeHtml(measure.timeSignature)}">
+    <span class="songMeasureTimeSignaturePart">${escapeHtml(parts[0])}</span>
+    <span class="songMeasureTimeSignatureDivider"></span>
+    <span class="songMeasureTimeSignaturePart">${escapeHtml(parts[1])}</span>
+  </div>`;
+}
+
+function buildSongBarHtml(bar, location) {
+  if (!bar || typeof bar !== "object") return "";
+  const baseClass = `songMeasureBar songMeasureBar--${escapeHtml(location)}`;
+
+  if (bar.kind === "repeatStart" || bar.kind === "repeatEnd") {
+    const dots =
+      '<span class="songMeasureBarDots"><span></span><span></span></span>';
+    const lines = `
+      <span class="songMeasureBarLine songMeasureBarLine--thin"></span>
+      <span class="songMeasureBarLine songMeasureBarLine--thick"></span>
+    `;
+    return `<div class="${baseClass} songMeasureBar--repeat songMeasureBar--${escapeHtml(bar.kind)}">
+      ${bar.kind === "repeatEnd" ? dots : ""}
+      ${lines}
+      ${bar.kind === "repeatStart" ? dots : ""}
+    </div>`;
+  }
+
+  if (bar.kind === "double") {
+    return `<div class="${baseClass} songMeasureBar songMeasureBar--double">
+      <span class="songMeasureBarLine songMeasureBarLine--thin"></span>
+      <span class="songMeasureBarLine songMeasureBarLine--thin"></span>
+    </div>`;
+  }
+
+  if (bar.kind === "final") {
+    return `<div class="${baseClass} songMeasureBar songMeasureBar--final">
+      <span class="songMeasureBarLine songMeasureBarLine--thin"></span>
+      <span class="songMeasureBarLine songMeasureBarLine--thick"></span>
+    </div>`;
+  }
+
+  return "";
+}
+
+function renderSongChordLabelHtml(label) {
+  return escapeHtml(label).replace(
+    /[♭♯]/g,
+    (symbol) => `<span class="songMeasureAccidental">${symbol}</span>`,
+  );
+}
+
+function buildSongChartHtml(song, activeEntry, completedEntries, hideLabels) {
+  const rows = buildSongDisplayRows(song);
+  if (!rows.length) return "";
+
+  const completedKeys = new Set(
+    (Array.isArray(completedEntries) ? completedEntries : [])
+      .filter(isSongChordEntry)
+      .map((entry) =>
+        getSongChordPositionKey(entry.measureIndex, entry.chordIndex),
+      ),
+  );
+  const activeKey = isSongChordEntry(activeEntry)
+    ? getSongChordPositionKey(activeEntry.measureIndex, activeEntry.chordIndex)
+    : "";
+
+  return `<table class="songChart"><tbody>${rows
+    .map(
+      (row) =>
+        `<tr class="songChartRow">${row
+          .map((measure) => {
+            const section = measure.section
+              ? `<div class="songMeasureSection">${escapeHtml(measure.section)}</div>`
+              : "";
+            const leftRail =
+              section ||
+              measure.leftBar ||
+              (measure.showTimeSignature && measure.timeSignature)
+                ? `<div class="songMeasureLeftMeta">
+                    ${section}
+                    <div class="songMeasureLeftLower">
+                      ${buildSongTimeSignatureHtml(measure)}
+                      ${buildSongBarHtml(measure.leftBar, "left")}
+                    </div>
+                  </div>`
+                : "";
+            const rightRail = buildSongBarHtml(measure.rightBar, "right");
+            const comments = measure.comments.length
+              ? `<div class="songMeasureComments">${measure.comments
+                  .map((comment) => escapeHtml(comment))
+                  .join(" / ")}</div>`
+              : "";
+            const chords = measure.chords.length
+              ? measure.chords
+                  .map((chord) => {
+                    const key = getSongChordPositionKey(
+                      chord.measureIndex,
+                      chord.chordIndex,
+                    );
+                    const classes = ["chord", "songMeasureChord"];
+                    if (key === activeKey) {
+                      classes.push("songMeasureChord--current");
+                    } else if (completedKeys.has(key)) {
+                      classes.push("songMeasureChord--complete");
+                    }
+                    const label = hideLabels ? "?" : chord.label || "";
+                    return `<span class="${classes.join(" ")}" title="${escapeHtml(chord.rawLabel || chord.label || "")}">${hideLabels ? escapeHtml(label) : renderSongChordLabelHtml(label)}</span>`;
+                  })
+                  .join("")
+              : '<span class="songMeasurePlaceholder">&nbsp;</span>';
+
+            return `<td class="songMeasure">
+              <div class="songMeasureFrame">
+                <div class="songMeasureRail songMeasureRail--left">${leftRail}</div>
+                <div class="songMeasureContent">
+                  <div class="songMeasureChords">${chords}</div>
+                  ${comments}
+                </div>
+                <div class="songMeasureRail songMeasureRail--right">${rightRail}</div>
+              </div>
+            </td>`;
+          })
+          .join("")}</tr>`,
+    )
+    .join("")}</tbody></table>`;
+}
+
+function addBassNoteToNotes(notes, bassNote) {
+  if (
+    !bassNote ||
+    !Object.prototype.hasOwnProperty.call(noteValues, bassNote)
+  ) {
+    return notes.slice();
+  }
+  const bassValue = noteValues[bassNote];
+  if (notes.some((note) => normalizePitchClass(note) === bassValue)) {
+    return notes.slice();
+  }
+  return [bassValue].concat(notes);
+}
+
+function resolveProgressionEntry(entry, options = {}) {
+  const wrap = options.wrap !== false;
+  const shouldApplyVoicing = !!options.applyVoicing;
+
+  if (isSongChordEntry(entry)) {
+    let notes = generateNotesFromChordName(entry.playableChord);
+    notes = addBassNoteToNotes(notes, entry.bassNote);
+    if (shouldApplyVoicing) {
+      notes = applySelectedVoicing(notes);
+    }
+    return {
+      name: entry.label,
+      notes,
+      internalName: entry.playableChord,
+    };
+  }
+
+  if (typeof entry !== "string") return null;
+
+  if (isIntervalChord(entry)) {
+    let [name, notes] = getIntervalChordNotesAndName(
+      keys[keyIndex],
+      entry,
+      wrap,
+    );
+    if (shouldApplyVoicing) {
+      notes = applySelectedVoicing(notes);
+    }
+    return {
+      name,
+      notes,
+      internalName: currentChordInternalName,
+    };
+  }
+
+  if (isNamedChord(entry)) {
+    let notes = generateNotesFromChordName(entry);
+    if (shouldApplyVoicing) {
+      notes = applySelectedVoicing(notes);
+    }
+    return {
+      name: generateChordName(entry, ""),
+      notes,
+      internalName: entry,
+    };
+  }
+
+  return null;
+}
+
 function setRandomChord() {
   let lastChordInternalName = currentChordInternalName;
 
@@ -663,12 +893,13 @@ function playAnswerNotes() {
     modeIsScales() ||
     modeIsJazz() ||
     modeIsProgressions() ||
-    modeIsDegrees()
+    modeIsDegrees() ||
+    modeIsSongs()
   ) {
     let offset = 0;
 
     // TODO: Make this smarter based on mode later
-    if (!modeIsScales()) {
+    if (!modeIsScales() && !modeIsSongs()) {
       offset = 2;
 
       // Play the tonic of the key first
@@ -684,13 +915,12 @@ function playAnswerNotes() {
     currentProgression.forEach((chord, index) => {
       setTimeout(
         () => {
-          let [name, notes] = getIntervalChordNotesAndName(
-            keys[keyIndex],
-            chord,
-            false,
-          );
-          // Apply selected voicing to playback as well
-          notes = applySelectedVoicing(notes);
+          const resolved = resolveProgressionEntry(chord, {
+            wrap: false,
+            applyVoicing: true,
+          });
+          if (!resolved) return;
+          const notes = resolved.notes;
           notes.forEach((note) => {
             sendMidiNote(note + 48, 70, 500);
           });
@@ -734,7 +964,7 @@ function checkChord() {
     highlightCorrectKeys();
   };
 
-  if (modeIsChords() || modeIsProgressions() || modeIsJazz()) {
+  if (modeIsChords() || modeIsProgressions() || modeIsJazz() || modeIsSongs()) {
     let cachedIntervals = null;
     const ensureIntervals = () => {
       if (!cachedIntervals) {
@@ -1071,11 +1301,17 @@ function nextKey() {
 
 function loadCurrentProgressionChord() {
   if (!Array.isArray(currentProgression) || !currentProgression.length) {
+    if (modeIsSongs()) {
+      currentChordName = "";
+      currentChordInternalName = "";
+      currentChordNotes = [];
+      return;
+    }
     setRandomChord();
     return;
   }
 
-  if (!keys.length) {
+  if (!keys.length && !modeIsSongs()) {
     const available = updateAvailableKeys();
     if (!available || !available.length) {
       setRandomChord();
@@ -1090,24 +1326,24 @@ function loadCurrentProgressionChord() {
 
   const entry = currentProgression[currentIndex];
   if (!entry) {
+    if (modeIsSongs()) {
+      currentChordName = "";
+      currentChordInternalName = "";
+      currentChordNotes = [];
+      return;
+    }
     setRandomChord();
     return;
   }
 
-  if (isIntervalChord(entry)) {
-    [currentChordName, currentChordNotes] = getIntervalChordNotesAndName(
-      keys[keyIndex],
-      entry,
-    );
-    currentChordNotes = applySelectedVoicing(currentChordNotes);
-    return;
-  }
-
-  if (isNamedChord(entry)) {
-    currentChordName = generateChordName(entry, "");
-    currentChordNotes = generateNotesFromChordName(entry);
-    currentChordInternalName = entry;
-    currentChordNotes = applySelectedVoicing(currentChordNotes);
+  const resolved = resolveProgressionEntry(entry, {
+    wrap: true,
+    applyVoicing: true,
+  });
+  if (resolved) {
+    currentChordName = resolved.name;
+    currentChordNotes = resolved.notes;
+    currentChordInternalName = resolved.internalName;
     return;
   }
 
@@ -1150,6 +1386,8 @@ function resetFlow() {
   currentProgression = [];
   currentProgressionName = "";
   selectedProgression = "";
+  currentSongId = "";
+  currentSong = null;
   scheduledRepeat = null;
   isIncorrect = false;
 
@@ -1157,7 +1395,8 @@ function resetFlow() {
     modeIsProgressions() ||
     modeIsScales() ||
     modeIsDegrees() ||
-    modeIsJazz()
+    modeIsJazz() ||
+    modeIsSongs()
   ) {
     generateProgression();
     loadCurrentProgressionChord();
@@ -1197,7 +1436,8 @@ function nextChord(skip = false) {
     modeIsProgressions() ||
     modeIsScales() ||
     modeIsDegrees() ||
-    modeIsJazz()
+    modeIsJazz() ||
+    modeIsSongs()
   ) {
     currentIndex++;
 
@@ -1211,6 +1451,14 @@ function nextChord(skip = false) {
       currentIndex >= (currentProgression ? currentProgression.length : 0)
     ) {
       if (modeIsProgressions()) {
+        updateResultCounters({
+          wasIncorrect: isIncorrect,
+          skipCorrect: skip,
+          correctElement: dom.cntProgsCorrect,
+          incorrectElement: dom.cntProgsIncorrect,
+          category: "progressions",
+        });
+      } else if (modeIsSongs()) {
         updateResultCounters({
           wasIncorrect: isIncorrect,
           skipCorrect: skip,
@@ -1303,13 +1551,32 @@ function updateDisplay() {
   dom.currentKey.textContent = keys[keyIndex];
 
   if (Array.isArray(currentProgression)) {
-    if (hideNumerals) {
+    const progressionLabel = (entry) =>
+      typeof entry === "string"
+        ? entry
+        : entry && typeof entry.label === "string"
+          ? entry.label
+          : "";
+    if (modeIsSongs() && currentSong) {
+      dom.progressionDisplay.innerHTML = buildSongChartHtml(
+        currentSong,
+        currentProgression[currentIndex],
+        currentProgression.slice(0, currentIndex),
+        hideNumerals,
+      );
+    } else if (hideNumerals) {
       dom.progressionDisplay.innerHTML = currentProgression
-        .map((chord) => `<span class="chord" title="${chord}">?</span>`)
+        .map((chord) => {
+          const label = progressionLabel(chord);
+          return `<span class="chord" title="${escapeHtml(label)}">?</span>`;
+        })
         .join(" - ");
     } else {
       dom.progressionDisplay.innerHTML = currentProgression
-        .map((chord) => `<span class="chord">${chord}</span>`)
+        .map(
+          (chord) =>
+            `<span class="chord">${escapeHtml(progressionLabel(chord))}</span>`,
+        )
         .join(" - ");
     }
   } else {
@@ -1317,17 +1584,20 @@ function updateDisplay() {
   }
 
   if (hideChordName) {
-    dom.cadenceDisplay.innerHTML = " ?";
+    dom.cadenceDisplay.textContent = " ?";
   } else {
-    dom.cadenceDisplay.innerHTML = " " + currentProgressionName;
+    dom.cadenceDisplay.textContent = " " + currentProgressionName;
   }
 
   // Add event listeners to chords to track user input
   document.querySelectorAll(".chord").forEach((chordSpan, index) => {
-    if (currentIndex == index) {
-      chordSpan.style.color = "#0077ff";
-    } else if (currentIndex > index) {
-      chordSpan.style.color = "green";
+    chordSpan.style.color = "";
+    if (!modeIsSongs()) {
+      if (currentIndex == index) {
+        chordSpan.style.color = "#0077ff";
+      } else if (currentIndex > index) {
+        chordSpan.style.color = "green";
+      }
     }
   });
 }
@@ -1570,6 +1840,34 @@ function generateProgression() {
       ];
     currentProgression = enabledCadences[selectedProgression];
     currentProgressionName = enabledNames[selectedProgression];
+  } else if (modeIsSongs()) {
+    currentSongId = dom.songSelect ? dom.songSelect.value || "" : "";
+    if (!currentSongId || !logicSongsStore) {
+      currentProgression = [];
+      currentProgressionName = "";
+      currentSong = null;
+      currentChordName = "";
+      currentChordInternalName = "";
+      currentChordNotes = [];
+      keys = [];
+      return;
+    }
+    const song = logicSongsStore.getSong(currentSongId);
+    if (!song) {
+      currentProgression = [];
+      currentProgressionName = "";
+      currentSong = null;
+      currentChordName = "";
+      currentChordInternalName = "";
+      currentChordNotes = [];
+      keys = [];
+      return;
+    }
+    currentSong = song;
+    currentProgression = buildPlayableSongEntries(song);
+    currentProgressionName = song.title;
+    keys = [song.key];
+    keyIndex = 0;
   }
 }
 
@@ -1593,7 +1891,11 @@ function applyShellVoicing(notes) {
   try {
     if (!Array.isArray(notes)) return notes;
     if (typeof getShellMode !== "function") return notes;
-    if (!(modeIsChords() || modeIsProgressions() || modeIsJazz())) return notes;
+    if (
+      !(modeIsChords() || modeIsProgressions() || modeIsJazz() || modeIsSongs())
+    ) {
+      return notes;
+    }
     const mode = getShellMode();
     if (mode === "off") return notes;
     const result = computeShellVoicing(notes, currentChordInternalName, mode);

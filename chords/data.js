@@ -403,6 +403,7 @@ const optionsPanels = {
 const modeSections = {
   chordOptions: requireElement("panelModeChords"),
   progressionOptions: requireElement("panelModeProgressions"),
+  songsOptions: requireElement("panelModeSongs"),
   degreesOptions: requireElement("panelModeDegrees"),
   scalesOptions: requireElement("panelModeScales"),
   jazzOptions: requireElement("panelModeJazz"),
@@ -437,6 +438,7 @@ const radioGroups = {
   mode: createRadioGroup("mode", [
     { id: "tabModeChords", value: "tabChords", defaultChecked: true },
     { id: "tabModeProgressions", value: "tabProgressions" },
+    { id: "tabModeSongs", value: "tabSongs" },
     { id: "tabModeScales", value: "tabScales" },
     { id: "tabModeDegrees", value: "tabDegrees" },
     { id: "tabModeJazz", value: "tabJazz" },
@@ -547,6 +549,13 @@ const domElements = {
   ),
   progressionOptions: requireElement("panelModeProgressions"),
   progressionSelect: requireElement("selectProgression"),
+  songPanel: requireElement("panelModeSongs"),
+  songUrlInput: requireElement("inputSongsUrl"),
+  songImportButton: requireElement("btnSongsImport"),
+  songDeleteButton: requireElement("btnSongsDelete"),
+  songClearButton: requireElement("btnSongsClear"),
+  songSelect: requireElement("selectSong"),
+  songStatus: requireElement("txtSongsStatus"),
   flowSelect: requireElement("selectFlow"),
   flowResetButton: requireElement("btnFlowReset"),
   flowStartSelect: requireElement("selectFlowStart"),
@@ -1449,6 +1458,7 @@ const SETTINGS_PRESETS_KEY = "chordChallenge.settings.presets";
 const WORKOUTS_STORAGE_KEY = "chordChallenge.workouts";
 const WORKOUTS_SELECTED_KEY = "chordChallenge.workouts.selected";
 const SONGS_STORAGE_KEY = "chordChallenge.songs";
+const SONGS_SELECTED_KEY = "chordChallenge.songs.selected";
 const IREAL_PRO_URI_REGEX = /.*?(irealb(?:ook)?):\/\/([^"]*)/;
 const IREAL_PRO_SCRAMBLE_MARKER = "1r34LbKcu7";
 const IREAL_PRO_CHORD_REGEX =
@@ -1476,6 +1486,80 @@ const IREAL_PRO_TIME_SIGNATURES = {
   T78: "7/8",
   T98: "9/8",
   T12: "12/8",
+};
+const IREAL_PRO_QUALITY_TO_INTERNAL = {
+  "": "",
+  2: "sus2",
+  5: "",
+  add9: "",
+  "+": "aug",
+  o: "dim",
+  sus: "sus4",
+  "^": "",
+  "-": "m",
+  "^7": "M7",
+  "-7": "m7",
+  7: "7",
+  "7sus": "sus4",
+  h7: "m7b5",
+  o7: "dim7",
+  "^9": "M9",
+  "^13": "M13",
+  6: "6",
+  69: "6",
+  "^7#11": "M7",
+  "^9#11": "M9",
+  "^7#5": "augM7",
+  "-6": "m6",
+  "-69": "m6",
+  "-^7": "mM7",
+  "-^9": "mM7",
+  "-9": "m9",
+  "-11": "m11",
+  "-7b5": "m7b5",
+  h9: "m7b5",
+  "-b6": "m6",
+  "-#5": "m",
+  9: "9",
+  "7b9": "7b9",
+  "7#9": "7#9",
+  "7#11": "7#11",
+  "7b5": "7",
+  "7#5": "aug7",
+  "9#11": "9",
+  "9b5": "9",
+  "9#5": "9",
+  "7b13": "7",
+  "7#9#5": "7#9",
+  "7#9b5": "7#9",
+  "7#9#11": "7#9",
+  "7b9#11": "7b9",
+  "7b9b5": "7b9",
+  "7b9#5": "7b9",
+  "7b9#9": "7b9",
+  "7b9b13": "7b9",
+  "7alt": "7",
+  13: "13",
+  "13#11": "13",
+  "13b9": "13",
+  "13#9": "13",
+  "7b9sus": "sus4",
+  "7susadd3": "sus4",
+  "9sus": "sus4",
+  "13sus": "sus4",
+  "7b13sus": "sus4",
+  "11,min13": "11",
+  min13: "m13",
+  "min^11": "m11",
+  "min^13": "m13",
+  "maj13#11": "M13",
+  maj7b5: "M7",
+  "maj7#9": "M7",
+  min7b6: "m7",
+  min9b6: "m9",
+  "maj(add4)": "",
+  "min(add4)": "m",
+  "7(add13)": "7",
 };
 
 function getStorageHandle() {
@@ -2005,7 +2089,44 @@ function parseIRealProSong(recordText, options = {}) {
   };
 }
 
-function extractIRealProPlaylistPayload(sourceText) {
+function parseIRealBookSong(recordText, options = {}) {
+  const normalized = normalizeTextValue(recordText);
+  if (!normalized) {
+    throw new Error("iReal Pro song record is required");
+  }
+  const parts = normalized.split("=");
+  if (parts.length < 6) {
+    throw new Error("Invalid iRealBook song record");
+  }
+  const title = parseIRealProTitle(parts[0]);
+  const composer = parseIRealProComposer(parts[1]);
+  const style = normalizeTextValue(parts[2]);
+  const key = normalizeTextValue(parts[3]);
+  const encodedMusic = parts[5];
+  const decodedMusic = normalizeTextValue(encodedMusic);
+  if (!title || !composer || !style || !key || !decodedMusic) {
+    throw new Error("Incomplete iRealBook song record");
+  }
+  return {
+    id: createIRealProSongId(title, composer),
+    title,
+    composer,
+    style,
+    key,
+    source: {
+      type: "irealpro",
+      playlistTitle: normalizeTextValue(options.playlistTitle),
+    },
+    raw: {
+      encodedRecord: normalized,
+      encodedMusic,
+      decodedMusic,
+    },
+    chart: parseIRealProChart(decodedMusic, { alreadyDecoded: true }),
+  };
+}
+
+function extractIRealProSourceData(sourceText) {
   if (typeof sourceText !== "string" || !sourceText.trim()) {
     throw new Error("iReal Pro playlist text is required");
   }
@@ -2014,14 +2135,17 @@ function extractIRealProPlaylistPayload(sourceText) {
     throw new Error("iReal Pro playlist must include an irealb:// URI");
   }
   try {
-    return decodeURIComponent(matched[2]);
+    return {
+      scheme: matched[1],
+      payload: decodeURIComponent(matched[2]),
+    };
   } catch (_) {
     throw new Error("Invalid iReal Pro URI encoding");
   }
 }
 
 function parseIRealProPlaylist(sourceText) {
-  const playlist = extractIRealProPlaylistPayload(sourceText);
+  const { payload: playlist } = extractIRealProSourceData(sourceText);
   const parts = playlist.split("===");
   const playlistTitle = normalizeTextValue(parts.pop());
   if (!parts.length) {
@@ -2036,6 +2160,263 @@ function parseIRealProPlaylist(sourceText) {
     songs,
     songCount: songs.length,
   };
+}
+
+function parseIRealProSource(sourceText) {
+  const { scheme, payload } = extractIRealProSourceData(sourceText);
+  if (scheme === "irealbook") {
+    const song = parseIRealBookSong(payload);
+    return {
+      sourceType: "irealpro",
+      playlistTitle: "",
+      songs: [song],
+      songCount: 1,
+    };
+  }
+  if (payload.includes("===")) {
+    return parseIRealProPlaylist(sourceText);
+  }
+  const song = parseIRealProSong(payload);
+  return {
+    sourceType: "irealpro",
+    playlistTitle: "",
+    songs: [song],
+    songCount: 1,
+  };
+}
+
+function normalizeIRealProQualityToInternal(quality) {
+  const normalized = normalizeTextValue(quality);
+  if (
+    Object.prototype.hasOwnProperty.call(
+      IREAL_PRO_QUALITY_TO_INTERNAL,
+      normalized,
+    )
+  ) {
+    return IREAL_PRO_QUALITY_TO_INTERNAL[normalized];
+  }
+  if (!normalized || normalized === "^") return "";
+  if (normalized.includes("sus")) return "sus4";
+  if (normalized === "h") return "dim";
+  if (normalized.startsWith("h")) return "m7b5";
+  if (normalized.startsWith("o"))
+    return normalized.includes("7") ? "dim7" : "dim";
+  if (normalized.startsWith("+")) {
+    if (normalized.includes("7")) {
+      return normalized.includes("^") ? "augM7" : "aug7";
+    }
+    return "aug";
+  }
+  if (normalized.startsWith("-")) {
+    if (normalized.includes("7b5")) return "m7b5";
+    if (normalized.includes("13")) return "m13";
+    if (normalized.includes("11")) return "m11";
+    if (normalized.includes("9")) return "m9";
+    if (normalized.includes("^7")) return "mM7";
+    if (normalized.includes("7")) return "m7";
+    if (normalized.includes("6")) return "m6";
+    return "m";
+  }
+  if (normalized.startsWith("^")) {
+    if (normalized.includes("13")) return "M13";
+    if (normalized.includes("9")) return "M9";
+    if (normalized.includes("7")) return "M7";
+    return "";
+  }
+  if (normalized.includes("#11")) return "7#11";
+  if (normalized.includes("#9")) return "7#9";
+  if (normalized.includes("b9")) return "7b9";
+  if (normalized.includes("13")) return "13";
+  if (normalized.includes("11")) return "11";
+  if (normalized.includes("9")) return "9";
+  if (normalized.includes("7")) return "7";
+  if (normalized.includes("6")) return "6";
+  return "";
+}
+
+function cloneSongChordEntry(entry) {
+  return {
+    kind: "songChord",
+    label: entry.label,
+    rawLabel: entry.rawLabel,
+    playableChord: entry.playableChord,
+    bassNote: entry.bassNote,
+    measureIndex: entry.measureIndex,
+    chordIndex: entry.chordIndex,
+    sourceMeasureIndex: entry.sourceMeasureIndex,
+    sourceChordIndex: entry.sourceChordIndex,
+  };
+}
+
+function formatIRealProDisplayNote(note) {
+  return normalizeTextValue(note).replace(/b/g, "♭").replace(/#/g, "♯");
+}
+
+function formatIRealProDisplayQuality(quality) {
+  let formatted = normalizeTextValue(quality);
+  if (!formatted) return "";
+  if (formatted.startsWith("h")) {
+    formatted = "ø" + formatted.slice(1);
+  }
+  return formatted
+    .replace(/maj/g, "Δ")
+    .replace(/min/g, "-")
+    .replace(/\^/g, "Δ")
+    .replace(/o/g, "°")
+    .replace(/#/g, "♯")
+    .replace(/b/g, "♭");
+}
+
+function formatIRealProChordDisplay(chord) {
+  if (!chord || typeof chord !== "object") return "";
+  if (chord.kind === "noChord") return "N.C.";
+  if (chord.kind === "repeatOne") return "%";
+  if (chord.kind === "repeatTwo") return "%%";
+
+  const root = formatIRealProDisplayNote(chord.root);
+  const quality = formatIRealProDisplayQuality(chord.quality);
+  const bass =
+    chord.bass && chord.bass.root
+      ? `/${formatIRealProDisplayNote(chord.bass.root)}`
+      : "";
+  const alternate = chord.alternate
+    ? ` (${formatIRealProChordDisplay(chord.alternate)})`
+    : "";
+
+  if (root && chord.kind !== "invisibleRoot" && chord.kind !== "slash") {
+    return `${root}${quality}${bass}${alternate}`;
+  }
+
+  const raw = normalizeTextValue(chord.raw);
+  return raw.replace(/\^/g, "Δ").replace(/#/g, "♯").replace(/b/g, "♭");
+}
+
+function buildPlayableSongEntry(chord, measureIndex, chordIndex) {
+  if (!chord || chord.kind !== "chord" || !chord.root) return null;
+  return {
+    kind: "songChord",
+    label: formatIRealProChordDisplay(chord),
+    rawLabel: chord.raw || chord.root,
+    playableChord:
+      chord.root + normalizeIRealProQualityToInternal(chord.quality || ""),
+    bassNote: chord.bass && chord.bass.root ? chord.bass.root : "",
+    measureIndex,
+    chordIndex,
+    sourceMeasureIndex: measureIndex,
+    sourceChordIndex: chordIndex,
+  };
+}
+
+function buildPlayableSongEntries(song) {
+  if (!song || typeof song !== "object") return [];
+  const chart =
+    song.chart && Array.isArray(song.chart.measures)
+      ? song.chart
+      : song.raw && typeof song.raw.decodedMusic === "string"
+        ? parseIRealProChart(song.raw.decodedMusic, { alreadyDecoded: true })
+        : null;
+  if (!chart) return [];
+  const resolvedMeasures = [];
+  const sequence = [];
+  chart.measures.forEach((measure, measureIndex) => {
+    let measureEntries = [];
+    let hasRepeatOne = false;
+    let hasRepeatTwo = false;
+    let repeatChordIndex = -1;
+    (measure.chords || []).forEach((chord, chordIndex) => {
+      if (chord.kind === "repeatOne") {
+        hasRepeatOne = true;
+        repeatChordIndex = chordIndex;
+        return;
+      }
+      if (chord.kind === "repeatTwo") {
+        hasRepeatTwo = true;
+        repeatChordIndex = chordIndex;
+        return;
+      }
+      const entry = buildPlayableSongEntry(chord, measureIndex, chordIndex);
+      if (entry) measureEntries.push(entry);
+    });
+    if (!measureEntries.length && hasRepeatTwo && resolvedMeasures.length) {
+      measureEntries = resolvedMeasures
+        .slice(-2)
+        .flat()
+        .map((entry) => ({
+          ...cloneSongChordEntry(entry),
+          measureIndex,
+          chordIndex: repeatChordIndex >= 0 ? repeatChordIndex : 0,
+        }));
+    } else if (
+      !measureEntries.length &&
+      hasRepeatOne &&
+      resolvedMeasures.length
+    ) {
+      measureEntries = resolvedMeasures[resolvedMeasures.length - 1].map(
+        (entry) => ({
+          ...cloneSongChordEntry(entry),
+          measureIndex,
+          chordIndex: repeatChordIndex >= 0 ? repeatChordIndex : 0,
+        }),
+      );
+    }
+    resolvedMeasures.push(measureEntries);
+    measureEntries.forEach((entry) => {
+      sequence.push(cloneSongChordEntry(entry));
+    });
+  });
+  return sequence;
+}
+
+function formatSongMeasureChordLabel(chord) {
+  return formatIRealProChordDisplay(chord);
+}
+
+function buildSongDisplayRows(song, barsPerRow = 4) {
+  if (!song || typeof song !== "object") return [];
+  const chart =
+    song.chart && Array.isArray(song.chart.measures)
+      ? song.chart
+      : song.raw && typeof song.raw.decodedMusic === "string"
+        ? parseIRealProChart(song.raw.decodedMusic, { alreadyDecoded: true })
+        : null;
+  if (!chart || !Array.isArray(chart.measures) || barsPerRow < 1) {
+    return [];
+  }
+
+  let previousTimeSignature = "";
+  const measures = chart.measures.map((measure, measureIndex) => {
+    const timeSignature = normalizeTextValue(measure.timeSignature);
+    const result = {
+      index: measure.index,
+      measureIndex,
+      timeSignature,
+      showTimeSignature:
+        !!timeSignature &&
+        (measureIndex === 0 || timeSignature !== previousTimeSignature),
+      section: normalizeTextValue(measure.section),
+      comments: Array.isArray(measure.comments) ? measure.comments.slice() : [],
+      leftBar: measure.leftBar ? cloneObject(measure.leftBar) : null,
+      rightBar: measure.rightBar ? cloneObject(measure.rightBar) : null,
+      finalBar: !!measure.finalBar,
+      chords: Array.isArray(measure.chords)
+        ? measure.chords.map((chord, chordIndex) => ({
+            measureIndex,
+            chordIndex,
+            kind: normalizeTextValue(chord.kind),
+            rawLabel: normalizeTextValue(chord.raw),
+            label: formatSongMeasureChordLabel(chord),
+          }))
+        : [],
+    };
+    previousTimeSignature = timeSignature || previousTimeSignature;
+    return result;
+  });
+
+  const rows = [];
+  for (let index = 0; index < measures.length; index += barsPerRow) {
+    rows.push(measures.slice(index, index + barsPerRow));
+  }
+  return rows;
 }
 
 function compactIRealProSongForStorage(song) {
@@ -2107,6 +2488,7 @@ function songsStoreFactory() {
   const store = {
     storage: getStorageHandle(),
     storageKey: SONGS_STORAGE_KEY,
+    selectedKey: SONGS_SELECTED_KEY,
     resolveStorage() {
       if (this.storage) return this.storage;
       const handle = getStorageHandle();
@@ -2133,6 +2515,33 @@ function songsStoreFactory() {
           JSON.stringify(sanitizeStoredSongsMap(songMap)),
         );
       } catch (_) {}
+    },
+    getLastSelection() {
+      const activeStorage = this.resolveStorage();
+      if (!activeStorage) return "";
+      try {
+        const raw = activeStorage.getItem(this.selectedKey);
+        const songId = normalizeTextValue(raw);
+        if (!songId) return "";
+        return this.hasSong(songId) ? songId : "";
+      } catch (_) {
+        return "";
+      }
+    },
+    setLastSelection(id) {
+      const activeStorage = this.resolveStorage();
+      if (!activeStorage) return false;
+      const songId = normalizeTextValue(id);
+      try {
+        if (!songId || !this.hasSong(songId)) {
+          activeStorage.removeItem(this.selectedKey);
+          return false;
+        }
+        activeStorage.setItem(this.selectedKey, songId);
+        return true;
+      } catch (_) {
+        return false;
+      }
     },
     loadAll() {
       const entries = this.loadStoredEntries();
@@ -2185,20 +2594,60 @@ function songsStoreFactory() {
     importPlaylist(sourceText) {
       const playlist = parseIRealProPlaylist(sourceText);
       const importedCount = this.upsertSongs(playlist.songs);
+      const selectedSongId = playlist.songs[0] ? playlist.songs[0].id : "";
+      this.setLastSelection(selectedSongId);
       return {
         playlistTitle: playlist.playlistTitle,
         importedCount,
+        selectedSongId,
         totalSongs: this.listSongs().length,
       };
     },
+    importSource(sourceText) {
+      const parsed = parseIRealProSource(sourceText);
+      const importedIds = parsed.songs.map((song) => song.id);
+      const importedCount = this.upsertSongs(parsed.songs);
+      const selectedSongId = importedIds[0] || "";
+      this.setLastSelection(selectedSongId);
+      return {
+        playlistTitle: parsed.playlistTitle,
+        importedCount,
+        importedIds,
+        selectedSongId,
+        totalSongs: this.listSongs().length,
+      };
+    },
+    deleteSong(id) {
+      const songId = normalizeTextValue(id);
+      if (!songId) return false;
+      const entries = this.loadStoredEntries();
+      const previousSelection = this.getLastSelection();
+      if (!Object.prototype.hasOwnProperty.call(entries, songId)) {
+        return false;
+      }
+      delete entries[songId];
+      this.saveStoredEntries(entries);
+      if (previousSelection === songId) {
+        const remainingIds = Object.keys(entries).sort((a, b) =>
+          compareStoredSongs(entries[a], entries[b]),
+        );
+        this.setLastSelection(remainingIds[0] || "");
+      }
+      return true;
+    },
     replaceAll(songMap) {
       this.saveStoredEntries(songMap);
+      const current = this.getLastSelection();
+      if (current) {
+        this.setLastSelection(current);
+      }
     },
     clearAll() {
       const activeStorage = this.resolveStorage();
       if (!activeStorage) return;
       try {
         activeStorage.removeItem(this.storageKey);
+        activeStorage.removeItem(this.selectedKey);
       } catch (_) {}
     },
   };
@@ -3039,6 +3488,10 @@ const dataExports = {
   parseIRealProChart,
   parseIRealProSong,
   parseIRealProPlaylist,
+  parseIRealProSource,
+  buildPlayableSongEntries,
+  buildSongDisplayRows,
+  formatIRealProChordDisplay,
   settingsStore,
   workoutStore,
   songsStore,
