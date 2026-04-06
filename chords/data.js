@@ -555,6 +555,10 @@ const domElements = {
   songDeleteButton: requireElement("btnSongsDelete"),
   songClearButton: requireElement("btnSongsClear"),
   songSelect: requireElement("selectSong"),
+  songFavoriteToggle: requireElement("chkSongFavorite"),
+  songFinishAction: requireElement("selectSongFinishAction"),
+  songRepeatCount: requireElement("inputSongRepeatCount"),
+  songCountGoals: requireElement("chkSongCountsTowardGoals"),
   songStatus: requireElement("txtSongsStatus"),
   flowSelect: requireElement("selectFlow"),
   flowResetButton: requireElement("btnFlowReset"),
@@ -1459,6 +1463,15 @@ const WORKOUTS_STORAGE_KEY = "chordChallenge.workouts";
 const WORKOUTS_SELECTED_KEY = "chordChallenge.workouts.selected";
 const SONGS_STORAGE_KEY = "chordChallenge.songs";
 const SONGS_SELECTED_KEY = "chordChallenge.songs.selected";
+const SONGS_FINISH_ACTIONS = {
+  nothing: "nothing",
+  nextFavorite: "nextFavorite",
+  randomFavorite: "randomFavorite",
+  nextSong: "nextSong",
+  randomSong: "randomSong",
+};
+const SONGS_FINISH_ACTION_VALUES = Object.values(SONGS_FINISH_ACTIONS);
+const DEFAULT_SONG_REPEAT_COUNT = 3;
 const IREAL_PRO_URI_REGEX = /.*?(irealb(?:ook)?):\/\/([^"]*)/;
 const IREAL_PRO_SCRAMBLE_MARKER = "1r34LbKcu7";
 const IREAL_PRO_CHORD_REGEX =
@@ -1630,6 +1643,107 @@ function createIRealProSongId(title, composer) {
   const titlePart = normalizeIRealProIdentityPart(title) || "untitled";
   const composerPart = normalizeIRealProIdentityPart(composer) || "unknown";
   return `${titlePart}--${composerPart}`;
+}
+
+function sanitizeSongRepeatCount(value) {
+  const parsed = parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed < 1) return DEFAULT_SONG_REPEAT_COUNT;
+  if (parsed > 99) return 99;
+  return parsed;
+}
+
+function sanitizeSongFinishAction(value) {
+  const normalized = normalizeTextValue(value);
+  return SONGS_FINISH_ACTION_VALUES.includes(normalized)
+    ? normalized
+    : SONGS_FINISH_ACTIONS.nothing;
+}
+
+function sanitizeSongsPracticeSettings(source) {
+  const settings =
+    source && typeof source === "object"
+      ? source.songs && typeof source.songs === "object"
+        ? source.songs
+        : source
+      : {};
+  return {
+    finishAction: sanitizeSongFinishAction(settings.finishAction),
+    repeatCount: sanitizeSongRepeatCount(settings.repeatCount),
+    countChordsTowardGoals:
+      !settings ||
+      !Object.prototype.hasOwnProperty.call(settings, "countChordsTowardGoals")
+        ? true
+        : !!settings.countChordsTowardGoals,
+  };
+}
+
+function pickRandomSongId(songs, currentSongId, randomValue = Math.random()) {
+  if (!Array.isArray(songs) || !songs.length) return "";
+  const ids = songs
+    .map((song) => normalizeTextValue(song && song.id))
+    .filter(Boolean);
+  if (!ids.length) return "";
+  let candidates = ids.slice();
+  const currentId = normalizeTextValue(currentSongId);
+  if (currentId && candidates.length > 1) {
+    candidates = candidates.filter((id) => id !== currentId);
+  }
+  if (!candidates.length) candidates = ids.slice();
+  const bounded =
+    typeof randomValue === "number" && Number.isFinite(randomValue)
+      ? Math.max(0, Math.min(0.999999, randomValue))
+      : 0;
+  return candidates[Math.floor(bounded * candidates.length)] || candidates[0];
+}
+
+function pickSongIdForFinishAction(
+  songs,
+  currentSongId,
+  finishAction,
+  randomValue,
+) {
+  const orderedSongs = Array.isArray(songs)
+    ? songs.filter((song) => song && normalizeTextValue(song.id))
+    : [];
+  if (!orderedSongs.length) return "";
+
+  const currentId = normalizeTextValue(currentSongId);
+  const fallbackId =
+    orderedSongs.find((song) => song.id === currentId)?.id ||
+    orderedSongs[0].id;
+  const action = sanitizeSongFinishAction(finishAction);
+
+  if (action === SONGS_FINISH_ACTIONS.nothing) {
+    return fallbackId;
+  }
+
+  if (action === SONGS_FINISH_ACTIONS.nextSong) {
+    const currentIndex = orderedSongs.findIndex(
+      (song) => song.id === currentId,
+    );
+    if (currentIndex < 0) return orderedSongs[0].id;
+    return orderedSongs[(currentIndex + 1) % orderedSongs.length].id;
+  }
+
+  if (action === SONGS_FINISH_ACTIONS.randomSong) {
+    return pickRandomSongId(orderedSongs, currentId, randomValue);
+  }
+
+  const favorites = orderedSongs.filter((song) => !!song.favorite);
+  if (!favorites.length) return fallbackId;
+
+  if (action === SONGS_FINISH_ACTIONS.randomFavorite) {
+    return pickRandomSongId(favorites, currentId, randomValue);
+  }
+
+  const currentIndex = orderedSongs.findIndex((song) => song.id === currentId);
+  if (currentIndex < 0) return favorites[0].id;
+  for (let offset = 1; offset <= orderedSongs.length; offset += 1) {
+    const candidate =
+      orderedSongs[(currentIndex + offset) % orderedSongs.length];
+    if (candidate && candidate.favorite) return candidate.id;
+  }
+  return favorites[0].id;
 }
 
 function obfuscateIRealPro50Segment(segment) {
@@ -2425,6 +2539,7 @@ function compactIRealProSongForStorage(song) {
   const composer = normalizeTextValue(song.composer);
   const style = normalizeTextValue(song.style);
   const key = normalizeTextValue(song.key);
+  const favorite = !!song.favorite;
   const playlistTitle = normalizeTextValue(
     song.source && song.source.playlistTitle,
   );
@@ -2442,6 +2557,7 @@ function compactIRealProSongForStorage(song) {
     composer,
     style,
     key,
+    favorite,
     source: {
       type: "irealpro",
       playlistTitle,
@@ -2563,6 +2679,7 @@ function songsStoreFactory() {
           composer: song.composer,
           style: song.style,
           key: song.key,
+          favorite: !!song.favorite,
           playlistTitle: song.source.playlistTitle,
         }));
     },
@@ -2585,6 +2702,13 @@ function songsStoreFactory() {
       (Array.isArray(songs) ? songs : []).forEach((song) => {
         const compact = compactIRealProSongForStorage(song);
         if (!compact) return;
+        const hasExplicitFavorite =
+          !!song &&
+          typeof song === "object" &&
+          Object.prototype.hasOwnProperty.call(song, "favorite");
+        if (!hasExplicitFavorite && entries[compact.id]) {
+          compact.favorite = !!entries[compact.id].favorite;
+        }
         entries[compact.id] = compact;
         upserted += 1;
       });
@@ -2633,6 +2757,20 @@ function songsStoreFactory() {
         );
         this.setLastSelection(remainingIds[0] || "");
       }
+      return true;
+    },
+    setFavorite(id, favorite) {
+      const songId = normalizeTextValue(id);
+      if (!songId) return false;
+      const entries = this.loadStoredEntries();
+      if (!Object.prototype.hasOwnProperty.call(entries, songId)) {
+        return false;
+      }
+      entries[songId] = {
+        ...entries[songId],
+        favorite: !!favorite,
+      };
+      this.saveStoredEntries(entries);
       return true;
     },
     replaceAll(songMap) {
@@ -3146,6 +3284,11 @@ function captureSimpleSettings() {
         domElements.customProgressionInput.value || "I-II-iii-IV-V-vi-viio-I",
       randomCount: parseInt(domElements.randomProgressionCount.value, 10) || 5,
     },
+    songs: sanitizeSongsPracticeSettings({
+      finishAction: domElements.songFinishAction.value,
+      repeatCount: domElements.songRepeatCount.value,
+      countChordsTowardGoals: !!domElements.songCountGoals.checked,
+    }),
     voicing: {
       mode: getRadioValue("voicingMode", "default"),
     },
@@ -3225,6 +3368,12 @@ function applySimpleSettings(settings) {
     domElements.randomProgressionCount.value = String(
       settings.progression.randomCount,
     );
+  }
+  if (settings.songs) {
+    const songSettings = sanitizeSongsPracticeSettings(settings.songs);
+    domElements.songFinishAction.value = songSettings.finishAction;
+    domElements.songRepeatCount.value = String(songSettings.repeatCount);
+    domElements.songCountGoals.checked = !!songSettings.countChordsTowardGoals;
   }
   if (settings.voicing) {
     setRadioValue("voicingMode", settings.voicing.mode);
@@ -3394,6 +3543,9 @@ function settingsStoreFactory() {
       this.watchElement(domElements.progressionSelect);
       this.watchElement(domElements.customProgressionInput, "input");
       this.watchElement(domElements.randomProgressionCount, "input");
+      this.watchElement(domElements.songFinishAction);
+      this.watchElement(domElements.songRepeatCount, "input");
+      this.watchElement(domElements.songCountGoals);
       Object.values(domElements.statGoals || {}).forEach((group) => {
         if (!group) return;
         this.watchElement(group.correct, "input");
@@ -3451,6 +3603,12 @@ appGlobals.songsStore = songsStore;
 if (appGlobals.root) {
   appGlobals.root.songsStore = songsStore;
 }
+appGlobals.sanitizeSongsPracticeSettings = sanitizeSongsPracticeSettings;
+appGlobals.pickSongIdForFinishAction = pickSongIdForFinishAction;
+if (appGlobals.root) {
+  appGlobals.root.sanitizeSongsPracticeSettings = sanitizeSongsPracticeSettings;
+  appGlobals.root.pickSongIdForFinishAction = pickSongIdForFinishAction;
+}
 
 const dataExports = {
   allNotes,
@@ -3492,6 +3650,8 @@ const dataExports = {
   buildPlayableSongEntries,
   buildSongDisplayRows,
   formatIRealProChordDisplay,
+  sanitizeSongsPracticeSettings,
+  pickSongIdForFinishAction,
   settingsStore,
   workoutStore,
   songsStore,

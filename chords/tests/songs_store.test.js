@@ -22,7 +22,11 @@ const storageMock = (() => {
 
 global.localStorage = storageMock;
 
-const { songsStore } = require("../data.js");
+const {
+  songsStore,
+  sanitizeSongsPracticeSettings,
+  pickSongIdForFinishAction,
+} = require("../data.js");
 
 const tests = [];
 function test(name, fn) {
@@ -72,6 +76,85 @@ test("songs store persists last selected song and falls back after delete", () =
     songsStore.getLastSelection(),
     "",
     "selection should clear when songs are cleared",
+  );
+});
+
+test("songs store preserves favorites across re-import and song settings sanitize cleanly", () => {
+  storageMock.clear();
+  songsStore.clearAll();
+
+  songsStore.importSource(
+    "irealbook://Favorite Study=Doe Jane=Medium Swing=C=n=[*AT44C7 |F7 Z",
+  );
+
+  const firstSong = songsStore.listSongs()[0];
+  assert(firstSong, "song should exist after import");
+
+  songsStore.setFavorite(firstSong.id, true);
+  assert.strictEqual(
+    songsStore.getSong(firstSong.id).favorite,
+    true,
+    "favorite flag should persist after toggle",
+  );
+
+  songsStore.importSource(
+    "irealbook://Favorite Study=Doe Jane=Medium Swing=C=n=[*AT44C7 |G7 Z",
+  );
+
+  assert.strictEqual(
+    songsStore.getSong(firstSong.id).favorite,
+    true,
+    "re-import should preserve an existing favorite flag",
+  );
+
+  assert.deepStrictEqual(
+    sanitizeSongsPracticeSettings({
+      finishAction: "bogus",
+      repeatCount: "0",
+      countChordsTowardGoals: false,
+    }),
+    {
+      finishAction: "nothing",
+      repeatCount: 3,
+      countChordsTowardGoals: false,
+    },
+  );
+});
+
+test("song finish actions choose the expected next song", () => {
+  const songs = [
+    { id: "alpha", favorite: false },
+    { id: "beta", favorite: true },
+    { id: "gamma", favorite: true },
+  ];
+
+  assert.strictEqual(
+    pickSongIdForFinishAction(songs, "alpha", "nextFavorite"),
+    "beta",
+  );
+  assert.strictEqual(
+    pickSongIdForFinishAction(songs, "beta", "nextFavorite"),
+    "gamma",
+  );
+  assert.strictEqual(
+    pickSongIdForFinishAction(songs, "gamma", "nextFavorite"),
+    "beta",
+  );
+  assert.strictEqual(
+    pickSongIdForFinishAction(songs, "alpha", "nextSong"),
+    "beta",
+  );
+  assert.strictEqual(
+    pickSongIdForFinishAction(songs, "gamma", "nextSong"),
+    "alpha",
+  );
+  assert.strictEqual(
+    pickSongIdForFinishAction(songs, "gamma", "randomFavorite", 0),
+    "beta",
+  );
+  assert.strictEqual(
+    pickSongIdForFinishAction(songs, "alpha", "randomSong", 0.8),
+    "gamma",
   );
 });
 

@@ -1131,6 +1131,37 @@
         <div class="tabContent" id="panelModeSongs">
           <label class="songsFieldLabel" for="selectSong">Saved Songs</label>
           <select id="selectSong"></select>
+          <label class="songsCheckboxRow" for="chkSongFavorite">
+            <input type="checkbox" id="chkSongFavorite" />
+            <span>Favorite selected song</span>
+          </label>
+          <div class="songsControlGrid">
+            <label class="songsControlField" for="selectSongFinishAction">
+              <span class="songsFieldLabel">When Song Finishes</span>
+              <select id="selectSongFinishAction">
+                <option value="nothing">Nothing</option>
+                <option value="nextFavorite">Next Favorite</option>
+                <option value="randomFavorite">Random Favorite</option>
+                <option value="nextSong">Next Song</option>
+                <option value="randomSong">Random Song</option>
+              </select>
+            </label>
+            <label class="songsControlField" for="inputSongRepeatCount">
+              <span class="songsFieldLabel">Repeats Before Finish</span>
+              <input
+                id="inputSongRepeatCount"
+                type="number"
+                min="1"
+                max="99"
+                step="1"
+                value="3"
+              />
+            </label>
+            <label class="songsCheckboxRow" for="chkSongCountsTowardGoals">
+              <input type="checkbox" id="chkSongCountsTowardGoals" checked />
+              <span>Count song chords toward daily goals</span>
+            </label>
+          </div>
           <div class="songsActions">
             <button id="btnSongsDelete" type="button">Delete Selected</button>
             <button id="btnSongsClear" type="button">Clear Songs</button>

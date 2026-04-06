@@ -1152,9 +1152,34 @@ input[type="text"]:focus {
 }
 
 .songsUrlInput,
-#selectSong {
+#selectSong,
+#selectSongFinishAction,
+#inputSongRepeatCount {
   width: 100%;
   max-width: 720px;
+}
+
+.songsControlGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px 14px;
+  max-width: 720px;
+  margin-top: 10px;
+}
+
+.songsControlField {
+  display: block;
+}
+
+.songsCheckboxRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.songsCheckboxRow input[type="checkbox"] {
+  margin: 0;
 }
 
 .songsUrlInput {

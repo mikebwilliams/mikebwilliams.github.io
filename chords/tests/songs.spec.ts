@@ -117,6 +117,10 @@ test("Songs tab restores the last selected song after reload", async ({
   await page.click("#btnSongsImport");
 
   await page.selectOption("#selectSong", { label: "Alpha Study - Jane Doe" });
+  await page.check("#chkSongFavorite");
+  await page.selectOption("#selectSongFinishAction", "nextFavorite");
+  await page.fill("#inputSongRepeatCount", "5");
+  await page.uncheck("#chkSongCountsTowardGoals");
   await expect(page.locator("#selectSong")).toHaveValue(
     /alpha-study--jane-doe/,
   );
@@ -127,5 +131,44 @@ test("Songs tab restores the last selected song after reload", async ({
   await expect(page.locator("#selectSong")).toHaveValue(
     /alpha-study--jane-doe/,
   );
+  await expect(page.locator("#chkSongFavorite")).toBeChecked();
+  await expect(page.locator("#selectSongFinishAction")).toHaveValue(
+    "nextFavorite",
+  );
+  await expect(page.locator("#inputSongRepeatCount")).toHaveValue("5");
+  await expect(page.locator("#chkSongCountsTowardGoals")).not.toBeChecked();
   await expect(page.locator("#txtCadence")).toContainText("Alpha Study");
+});
+
+test("Songs tab advances to the next favorite after the configured repeat count", async ({
+  page,
+}) => {
+  const firstSongUrl =
+    "irealbook://Alpha Study=Doe Jane=Medium Swing=C=n=[*AT44C7 Z";
+  const secondSongUrl =
+    "irealbook://Beta Study=Doe Jane=Medium Swing=F=n=[*AT44F7 Z";
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.click("label[for='tabModeSongs']");
+
+  await page.fill("#inputSongsUrl", firstSongUrl);
+  await page.click("#btnSongsImport");
+  await page.fill("#inputSongsUrl", secondSongUrl);
+  await page.click("#btnSongsImport");
+
+  await page.selectOption("#selectSong", { label: "Beta Study - Jane Doe" });
+  await page.check("#chkSongFavorite");
+  await page.selectOption("#selectSong", { label: "Alpha Study - Jane Doe" });
+  await page.selectOption("#selectSongFinishAction", "nextFavorite");
+  await page.fill("#inputSongRepeatCount", "1");
+
+  await page.evaluate(() => {
+    nextChord(false);
+  });
+
+  await expect(page.locator("#selectSong")).toHaveValue(/beta-study--jane-doe/);
+  await expect(page.locator("#txtCadence")).toContainText("Beta Study");
 });

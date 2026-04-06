@@ -19,6 +19,7 @@ let keys = [];
 let selectedProgression = "";
 let currentSongId = "";
 let currentSong = null;
+let currentSongCompletedPasses = 0;
 let currentShellVoicingAlternates = null;
 
 const DEFAULT_START_KEY = "C";
@@ -35,6 +36,31 @@ const logicSettingsStore =
   sharedGlobals.settingsStore || runtimeRoot.settingsStore || null;
 const logicSongsStore =
   sharedGlobals.songsStore || runtimeRoot.songsStore || null;
+const logicSanitizeSongsPracticeSettings =
+  sharedGlobals.sanitizeSongsPracticeSettings ||
+  runtimeRoot.sanitizeSongsPracticeSettings ||
+  ((source) => ({
+    finishAction:
+      source && typeof source.finishAction === "string"
+        ? source.finishAction
+        : "nothing",
+    repeatCount: Math.max(1, parseInt(source && source.repeatCount, 10) || 3),
+    countChordsTowardGoals:
+      !source ||
+      !Object.prototype.hasOwnProperty.call(source, "countChordsTowardGoals")
+        ? true
+        : !!source.countChordsTowardGoals,
+  }));
+const logicPickSongIdForFinishAction =
+  sharedGlobals.pickSongIdForFinishAction ||
+  runtimeRoot.pickSongIdForFinishAction ||
+  ((songs, currentSongId) => {
+    const currentId = typeof currentSongId === "string" ? currentSongId : "";
+    if (!Array.isArray(songs) || !songs.length) return currentId;
+    return (
+      songs.find((song) => song && song.id === currentId)?.id || songs[0].id
+    );
+  });
 const documentAvailable =
   "hasDocument" in sharedGlobals
     ? !!sharedGlobals.hasDocument
@@ -820,6 +846,62 @@ function updateResultCounters({
   }
 }
 
+function getSongPracticeSettings() {
+  return logicSanitizeSongsPracticeSettings({
+    finishAction: dom.songFinishAction ? dom.songFinishAction.value : "nothing",
+    repeatCount: dom.songRepeatCount ? dom.songRepeatCount.value : 3,
+    countChordsTowardGoals: dom.songCountGoals
+      ? !!dom.songCountGoals.checked
+      : true,
+  });
+}
+
+function recordSongChordCompletion() {
+  if (!modeIsSongs()) return;
+  const songSettings = getSongPracticeSettings();
+  if (!songSettings.countChordsTowardGoals) return;
+  updateResultCounters({
+    wasIncorrect: isIncorrect,
+    correctElement: dom.cntChordsCorrect,
+    incorrectElement: dom.cntChordsIncorrect,
+    category: "chords",
+  });
+}
+
+function syncSelectedSongControls(songId) {
+  if (
+    logicSongsStore &&
+    typeof logicSongsStore.setLastSelection === "function"
+  ) {
+    logicSongsStore.setLastSelection(songId);
+  }
+  if (dom.songFavoriteToggle && logicSongsStore) {
+    const song = songId ? logicSongsStore.getSong(songId) : null;
+    dom.songFavoriteToggle.checked = !!(song && song.favorite);
+    dom.songFavoriteToggle.disabled = !song;
+  }
+}
+
+function applySelectedSong(songId) {
+  if (!dom.songSelect) return "";
+  const targetId = typeof songId === "string" ? songId.trim() : "";
+  if (!targetId) return dom.songSelect.value || "";
+  dom.songSelect.value = targetId;
+  syncSelectedSongControls(dom.songSelect.value || "");
+  return dom.songSelect.value || "";
+}
+
+function chooseSongAfterFinish() {
+  const songs = logicSongsStore ? logicSongsStore.listSongs() : [];
+  const settings = getSongPracticeSettings();
+  return logicPickSongIdForFinishAction(
+    songs,
+    currentSongId,
+    settings.finishAction,
+    Math.random(),
+  );
+}
+
 function recordChordCompletion() {
   spacedRepHandleResult("chord", currentChordInternalName, isIncorrect);
   updateResultCounters({
@@ -957,6 +1039,8 @@ function checkChord() {
       recordChordCompletion();
     } else if (modeIsDegrees()) {
       recordDegreeCompletion();
+    } else if (modeIsSongs()) {
+      recordSongChordCompletion();
     }
 
     clearTimeout(highlightTimer);
@@ -1388,6 +1472,7 @@ function resetFlow() {
   selectedProgression = "";
   currentSongId = "";
   currentSong = null;
+  currentSongCompletedPasses = 0;
   scheduledRepeat = null;
   isIncorrect = false;
 
@@ -1450,6 +1535,8 @@ function nextChord(skip = false) {
       skip ||
       currentIndex >= (currentProgression ? currentProgression.length : 0)
     ) {
+      let shouldAdvanceKey = true;
+      let shouldResetIncorrect = true;
       if (modeIsProgressions()) {
         updateResultCounters({
           wasIncorrect: isIncorrect,
@@ -1459,13 +1546,30 @@ function nextChord(skip = false) {
           category: "progressions",
         });
       } else if (modeIsSongs()) {
-        updateResultCounters({
-          wasIncorrect: isIncorrect,
-          skipCorrect: skip,
-          correctElement: dom.cntProgsCorrect,
-          incorrectElement: dom.cntProgsIncorrect,
-          category: "progressions",
-        });
+        shouldAdvanceKey = false;
+        let shouldFinishSong = !!skip;
+        if (skip) {
+          currentSongCompletedPasses = 0;
+        } else {
+          currentSongCompletedPasses += 1;
+          const songSettings = getSongPracticeSettings();
+          if (currentSongCompletedPasses >= songSettings.repeatCount) {
+            currentSongCompletedPasses = 0;
+            shouldFinishSong = true;
+          } else {
+            shouldResetIncorrect = false;
+          }
+        }
+        if (shouldFinishSong) {
+          updateResultCounters({
+            wasIncorrect: isIncorrect,
+            skipCorrect: skip,
+            correctElement: dom.cntProgsCorrect,
+            incorrectElement: dom.cntProgsIncorrect,
+            category: "progressions",
+          });
+          applySelectedSong(chooseSongAfterFinish());
+        }
       } else if (modeIsJazz()) {
         // Handle Jazz Brick spaced repetition using unified queue
         spacedRepHandleResult("brick", selectedProgression, isIncorrect);
@@ -1486,9 +1590,13 @@ function nextChord(skip = false) {
         });
       }
 
-      isIncorrect = false;
+      if (shouldResetIncorrect) {
+        isIncorrect = false;
+      }
 
-      nextKey();
+      if (shouldAdvanceKey) {
+        nextKey();
+      }
       generateProgression();
 
       if (dom.sendMidiNotes.checked) {
@@ -1841,7 +1949,11 @@ function generateProgression() {
     currentProgression = enabledCadences[selectedProgression];
     currentProgressionName = enabledNames[selectedProgression];
   } else if (modeIsSongs()) {
-    currentSongId = dom.songSelect ? dom.songSelect.value || "" : "";
+    const selectedSongId = dom.songSelect ? dom.songSelect.value || "" : "";
+    if (selectedSongId !== currentSongId) {
+      currentSongCompletedPasses = 0;
+    }
+    currentSongId = selectedSongId;
     if (!currentSongId || !logicSongsStore) {
       currentProgression = [];
       currentProgressionName = "";
@@ -1912,6 +2024,8 @@ function handleTypedVoicingSuccess() {
   dom.chordDisplay.classList.add("correct");
   if (modeIsChords()) {
     recordChordCompletion();
+  } else if (modeIsSongs()) {
+    recordSongChordCompletion();
   }
   clearTimeout(highlightTimer);
   highlightCorrectKeys();

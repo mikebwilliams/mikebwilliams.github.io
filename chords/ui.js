@@ -330,6 +330,14 @@ function setSongsStatus(message) {
   dom.songStatus.textContent = message;
 }
 
+function syncSongFavoriteToggle() {
+  if (!dom.songFavoriteToggle || !uiSongsStore || !dom.songSelect) return;
+  const songId = dom.songSelect.value || "";
+  const song = songId ? uiSongsStore.getSong(songId) : null;
+  dom.songFavoriteToggle.disabled = !song;
+  dom.songFavoriteToggle.checked = !!(song && song.favorite);
+}
+
 function refreshSongSelect(selectedId = "") {
   if (!dom.songSelect || !uiSongsStore) return;
   const songs = uiSongsStore.listSongs();
@@ -350,6 +358,10 @@ function refreshSongSelect(selectedId = "") {
     if (typeof uiSongsStore.setLastSelection === "function") {
       uiSongsStore.setLastSelection("");
     }
+    if (dom.songFavoriteToggle) {
+      dom.songFavoriteToggle.checked = false;
+      dom.songFavoriteToggle.disabled = true;
+    }
     if (dom.songDeleteButton) dom.songDeleteButton.disabled = true;
     if (dom.songClearButton) dom.songClearButton.disabled = true;
     return;
@@ -358,7 +370,7 @@ function refreshSongSelect(selectedId = "") {
   songs.forEach((song) => {
     const option = document.createElement("option");
     option.value = song.id;
-    option.textContent = `${song.title} - ${song.composer}`;
+    option.textContent = `${song.favorite ? "★ " : ""}${song.title} - ${song.composer}`;
     dom.songSelect.appendChild(option);
   });
 
@@ -371,7 +383,11 @@ function refreshSongSelect(selectedId = "") {
 
   if (dom.songDeleteButton) dom.songDeleteButton.disabled = false;
   if (dom.songClearButton) dom.songClearButton.disabled = false;
+  syncSongFavoriteToggle();
 }
+
+uiGlobals.refreshSongSelect = refreshSongSelect;
+uiGlobals.syncSongFavoriteToggle = syncSongFavoriteToggle;
 
 function handleSongImport() {
   if (!dom.songUrlInput || !uiSongsStore) return;
@@ -434,9 +450,22 @@ if (dom.songSelect) {
     if (uiSongsStore && typeof uiSongsStore.setLastSelection === "function") {
       uiSongsStore.setLastSelection(dom.songSelect.value);
     }
+    syncSongFavoriteToggle();
     if (modeIsSongs()) {
       resetFlow();
     }
+  });
+}
+if (dom.songFavoriteToggle) {
+  dom.songFavoriteToggle.addEventListener("change", () => {
+    if (!uiSongsStore || !dom.songSelect) return;
+    const songId = dom.songSelect.value || "";
+    if (!songId) {
+      dom.songFavoriteToggle.checked = false;
+      return;
+    }
+    uiSongsStore.setFavorite(songId, dom.songFavoriteToggle.checked);
+    refreshSongSelect(songId);
   });
 }
 refreshSongSelect();
