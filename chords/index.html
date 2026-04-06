@@ -1130,11 +1130,20 @@
 
         <div class="tabContent" id="panelModeSongs">
           <label class="songsFieldLabel" for="selectSong">Saved Songs</label>
-          <select id="selectSong"></select>
-          <label class="songsCheckboxRow" for="chkSongFavorite">
-            <input type="checkbox" id="chkSongFavorite" />
-            <span>Favorite selected song</span>
-          </label>
+          <div class="songsSavedRow">
+            <select id="selectSong"></select>
+            <label
+              class="songsCheckboxRow songsCheckboxRow--inline"
+              for="chkSongFavorite"
+            >
+              <input type="checkbox" id="chkSongFavorite" />
+              <span>Favorite</span>
+            </label>
+          </div>
+          <div class="songsActions">
+            <button id="btnSongsDelete" type="button">Delete Selected</button>
+            <button id="btnSongsClear" type="button">Clear Songs</button>
+          </div>
           <div class="songsControlGrid">
             <label class="songsControlField" for="selectSongFinishAction">
               <span class="songsFieldLabel">When Song Finishes</span>
@@ -1157,50 +1166,51 @@
                 value="3"
               />
             </label>
+            <div class="songsOptionRow songsOptionRow--keys">
+              <label
+                class="songsCheckboxRow songsControlField"
+                for="chkSongUseOriginalKey"
+              >
+                <input type="checkbox" id="chkSongUseOriginalKey" checked />
+                <span>Use original key</span>
+              </label>
+              <label
+                class="songsCheckboxRow songsControlField"
+                for="chkSongAdvanceKeyOnRepeat"
+              >
+                <input type="checkbox" id="chkSongAdvanceKeyOnRepeat" />
+                <span>Advance key on repeat</span>
+              </label>
+              <label
+                class="songsCheckboxRow songsControlField"
+                for="chkSongAdvanceKeyOnSongChange"
+              >
+                <input type="checkbox" id="chkSongAdvanceKeyOnSongChange" />
+                <span>Advance key on song change</span>
+              </label>
+            </div>
             <label
-              class="songsCheckboxRow songsControlField"
-              for="chkSongUseOriginalKey"
+              class="songsCheckboxRow songsCheckboxRow--full"
+              for="chkSongCountsTowardGoals"
             >
-              <input type="checkbox" id="chkSongUseOriginalKey" checked />
-              <span>Use original key</span>
-            </label>
-            <label
-              class="songsCheckboxRow songsControlField"
-              for="chkSongAdvanceKeyOnRepeat"
-            >
-              <input type="checkbox" id="chkSongAdvanceKeyOnRepeat" />
-              <span>Advance key on repeat</span>
-            </label>
-            <label
-              class="songsCheckboxRow songsControlField"
-              for="chkSongAdvanceKeyOnSongChange"
-            >
-              <input type="checkbox" id="chkSongAdvanceKeyOnSongChange" />
-              <span>Advance key on song change</span>
-            </label>
-            <label class="songsCheckboxRow" for="chkSongCountsTowardGoals">
               <input type="checkbox" id="chkSongCountsTowardGoals" checked />
               <span>Count song chords toward daily goals</span>
             </label>
           </div>
-          <div class="songsActions">
-            <button id="btnSongsDelete" type="button">Delete Selected</button>
-            <button id="btnSongsClear" type="button">Clear Songs</button>
-          </div>
-          <label class="songsFieldLabel" for="inputSongsUrl">iReal URL</label>
+          <label class="songsFieldLabel" for="inputSongsUrl">
+            Import Song(s)
+          </label>
           <textarea
             id="inputSongsUrl"
             class="songsUrlInput"
-            rows="5"
-            placeholder="Paste an irealb:// or irealbook:// link"
+            rows="3"
+            placeholder="Paste an irealb:// or irealbook:// link to import song(s)"
             spellcheck="false"
           ></textarea>
           <div class="songsActions">
             <button id="btnSongsImport" type="button">Import URL</button>
           </div>
-          <p id="txtSongsStatus" class="songsStatus">
-            Paste an iReal Pro link to import songs for practice.
-          </p>
+          <p id="txtSongsStatus" class="songsStatus"></p>
         </div>
 
         <div class="tabContent" id="panelModeScales">

@@ -2729,6 +2729,9 @@ function sanitizeStoredSongsMap(collection) {
 }
 
 function compareStoredSongs(a, b) {
+  if (!!a.favorite !== !!b.favorite) {
+    return a.favorite ? -1 : 1;
+  }
   const titleCompare = a.title.localeCompare(b.title, "en", {
     sensitivity: "base",
   });

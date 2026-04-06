@@ -161,6 +161,40 @@ test("song finish actions choose the expected next song", () => {
   );
 });
 
+test("favorite songs sort to the top of the saved songs list", () => {
+  storageMock.clear();
+  songsStore.clearAll();
+
+  songsStore.importSource(
+    "irealbook://Beta Study=Doe Jane=Medium Swing=C=n=[*AT44C7 Z",
+  );
+  songsStore.importSource(
+    "irealbook://Alpha Study=Doe Jane=Medium Swing=C=n=[*AT44C7 Z",
+  );
+
+  const beforeFavorite = songsStore.listSongs().map((song) => song.title);
+  assert.deepStrictEqual(
+    beforeFavorite,
+    ["Alpha Study", "Beta Study"],
+    "songs should sort alphabetically before any favorites are set",
+  );
+
+  const beta = songsStore
+    .listSongs()
+    .find((song) => song.title === "Beta Study");
+  assert(beta, "beta song should exist");
+  songsStore.setFavorite(beta.id, true);
+
+  const afterFavorite = songsStore.listSongs().map((song) => ({
+    title: song.title,
+    favorite: song.favorite,
+  }));
+  assert.deepStrictEqual(afterFavorite, [
+    { title: "Beta Study", favorite: true },
+    { title: "Alpha Study", favorite: false },
+  ]);
+});
+
 let passed = 0;
 let failed = 0;
 tests.forEach(({ name, fn }) => {
