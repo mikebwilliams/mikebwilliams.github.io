@@ -318,3 +318,52 @@ test("Songs tab can sync measure timing to the metronome", async ({ page }) => {
 
   await page.click("#btnMetronomeToggle");
 });
+
+test("Songs tab accepts anticipated chords at the barline in metronome sync mode", async ({
+  page,
+}) => {
+  test.setTimeout(7000);
+  const songUrl =
+    "irealbook://Anticipation Study=Doe Jane=Medium Swing=C=n=[*AT44C7,G7 |F7 Z";
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.click("label[for='tabModeSongs']");
+  await page.fill("#inputSongsUrl", songUrl);
+  await page.click("#btnSongsImport");
+
+  await page.click("#panelMetronome > summary");
+  await page.fill("#inputMetronomeTempoNumber", "240");
+  await page.locator("#inputMetronomeTempoNumber").blur();
+  await page.fill("#inputMetronomeCountInMeasures", "1");
+  await page.locator("#inputMetronomeCountInMeasures").blur();
+  await page.check("#chkMetronomeSyncSongs");
+
+  const firstChord = page.locator("#txtProgression .songMeasureChord").nth(0);
+  const secondChord = page.locator("#txtProgression .songMeasureChord").nth(1);
+
+  await page.click("#btnMetronomeToggle");
+  await page.waitForTimeout(250);
+
+  await page.evaluate(() => {
+    [48, 52, 55, 58].forEach((note) =>
+      handleMidiMessage({ data: [144, note, 100] }),
+    );
+  });
+
+  await page.waitForTimeout(900);
+  await expect(firstChord).toHaveClass(/songMeasureChord--complete/);
+  await expect(secondChord).not.toHaveClass(/songMeasureChord--current/);
+
+  await page.evaluate(() => {
+    [48, 52, 55, 58].forEach((note) =>
+      handleMidiMessage({ data: [128, note, 0] }),
+    );
+  });
+
+  await expect(secondChord).toHaveClass(/songMeasureChord--current/);
+
+  await page.click("#btnMetronomeToggle");
+});

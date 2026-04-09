@@ -1820,6 +1820,43 @@ function getMetronomeTickType(beatInMeasure, measureNumber, source) {
   return "measure";
 }
 
+function getSongSyncMetronomeTickType(
+  beatInMeasure,
+  transportMeasureNumber,
+  measure,
+  options = {},
+) {
+  if (beatInMeasure !== 0) return "normal";
+  const xMeasures = sanitizeMetronomeInteger(options.xMeasures, 0, 256, 4);
+  const yMeasures = sanitizeMetronomeInteger(options.yMeasures, 0, 256, 0);
+  const songMeasureNumber = sanitizeMetronomeInteger(
+    measure && measure.sectionMeasure,
+    1,
+    1000000,
+    1,
+  );
+  const countInMeasures = sanitizeMetronomeInteger(
+    options.countInMeasures,
+    0,
+    8,
+    0,
+  );
+
+  if (!options.hasStarted && countInMeasures > 0) {
+    if (yMeasures > 0) return "y";
+    if (xMeasures > 0) return "x";
+    return "measure";
+  }
+
+  if (yMeasures > 0 && (songMeasureNumber - 1) % yMeasures === 0) {
+    return "y";
+  }
+  if (xMeasures > 0 && (songMeasureNumber - 1) % xMeasures === 0) {
+    return "x";
+  }
+  return "measure";
+}
+
 function getMetronomeCompletedMeasures(hasPlayedNote, currentMeasure) {
   if (!hasPlayedNote) return 0;
   const measureNumber = sanitizeMetronomeInteger(currentMeasure, 1, 1000000, 1);
@@ -2828,18 +2865,22 @@ function buildSongPracticeTimeline(song, options = {}) {
   });
 
   let phraseMeasure = 0;
+  let sectionMeasure = 0;
   return chart.measures.map((measure, measureIndex) => {
     const section = normalizeTextValue(measure.section);
     if (measureIndex === 0 || section) {
       phraseMeasure = 0;
+      sectionMeasure = 0;
     }
     phraseMeasure = (phraseMeasure % 4) + 1;
+    sectionMeasure += 1;
     return {
       measureIndex,
       beatsPerMeasure: parseSongMeasureBeats(measure.timeSignature),
       timeSignature: normalizeTextValue(measure.timeSignature) || "4/4",
       section,
       phraseMeasure,
+      sectionMeasure,
       phraseLength: 4,
       chordTargets: (entriesByMeasure.get(measureIndex) || []).map((entry) => ({
         ...cloneSongChordEntry(entry),
@@ -4008,6 +4049,7 @@ if (appGlobals.root) {
 appGlobals.sanitizeMetronomeSettings = sanitizeMetronomeSettings;
 appGlobals.buildSongPracticeTimeline = buildSongPracticeTimeline;
 appGlobals.getMetronomeTickType = getMetronomeTickType;
+appGlobals.getSongSyncMetronomeTickType = getSongSyncMetronomeTickType;
 appGlobals.getMetronomeCompletedMeasures = getMetronomeCompletedMeasures;
 appGlobals.getMetronomeDisplayedMeasure = getMetronomeDisplayedMeasure;
 appGlobals.getMetronomeCycleDisplay = getMetronomeCycleDisplay;
@@ -4017,6 +4059,7 @@ if (appGlobals.root) {
   appGlobals.root.sanitizeMetronomeSettings = sanitizeMetronomeSettings;
   appGlobals.root.buildSongPracticeTimeline = buildSongPracticeTimeline;
   appGlobals.root.getMetronomeTickType = getMetronomeTickType;
+  appGlobals.root.getSongSyncMetronomeTickType = getSongSyncMetronomeTickType;
   appGlobals.root.getMetronomeCompletedMeasures = getMetronomeCompletedMeasures;
   appGlobals.root.getMetronomeDisplayedMeasure = getMetronomeDisplayedMeasure;
   appGlobals.root.getMetronomeCycleDisplay = getMetronomeCycleDisplay;
@@ -4067,6 +4110,7 @@ const dataExports = {
   formatIRealProChordDisplay,
   sanitizeMetronomeSettings,
   getMetronomeTickType,
+  getSongSyncMetronomeTickType,
   getMetronomeCompletedMeasures,
   getMetronomeDisplayedMeasure,
   getMetronomeCycleDisplay,

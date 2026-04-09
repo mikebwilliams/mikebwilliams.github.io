@@ -25,6 +25,7 @@ global.localStorage = storageMock;
 const {
   sanitizeMetronomeSettings,
   getMetronomeTickType,
+  getSongSyncMetronomeTickType,
   getMetronomeCompletedMeasures,
   getMetronomeDisplayedMeasure,
   getMetronomeCycleDisplay,
@@ -68,6 +69,68 @@ test("getMetronomeTickType prioritizes y then x then measure", () => {
   assert.strictEqual(getMetronomeTickType(0, 8, settings), "y");
   assert.strictEqual(getMetronomeTickType(0, 4, settings), "x");
   assert.strictEqual(getMetronomeTickType(0, 3, settings), "measure");
+});
+
+test("song sync metronome tick type ignores count-in for phrase accents", () => {
+  const firstBar = { sectionMeasure: 1 };
+  const fourthBar = { sectionMeasure: 4 };
+  const fifthBar = { sectionMeasure: 5 };
+  const ninthBar = { sectionMeasure: 9 };
+
+  assert.strictEqual(
+    getSongSyncMetronomeTickType(0, 1, firstBar, {
+      hasStarted: false,
+      countInMeasures: 1,
+      xMeasures: 4,
+      yMeasures: 8,
+    }),
+    "y",
+  );
+  assert.strictEqual(
+    getSongSyncMetronomeTickType(0, 2, firstBar, {
+      hasStarted: true,
+      countInMeasures: 1,
+      xMeasures: 4,
+      yMeasures: 8,
+    }),
+    "y",
+  );
+  assert.strictEqual(
+    getSongSyncMetronomeTickType(0, 5, fourthBar, {
+      hasStarted: true,
+      countInMeasures: 1,
+      xMeasures: 4,
+      yMeasures: 8,
+    }),
+    "measure",
+  );
+  assert.strictEqual(
+    getSongSyncMetronomeTickType(0, 6, fifthBar, {
+      hasStarted: true,
+      countInMeasures: 1,
+      xMeasures: 4,
+      yMeasures: 8,
+    }),
+    "x",
+  );
+  assert.strictEqual(
+    getSongSyncMetronomeTickType(0, 10, ninthBar, {
+      hasStarted: true,
+      countInMeasures: 1,
+      xMeasures: 4,
+      yMeasures: 8,
+    }),
+    "y",
+  );
+  assert.strictEqual(
+    getSongSyncMetronomeTickType(0, 1, firstBar, {
+      hasStarted: false,
+      countInMeasures: 2,
+      xMeasures: 4,
+      yMeasures: 8,
+    }),
+    "y",
+  );
 });
 
 test("metronome measure displays reset at x and y marker boundaries", () => {

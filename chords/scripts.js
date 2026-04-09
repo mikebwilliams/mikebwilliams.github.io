@@ -163,6 +163,36 @@ const logicGetMetronomeTickType =
     }
     return "measure";
   });
+const logicGetSongSyncMetronomeTickType =
+  sharedGlobals.getSongSyncMetronomeTickType ||
+  runtimeRoot.getSongSyncMetronomeTickType ||
+  ((beatInMeasure, transportMeasureNumber, measure, options = {}) => {
+    if (beatInMeasure !== 0) return "normal";
+    const xMeasures = Math.max(
+      0,
+      Math.min(256, parseInt(options && options.xMeasures, 10) || 4),
+    );
+    const yMeasures = Math.max(
+      0,
+      Math.min(256, parseInt(options && options.yMeasures, 10) || 0),
+    );
+    const sectionMeasure = Math.max(
+      1,
+      parseInt(measure && measure.sectionMeasure, 10) || 1,
+    );
+    const countInMeasures = Math.max(
+      0,
+      Math.min(8, parseInt(options && options.countInMeasures, 10) || 0),
+    );
+    if (!options.hasStarted && countInMeasures > 0) {
+      if (yMeasures > 0) return "y";
+      if (xMeasures > 0) return "x";
+      return "measure";
+    }
+    if (yMeasures > 0 && (sectionMeasure - 1) % yMeasures === 0) return "y";
+    if (xMeasures > 0 && (sectionMeasure - 1) % xMeasures === 0) return "x";
+    return "measure";
+  });
 const logicGetMetronomeCompletedMeasures =
   sharedGlobals.getMetronomeCompletedMeasures ||
   runtimeRoot.getMetronomeCompletedMeasures ||
@@ -615,12 +645,18 @@ function getMetronomeBeatCountForMeasure(measureNumber) {
 
 function getMetronomeTickTypeForBeat(beatInMeasure, measureNumber) {
   if (isSongMetronomeSyncActive()) {
-    if (beatInMeasure !== 0) return "normal";
     const measure = getSongMetronomeMeasureForTransport(measureNumber);
-    if (measure && measure.phraseMeasure === measure.phraseLength) {
-      return "x";
-    }
-    return "measure";
+    return logicGetSongSyncMetronomeTickType(
+      beatInMeasure,
+      measureNumber,
+      measure,
+      {
+        hasStarted: songMetronomeState.hasStarted,
+        countInMeasures: songMetronomeState.countInMeasuresTotal,
+        xMeasures: metronomeState.xMeasures,
+        yMeasures: metronomeState.yMeasures,
+      },
+    );
   }
   return logicGetMetronomeTickType(beatInMeasure, measureNumber, {
     xMeasures: metronomeState.xMeasures,
@@ -630,14 +666,9 @@ function getMetronomeTickTypeForBeat(beatInMeasure, measureNumber) {
 
 function updateMetronomeControlAvailability() {
   const synced = isSongMetronomeSyncActive();
-  [
-    dom.metronomeBeatsInput,
-    dom.metronomeXMeasuresInput,
-    dom.metronomeYMeasuresInput,
-  ].forEach((input) => {
-    if (!input) return;
-    input.disabled = synced;
-  });
+  if (dom.metronomeBeatsInput) {
+    dom.metronomeBeatsInput.disabled = synced;
+  }
 }
 
 function isMetronomeTypingTarget(target) {
@@ -697,13 +728,22 @@ function updateMetronomeStatus() {
   if (isSongMetronomeSyncActive()) {
     const measure = getSongMetronomeMeasure();
     const timeSignature = measure ? measure.timeSignature || "4/4" : "4/4";
+    const xText =
+      metronomeState.xMeasures > 0
+        ? `every ${metronomeState.xMeasures} measures`
+        : "disabled";
+    const yText =
+      metronomeState.yMeasures > 0
+        ? `every ${metronomeState.yMeasures} measures`
+        : "disabled";
     const countInText =
       songMetronomeState.countInMeasuresTotal > 0
         ? ` Count-in: ${songMetronomeState.countInMeasuresTotal} measure${songMetronomeState.countInMeasuresTotal === 1 ? "" : "s"}.`
         : "";
     let message =
       `Song sync active. Time signature follows the chart (${timeSignature}). ` +
-      "Special click every 4 bars, resetting at section markers when present." +
+      `X marker: ${xText}. Y marker: ${yText}. ` +
+      "Markers reset at section labels when present." +
       countInText;
     if (isSongMetronomeCountInActive()) {
       message += ` Waiting through count-in ${songMetronomeState.countInMeasuresCompleted} / ${songMetronomeState.countInMeasuresTotal}.`;
@@ -768,9 +808,11 @@ function updateMetronomeReadout() {
       const measure = getSongMetronomeMeasure();
       dom.metronomeXRepeatDisplay.textContent = isSongMetronomeCountInActive()
         ? "Count-in"
-        : measure
-          ? `${measure.phraseMeasure} / ${measure.phraseLength}`
-          : "1 / 4";
+        : metronomeState.xMeasures > 0
+          ? measure
+            ? `${((measure.sectionMeasure - 1) % metronomeState.xMeasures) + 1} / ${metronomeState.xMeasures}`
+            : `1 / ${metronomeState.xMeasures}`
+          : "Off";
     } else {
       dom.metronomeXRepeatDisplay.textContent = logicGetMetronomeCycleDisplay(
         metronomeState.currentMeasure,
@@ -779,12 +821,21 @@ function updateMetronomeReadout() {
     }
   }
   if (dom.metronomeYRepeatDisplay) {
-    dom.metronomeYRepeatDisplay.textContent = isSongMetronomeSyncActive()
-      ? "Off"
-      : logicGetMetronomeCycleDisplay(
-          metronomeState.currentMeasure,
-          metronomeState.yMeasures,
-        );
+    if (isSongMetronomeSyncActive()) {
+      const measure = getSongMetronomeMeasure();
+      dom.metronomeYRepeatDisplay.textContent = isSongMetronomeCountInActive()
+        ? "Count-in"
+        : metronomeState.yMeasures > 0
+          ? measure
+            ? `${((measure.sectionMeasure - 1) % metronomeState.yMeasures) + 1} / ${metronomeState.yMeasures}`
+            : `1 / ${metronomeState.yMeasures}`
+          : "Off";
+    } else {
+      dom.metronomeYRepeatDisplay.textContent = logicGetMetronomeCycleDisplay(
+        metronomeState.currentMeasure,
+        metronomeState.yMeasures,
+      );
+    }
   }
   updateMetronomeControlAvailability();
   updateMetronomeStatus();
@@ -978,8 +1029,8 @@ function syncMetronomeSettings(options = {}) {
     metronomeState.beatsPerMeasure = currentMeasure
       ? currentMeasure.beatsPerMeasure
       : 4;
-    metronomeState.xMeasures = 4;
-    metronomeState.yMeasures = 0;
+    metronomeState.xMeasures = settings.xMeasures;
+    metronomeState.yMeasures = settings.yMeasures;
   } else {
     metronomeState.beatsPerMeasure = settings.beatsPerMeasure;
     metronomeState.xMeasures = settings.xMeasures;
@@ -1947,10 +1998,17 @@ function completeSongPass(skip = false) {
 }
 
 function startSongMeasureFromMetronome() {
+  if (!songMetronomeState.hasStarted) {
+    songMetronomeState.transportMeasureOffset =
+      metronomeState.currentMeasure - 1;
+  }
   songMetronomeState.currentChordIndexInMeasure = 0;
   songMetronomeState.hasStarted = true;
   loadCurrentProgressionChord();
   updateDisplay();
+  if (activeKeys.length) {
+    checkChord();
+  }
 }
 
 function advanceSongMeasureFromMetronome() {
