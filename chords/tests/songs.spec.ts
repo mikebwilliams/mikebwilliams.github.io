@@ -260,6 +260,7 @@ test("Songs tab can advance key on repeat and on song change", async ({
 });
 
 test("Songs tab can sync measure timing to the metronome", async ({ page }) => {
+  test.setTimeout(7000);
   const songUrl =
     "irealbook://Meter Study=Doe Jane=Medium Swing=C=n=[*AT44C7,G7 |F7 Z";
 
@@ -274,11 +275,16 @@ test("Songs tab can sync measure timing to the metronome", async ({ page }) => {
   await page.click("#panelMetronome > summary");
   await page.fill("#inputMetronomeTempoNumber", "240");
   await page.locator("#inputMetronomeTempoNumber").blur();
+  await page.fill("#inputMetronomeCountInMeasures", "1");
+  await page.locator("#inputMetronomeCountInMeasures").blur();
   await page.check("#chkMetronomeSyncSongs");
 
   await expect(page.locator("#inputMetronomeBeatsPerMeasure")).toBeDisabled();
   await expect(page.locator("#txtMetronomeStatus")).toContainText(
     "Song sync active",
+  );
+  await expect(page.locator("#txtMetronomeStatus")).toContainText(
+    "Count-in: 1 measure.",
   );
   await expect(page.locator(".metronomePulse")).toHaveCount(4);
 
@@ -287,6 +293,11 @@ test("Songs tab can sync measure timing to the metronome", async ({ page }) => {
   const thirdChord = page.locator("#txtProgression .songMeasureChord").nth(2);
 
   await page.click("#btnMetronomeToggle");
+  await page.waitForTimeout(250);
+  await expect(page.locator("#txtMetronomeMeasure")).toHaveText("In 1 / 1");
+  await expect(firstChord).not.toHaveClass(/songMeasureChord--current/);
+
+  await page.waitForTimeout(900);
   await expect(firstChord).toHaveClass(/songMeasureChord--current/);
 
   await page.evaluate(() => {

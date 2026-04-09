@@ -56,6 +56,7 @@ test("sanitizeMetronomeSettings clamps values and falls back to defaults", () =>
       beatsPerMeasure: 1,
       xMeasures: 0,
       yMeasures: 8,
+      countInMeasures: 1,
       syncToSongs: false,
     },
   );

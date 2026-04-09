@@ -571,6 +571,9 @@ const domElements = {
   metronomeBeatsInput: requireElement("inputMetronomeBeatsPerMeasure"),
   metronomeXMeasuresInput: requireElement("inputMetronomeXMeasures"),
   metronomeYMeasuresInput: requireElement("inputMetronomeYMeasures"),
+  metronomeCountInMeasuresInput: requireElement(
+    "inputMetronomeCountInMeasures",
+  ),
   metronomeSyncSongs: requireElement("chkMetronomeSyncSongs"),
   metronomeTempoDisplay: requireElement("txtMetronomeTempo"),
   metronomeMeasureDisplay: requireElement("txtMetronomeMeasure"),
@@ -1497,6 +1500,7 @@ const DEFAULT_METRONOME_SETTINGS = {
   beatsPerMeasure: 4,
   xMeasures: 4,
   yMeasures: 8,
+  countInMeasures: 1,
 };
 const IREAL_PRO_URI_REGEX = /.*?(irealb(?:ook)?):\/\/([^"]*)/;
 const IREAL_PRO_SCRAMBLE_MARKER = "1r34LbKcu7";
@@ -1789,6 +1793,12 @@ function sanitizeMetronomeSettings(source) {
       0,
       256,
       DEFAULT_METRONOME_SETTINGS.yMeasures,
+    ),
+    countInMeasures: sanitizeMetronomeInteger(
+      settings.countInMeasures,
+      0,
+      8,
+      DEFAULT_METRONOME_SETTINGS.countInMeasures,
     ),
     syncToSongs:
       !!settings &&
@@ -3635,6 +3645,7 @@ function captureSimpleSettings() {
       beatsPerMeasure: domElements.metronomeBeatsInput.value,
       xMeasures: domElements.metronomeXMeasuresInput.value,
       yMeasures: domElements.metronomeYMeasuresInput.value,
+      countInMeasures: domElements.metronomeCountInMeasuresInput.value,
       syncToSongs: !!domElements.metronomeSyncSongs.checked,
     }),
     songs: sanitizeSongsPracticeSettings({
@@ -3737,6 +3748,9 @@ function applySimpleSettings(settings) {
     domElements.metronomeBeatsInput.value = String(metronome.beatsPerMeasure);
     domElements.metronomeXMeasuresInput.value = String(metronome.xMeasures);
     domElements.metronomeYMeasuresInput.value = String(metronome.yMeasures);
+    domElements.metronomeCountInMeasuresInput.value = String(
+      metronome.countInMeasures,
+    );
     domElements.metronomeSyncSongs.checked = !!metronome.syncToSongs;
     notifyMetronomeSettingsChange();
   }
@@ -3926,6 +3940,7 @@ function settingsStoreFactory() {
       this.watchElement(domElements.metronomeBeatsInput);
       this.watchElement(domElements.metronomeXMeasuresInput);
       this.watchElement(domElements.metronomeYMeasuresInput);
+      this.watchElement(domElements.metronomeCountInMeasuresInput);
       this.watchElement(domElements.metronomeSyncSongs);
       this.watchElement(domElements.songFinishAction);
       this.watchElement(domElements.songRepeatCount, "input");

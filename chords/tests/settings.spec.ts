@@ -104,6 +104,8 @@ test("Metronome panel persists its open state and settings", async ({
   await page.locator("#inputMetronomeXMeasures").blur();
   await page.fill("#inputMetronomeYMeasures", "5");
   await page.locator("#inputMetronomeYMeasures").blur();
+  await page.fill("#inputMetronomeCountInMeasures", "2");
+  await page.locator("#inputMetronomeCountInMeasures").blur();
   await page.check("#chkMetronomeSyncSongs");
 
   await expect(page.locator("#txtMetronomeTempo")).toHaveText("144");
@@ -117,6 +119,7 @@ test("Metronome panel persists its open state and settings", async ({
   await expect(page.locator("#inputMetronomeBeatsPerMeasure")).toHaveValue("7");
   await expect(page.locator("#inputMetronomeXMeasures")).toHaveValue("3");
   await expect(page.locator("#inputMetronomeYMeasures")).toHaveValue("5");
+  await expect(page.locator("#inputMetronomeCountInMeasures")).toHaveValue("2");
   await expect(page.locator("#chkMetronomeSyncSongs")).toBeChecked();
   await expect(page.locator(".metronomePulse")).toHaveCount(7);
 });
