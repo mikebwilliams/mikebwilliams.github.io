@@ -629,6 +629,7 @@ const domElements = {
   randomProgressionCount: requireElement("inputProgressionRandomCount"),
   sendMidiNotes: requireElement("chkEarSendMidi"),
   midiStatusText: requireElement("txtMidiStatus"),
+  midiRefreshButton: requireElement("btnMidiRefresh"),
   midiInputs: requireElement("tableMidiInputs"),
   midiOutputs: requireElement("tableMidiOutputs"),
   settingsPresetSelect: requireElement("selectSettingsPreset"),

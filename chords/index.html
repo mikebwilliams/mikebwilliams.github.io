@@ -1036,9 +1036,12 @@
         </div>
 
         <div class="tabContent" id="panelOptionsMidi">
-          <label id="labelMidiStatus"
-            >MIDI Status: <span id="txtMidiStatus">Not Connected</span></label
-          >
+          <div class="midiStatusRow">
+            <label id="labelMidiStatus"
+              >MIDI Status: <span id="txtMidiStatus">Not Connected</span></label
+            >
+            <button id="btnMidiRefresh" type="button">Refresh Devices</button>
+          </div>
           <table id="tableMidiInputs"></table>
           <table id="tableMidiOutputs"></table>
         </div>

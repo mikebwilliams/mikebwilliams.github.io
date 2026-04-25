@@ -2456,13 +2456,23 @@ function onMIDIFailure(error) {
   dom.midiStatusText.textContent = "Failed to get MIDI access. Error: " + error;
 }
 
-function initMIDI() {
-  // Initialize MIDI access
-  if (navigator.requestMIDIAccess)
-    navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
-  else
+function requestMIDIDeviceAccess() {
+  if (!navigator.requestMIDIAccess) {
     dom.midiStatusText.textContent =
       "Your browser does not support MIDI access. Please ensure you are using a browser that supports WebMIDI, and that you are accessing this site from HTTPS, as some browsers require secure connections for WebMIDI.";
+    return;
+  }
+  navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
+}
+
+function initMIDI() {
+  // Initialize MIDI access
+  requestMIDIDeviceAccess();
+}
+
+function refreshMIDIDevices() {
+  dom.midiStatusText.textContent = "Refreshing MIDI devices...";
+  requestMIDIDeviceAccess();
 }
 
 function renderMidiDeviceTables() {

@@ -1574,6 +1574,13 @@ document.addEventListener("DOMContentLoaded", () => {
     uiSettingsStore.syncFromDom();
   }
   initMIDI();
+  if (dom.midiRefreshButton) {
+    dom.midiRefreshButton.addEventListener("click", () => {
+      if (typeof refreshMIDIDevices === "function") {
+        refreshMIDIDevices();
+      }
+    });
+  }
 
   dom.spacedRepClearButton.addEventListener("click", () => {
     if (typeof spacedRepClearAll === "function") spacedRepClearAll();
