@@ -123,3 +123,35 @@ test("Metronome panel persists its open state and settings", async ({
   await expect(page.locator("#chkMetronomeSyncSongs")).toBeChecked();
   await expect(page.locator(".metronomePulse")).toHaveCount(7);
 });
+
+test("Random flow resumes from the last practiced key after reload", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.selectOption("#selectFlow", "random");
+  await page.selectOption("#selectFlowStart", "C");
+  await expect(page.locator("#txtCurrentKey")).toHaveText("C");
+
+  await page.evaluate(() => {
+    const originalRandom = Math.random;
+    Math.random = () => 0.75;
+    nextProgression();
+    Math.random = originalRandom;
+  });
+
+  const advancedKey = (
+    (await page.locator("#txtCurrentKey").textContent()) || ""
+  ).trim();
+
+  expect(advancedKey).toBeTruthy();
+  expect(advancedKey).not.toBe("C");
+
+  await page.reload();
+
+  await expect(page.locator("#selectFlow")).toHaveValue("random");
+  await expect(page.locator("#selectFlowStart")).toHaveValue(advancedKey);
+  await expect(page.locator("#txtCurrentKey")).toHaveText(advancedKey);
+});

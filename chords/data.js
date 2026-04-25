@@ -108,6 +108,7 @@ function createElementStub(id) {
   return {
     id,
     style: {},
+    dataset: {},
     classList: createClassListStub(),
     addEventListener() {},
     removeEventListener() {},
@@ -3748,6 +3749,10 @@ function applySimpleSettings(settings) {
   if (settings.flow) {
     domElements.flowSelect.value = settings.flow.mode;
     domElements.flowStartSelect.value = settings.flow.startKey;
+    if (domElements.flowStartSelect.dataset) {
+      domElements.flowStartSelect.dataset.pendingValue =
+        settings.flow.startKey || "";
+    }
   }
   if (settings.display) {
     const display = settings.display;

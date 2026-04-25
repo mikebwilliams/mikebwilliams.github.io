@@ -2579,6 +2579,23 @@ function updateAvailableKeys() {
   return keys;
 }
 
+function syncRandomFlowStartKey({ save = true } = {}) {
+  if (!dom.flowSelect || !dom.flowStartSelect) return;
+  if (dom.flowSelect.value !== "random") return;
+  if (!Array.isArray(keys) || !keys.length) return;
+  if (!Number.isFinite(keyIndex) || keyIndex < 0 || keyIndex >= keys.length) {
+    return;
+  }
+
+  const currentKey = keys[keyIndex];
+  if (typeof currentKey !== "string" || !currentKey) return;
+
+  dom.flowStartSelect.value = currentKey;
+  if (save) {
+    syncSettingsStore();
+  }
+}
+
 function nextKey() {
   const available = updateAvailableKeys();
   if (!available || !available.length) return;
@@ -2591,6 +2608,7 @@ function nextKey() {
   }
 
   keyIndex %= keys.length;
+  syncRandomFlowStartKey();
 }
 
 function loadCurrentProgressionChord() {
@@ -2683,6 +2701,8 @@ function resetFlow() {
     keyIndex = 0;
   }
 
+  syncRandomFlowStartKey();
+
   currentIndex = 0;
   currentProgression = [];
   currentProgressionName = "";
@@ -2719,7 +2739,8 @@ function populateStartingKeyOptions() {
   const select = dom.flowStartSelect;
   if (!select || typeof normalNotes === "undefined") return;
 
-  const previous = select.value;
+  const previous =
+    (select.dataset && select.dataset.pendingValue) || select.value;
   const seen = new Set();
   select.innerHTML = "";
 
@@ -2736,6 +2757,12 @@ function populateStartingKeyOptions() {
     previous && seen.has(previous) ? previous : DEFAULT_START_KEY;
   if (seen.has(preferred)) select.value = preferred;
   else if (select.options.length) select.value = select.options[0].value;
+  if (
+    select.dataset &&
+    Object.prototype.hasOwnProperty.call(select.dataset, "pendingValue")
+  ) {
+    delete select.dataset.pendingValue;
+  }
 }
 
 function nextChord(skip = false) {
