@@ -96,6 +96,45 @@ test("Songs tab marks repeat symbols after the original chord is completed", asy
   await expect(repeatChord).toHaveClass(/songMeasureChord--current/);
 });
 
+test("Songs tab advances immediately for legato chord changes", async ({
+  page,
+}) => {
+  const songUrl =
+    "irealbook://Legato Study=Doe John=Medium Swing=C=n=[*AT44C7 |F7 |Bb^7 Z";
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.click("label[for='tabModeSongs']");
+  await page.fill("#inputSongsUrl", songUrl);
+  await page.click("#btnSongsImport");
+
+  const firstChord = page.locator("#txtProgression .songMeasureChord").nth(0);
+  const secondChord = page.locator("#txtProgression .songMeasureChord").nth(1);
+  const thirdChord = page.locator("#txtProgression .songMeasureChord").nth(2);
+
+  await expect(firstChord).toHaveClass(/songMeasureChord--current/);
+
+  await page.evaluate(() => {
+    [48, 52, 55, 58].forEach((note) =>
+      handleMidiMessage({ data: [144, note, 100] }),
+    );
+  });
+
+  await expect(firstChord).toHaveClass(/songMeasureChord--complete/);
+  await expect(secondChord).toHaveClass(/songMeasureChord--current/);
+
+  await page.evaluate(() => {
+    [53, 57, 60, 63].forEach((note) =>
+      handleMidiMessage({ data: [144, note, 100] }),
+    );
+  });
+
+  await expect(secondChord).toHaveClass(/songMeasureChord--complete/);
+  await expect(thirdChord).toHaveClass(/songMeasureChord--current/);
+});
+
 test("Songs tab restores the last selected song after reload", async ({
   page,
 }) => {
@@ -353,16 +392,8 @@ test("Songs tab accepts anticipated chords at the barline in metronome sync mode
     );
   });
 
-  await page.waitForTimeout(900);
+  await page.waitForTimeout(800);
   await expect(firstChord).toHaveClass(/songMeasureChord--complete/);
-  await expect(secondChord).not.toHaveClass(/songMeasureChord--current/);
-
-  await page.evaluate(() => {
-    [48, 52, 55, 58].forEach((note) =>
-      handleMidiMessage({ data: [128, note, 0] }),
-    );
-  });
-
   await expect(secondChord).toHaveClass(/songMeasureChord--current/);
 
   await page.click("#btnMetronomeToggle");

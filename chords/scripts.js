@@ -2166,6 +2166,48 @@ function playAnswerNotes() {
   }
 }
 
+function shouldAllowLegatoChordOverlap() {
+  return modeIsSongs();
+}
+
+function handleSuccessfulChordMatch() {
+  const waitForRelease = !modeIsSongs();
+  awaitingKeyRelease = waitForRelease;
+  dom.chordDisplay.classList.remove("incorrect");
+  dom.chordDisplay.classList.add("correct");
+
+  if (modeIsChords()) {
+    recordChordCompletion();
+  } else if (modeIsDegrees()) {
+    recordDegreeCompletion();
+  } else if (modeIsSongs()) {
+    if (isSongMetronomeSyncActive()) {
+      handleSongMetronomeCorrectChord();
+    } else {
+      recordSongChordCompletion();
+    }
+  }
+
+  clearTimeout(highlightTimer);
+  highlightCorrectKeys();
+
+  if (waitForRelease) {
+    updateDisplay();
+    return;
+  }
+
+  const advanceAction = pendingSuccessAdvanceAction;
+  clearChordFeedbackState();
+  if (typeof advanceAction === "function") {
+    advanceAction();
+  } else if (modeIsSongs() && !isSongMetronomeSyncActive()) {
+    nextChord();
+  } else {
+    loadCurrentProgressionChord();
+    updateDisplay();
+  }
+}
+
 function checkChord() {
   if (awaitingKeyRelease) {
     if (activeKeys.length > 0) {
@@ -2190,27 +2232,9 @@ function checkChord() {
   let sortedActiveNotes = [
     ...new Set(activeKeys.map(normalizePitchClass)),
   ].sort((a, b) => a - b);
+  const allowLegatoOverlap = shouldAllowLegatoChordOverlap();
   const markChordCorrect = () => {
-    awaitingKeyRelease = true;
-    dom.chordDisplay.classList.remove("incorrect");
-    dom.chordDisplay.classList.add("correct");
-
-    if (modeIsChords()) {
-      recordChordCompletion();
-    } else if (modeIsDegrees()) {
-      recordDegreeCompletion();
-    } else if (modeIsSongs()) {
-      if (isSongMetronomeSyncActive()) {
-        handleSongMetronomeCorrectChord();
-      } else {
-        recordSongChordCompletion();
-      }
-    }
-
-    clearTimeout(highlightTimer);
-
-    highlightCorrectKeys();
-    updateDisplay();
+    handleSuccessfulChordMatch();
   };
 
   if (modeIsChords() || modeIsProgressions() || modeIsJazz() || modeIsSongs()) {
@@ -2266,6 +2290,11 @@ function checkChord() {
       const normalizedCombo = [...new Set(combo.map(normalizePitchClass))].sort(
         (a, b) => a - b,
       );
+      if (allowLegatoOverlap) {
+        return normalizedCombo.every((note) =>
+          sortedActiveNotes.includes(note),
+        );
+      }
       if (normalizedCombo.length !== sortedActiveNotes.length) return false;
       return normalizedCombo.every(
         (note, index) => note === sortedActiveNotes[index],
@@ -2279,12 +2308,18 @@ function checkChord() {
 
   // Check if every element in sortedCurrentChordNotes is in sortedActiveNotes and both arrays have the same length
   // This makes sure we disallow extra notes in the chord
-  if (
+  const matchesExactChord =
     sortedCurrentChordNotes.length === sortedActiveNotes.length &&
     sortedCurrentChordNotes.every(
       (chordNote, index) => chordNote === sortedActiveNotes[index],
-    )
-  ) {
+    );
+  const matchesLegatoOverlap =
+    allowLegatoOverlap &&
+    sortedCurrentChordNotes.every((chordNote) =>
+      sortedActiveNotes.includes(chordNote),
+    );
+
+  if (matchesExactChord || matchesLegatoOverlap) {
     markChordCorrect();
   }
 }
@@ -3265,21 +3300,7 @@ function applyShellVoicing(notes) {
 }
 
 function handleTypedVoicingSuccess() {
-  awaitingKeyRelease = true;
-  dom.chordDisplay.classList.remove("incorrect");
-  dom.chordDisplay.classList.add("correct");
-  if (modeIsChords()) {
-    recordChordCompletion();
-  } else if (modeIsSongs()) {
-    if (isSongMetronomeSyncActive()) {
-      handleSongMetronomeCorrectChord();
-    } else {
-      recordSongChordCompletion();
-    }
-  }
-  clearTimeout(highlightTimer);
-  highlightCorrectKeys();
-  updateDisplay();
+  handleSuccessfulChordMatch();
 }
 
 function enforceTypedVoicing(activeNotes, mode, requiredLength, intervals) {
