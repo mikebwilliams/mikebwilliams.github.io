@@ -1908,6 +1908,60 @@ function pickRandomSongId(songs, currentSongId, randomValue = Math.random()) {
   return candidates[Math.floor(bounded * candidates.length)] || candidates[0];
 }
 
+function pickSongIdForSongNavigation(songs, currentSongId, direction) {
+  const orderedSongs = Array.isArray(songs)
+    ? songs.filter((song) => song && normalizeTextValue(song.id))
+    : [];
+  if (!orderedSongs.length) return "";
+
+  const step = direction === "previous" ? -1 : 1;
+  const currentId = normalizeTextValue(currentSongId);
+  const currentIndex = orderedSongs.findIndex((song) => song.id === currentId);
+  if (currentIndex < 0) {
+    return step < 0
+      ? orderedSongs[orderedSongs.length - 1].id
+      : orderedSongs[0].id;
+  }
+
+  return (
+    orderedSongs[
+      (currentIndex + step + orderedSongs.length) % orderedSongs.length
+    ].id || ""
+  );
+}
+
+function pickSongIdForFavoriteNavigation(songs, currentSongId, direction) {
+  const orderedSongs = Array.isArray(songs)
+    ? songs.filter((song) => song && normalizeTextValue(song.id))
+    : [];
+  if (!orderedSongs.length) return "";
+
+  const currentId = normalizeTextValue(currentSongId);
+  const fallbackId =
+    orderedSongs.find((song) => song.id === currentId)?.id ||
+    orderedSongs[0].id;
+  const favorites = orderedSongs.filter((song) => !!song.favorite);
+  if (!favorites.length) return fallbackId;
+
+  const step = direction === "previous" ? -1 : 1;
+  const currentIndex = orderedSongs.findIndex((song) => song.id === currentId);
+  if (currentIndex < 0) {
+    return step < 0 ? favorites[favorites.length - 1].id : favorites[0].id;
+  }
+
+  for (let offset = 1; offset <= orderedSongs.length; offset += 1) {
+    const candidate =
+      orderedSongs[
+        (((currentIndex + step * offset) % orderedSongs.length) +
+          orderedSongs.length) %
+          orderedSongs.length
+      ];
+    if (candidate && candidate.favorite) return candidate.id;
+  }
+
+  return step < 0 ? favorites[favorites.length - 1].id : favorites[0].id;
+}
+
 function pickSongIdForFinishAction(
   songs,
   currentSongId,
@@ -1930,11 +1984,7 @@ function pickSongIdForFinishAction(
   }
 
   if (action === SONGS_FINISH_ACTIONS.nextSong) {
-    const currentIndex = orderedSongs.findIndex(
-      (song) => song.id === currentId,
-    );
-    if (currentIndex < 0) return orderedSongs[0].id;
-    return orderedSongs[(currentIndex + 1) % orderedSongs.length].id;
+    return pickSongIdForSongNavigation(orderedSongs, currentId, "next");
   }
 
   if (action === SONGS_FINISH_ACTIONS.randomSong) {
@@ -1948,14 +1998,7 @@ function pickSongIdForFinishAction(
     return pickRandomSongId(favorites, currentId, randomValue);
   }
 
-  const currentIndex = orderedSongs.findIndex((song) => song.id === currentId);
-  if (currentIndex < 0) return favorites[0].id;
-  for (let offset = 1; offset <= orderedSongs.length; offset += 1) {
-    const candidate =
-      orderedSongs[(currentIndex + offset) % orderedSongs.length];
-    if (candidate && candidate.favorite) return candidate.id;
-  }
-  return favorites[0].id;
+  return pickSongIdForFavoriteNavigation(orderedSongs, currentId, "next");
 }
 
 function obfuscateIRealPro50Segment(segment) {
@@ -4060,6 +4103,8 @@ appGlobals.getMetronomeCompletedMeasures = getMetronomeCompletedMeasures;
 appGlobals.getMetronomeDisplayedMeasure = getMetronomeDisplayedMeasure;
 appGlobals.getMetronomeCycleDisplay = getMetronomeCycleDisplay;
 appGlobals.sanitizeSongsPracticeSettings = sanitizeSongsPracticeSettings;
+appGlobals.pickSongIdForSongNavigation = pickSongIdForSongNavigation;
+appGlobals.pickSongIdForFavoriteNavigation = pickSongIdForFavoriteNavigation;
 appGlobals.pickSongIdForFinishAction = pickSongIdForFinishAction;
 if (appGlobals.root) {
   appGlobals.root.sanitizeMetronomeSettings = sanitizeMetronomeSettings;
@@ -4070,6 +4115,9 @@ if (appGlobals.root) {
   appGlobals.root.getMetronomeDisplayedMeasure = getMetronomeDisplayedMeasure;
   appGlobals.root.getMetronomeCycleDisplay = getMetronomeCycleDisplay;
   appGlobals.root.sanitizeSongsPracticeSettings = sanitizeSongsPracticeSettings;
+  appGlobals.root.pickSongIdForSongNavigation = pickSongIdForSongNavigation;
+  appGlobals.root.pickSongIdForFavoriteNavigation =
+    pickSongIdForFavoriteNavigation;
   appGlobals.root.pickSongIdForFinishAction = pickSongIdForFinishAction;
 }
 
@@ -4121,6 +4169,8 @@ const dataExports = {
   getMetronomeDisplayedMeasure,
   getMetronomeCycleDisplay,
   sanitizeSongsPracticeSettings,
+  pickSongIdForSongNavigation,
+  pickSongIdForFavoriteNavigation,
   pickSongIdForFinishAction,
   settingsStore,
   workoutStore,

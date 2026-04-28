@@ -87,6 +87,27 @@ const logicPickSongIdForFinishAction =
       songs.find((song) => song && song.id === currentId)?.id || songs[0].id
     );
   });
+const logicPickSongIdForSongNavigation =
+  sharedGlobals.pickSongIdForSongNavigation ||
+  runtimeRoot.pickSongIdForSongNavigation ||
+  ((songs, currentSongId, direction) => {
+    const orderedSongs = Array.isArray(songs)
+      ? songs.filter((song) => song && song.id)
+      : [];
+    if (!orderedSongs.length) return "";
+    const step = direction === "previous" ? -1 : 1;
+    const currentIndex = orderedSongs.findIndex(
+      (song) => song.id === currentSongId,
+    );
+    if (currentIndex < 0) {
+      return step < 0
+        ? orderedSongs[orderedSongs.length - 1].id
+        : orderedSongs[0].id;
+    }
+    return orderedSongs[
+      (currentIndex + step + orderedSongs.length) % orderedSongs.length
+    ].id;
+  });
 const logicBuildSongPracticeTimeline =
   sharedGlobals.buildSongPracticeTimeline ||
   runtimeRoot.buildSongPracticeTimeline ||
@@ -1887,6 +1908,46 @@ function chooseSongAfterFinish() {
   );
 }
 
+function getSongShortcutAction(event) {
+  if (!modeIsSongs() || isMetronomeTypingTarget(event.target)) return "";
+  if (event.ctrlKey || event.metaKey || event.altKey) return "";
+
+  const key = event && typeof event.key === "string" ? event.key : "";
+  const code = event && typeof event.code === "string" ? event.code : "";
+  if (key === "[" || key === "{" || code === "BracketLeft") {
+    return "previous";
+  }
+  if (key === "]" || key === "}" || code === "BracketRight") {
+    return "next";
+  }
+  return "";
+}
+
+function selectAdjacentSong(direction) {
+  if (!modeIsSongs() || !logicSongsStore) return false;
+  const songs = logicSongsStore.listSongs();
+  if (!songs.length) return false;
+
+  const currentId = (dom.songSelect && dom.songSelect.value) || currentSongId;
+  const targetSongId = logicPickSongIdForSongNavigation(
+    songs,
+    currentId,
+    direction,
+  );
+  if (!targetSongId) return false;
+
+  applySelectedSong(targetSongId);
+  resetFlow();
+  return true;
+}
+
+function handleSongShortcut(event) {
+  const action = getSongShortcutAction(event);
+  if (!action) return false;
+  event.preventDefault();
+  return selectAdjacentSong(action);
+}
+
 function clearChordFeedbackState() {
   awaitingKeyRelease = false;
   pendingSuccessAdvanceAction = null;
@@ -3298,8 +3359,9 @@ if (
 }
 
 if (documentAvailable && typeof document.addEventListener === "function") {
-  document.addEventListener("keydown", (event) => {
-    handleMetronomeShortcut(event);
+  document.addEventListener("keydown", async (event) => {
+    if (handleSongShortcut(event)) return;
+    await handleMetronomeShortcut(event);
   });
 }
 

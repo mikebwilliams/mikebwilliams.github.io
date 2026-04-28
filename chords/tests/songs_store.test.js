@@ -25,6 +25,8 @@ global.localStorage = storageMock;
 const {
   songsStore,
   sanitizeSongsPracticeSettings,
+  pickSongIdForSongNavigation,
+  pickSongIdForFavoriteNavigation,
   pickSongIdForFinishAction,
 } = require("../data.js");
 
@@ -158,6 +160,57 @@ test("song finish actions choose the expected next song", () => {
   assert.strictEqual(
     pickSongIdForFinishAction(songs, "alpha", "randomSong", 0.8),
     "gamma",
+  );
+});
+
+test("song navigation can move forward and backward through saved songs", () => {
+  const songs = [{ id: "alpha" }, { id: "beta" }, { id: "gamma" }];
+
+  assert.strictEqual(
+    pickSongIdForSongNavigation(songs, "alpha", "next"),
+    "beta",
+  );
+  assert.strictEqual(
+    pickSongIdForSongNavigation(songs, "gamma", "next"),
+    "alpha",
+  );
+  assert.strictEqual(
+    pickSongIdForSongNavigation(songs, "alpha", "previous"),
+    "gamma",
+  );
+  assert.strictEqual(
+    pickSongIdForSongNavigation(songs, "missing", "previous"),
+    "gamma",
+  );
+});
+
+test("favorite navigation can move forward and backward through favorites", () => {
+  const songs = [
+    { id: "alpha", favorite: true },
+    { id: "beta", favorite: false },
+    { id: "gamma", favorite: true },
+    { id: "delta", favorite: true },
+  ];
+
+  assert.strictEqual(
+    pickSongIdForFavoriteNavigation(songs, "alpha", "next"),
+    "gamma",
+  );
+  assert.strictEqual(
+    pickSongIdForFavoriteNavigation(songs, "gamma", "next"),
+    "delta",
+  );
+  assert.strictEqual(
+    pickSongIdForFavoriteNavigation(songs, "delta", "next"),
+    "alpha",
+  );
+  assert.strictEqual(
+    pickSongIdForFavoriteNavigation(songs, "delta", "previous"),
+    "gamma",
+  );
+  assert.strictEqual(
+    pickSongIdForFavoriteNavigation(songs, "beta", "previous"),
+    "alpha",
   );
 });
 

@@ -179,6 +179,47 @@ test("Songs tab restores the last selected song after reload", async ({
   await expect(page.locator("#txtCadence")).toContainText("Alpha Study");
 });
 
+test("Songs tab keyboard shortcuts move through the saved song list", async ({
+  page,
+}) => {
+  const alphaSongUrl =
+    "irealbook://Alpha Study=Doe Jane=Medium Swing=C=n=[*AT44C7 Z";
+  const betaSongUrl =
+    "irealbook://Beta Study=Doe Jane=Medium Swing=F=n=[*AT44F7 Z";
+  const gammaSongUrl =
+    "irealbook://Gamma Study=Doe Jane=Medium Swing=Bb=n=[*AT44Bb^7 Z";
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.click("label[for='tabModeSongs']");
+  await page.fill("#inputSongsUrl", alphaSongUrl);
+  await page.click("#btnSongsImport");
+  await page.fill("#inputSongsUrl", betaSongUrl);
+  await page.click("#btnSongsImport");
+  await page.fill("#inputSongsUrl", gammaSongUrl);
+  await page.click("#btnSongsImport");
+
+  await page.selectOption("#selectSong", { label: "Alpha Study - Jane Doe" });
+  await page.locator("#txtCadence").click();
+
+  await page.keyboard.press("BracketRight");
+  await expect(page.locator("#selectSong")).toHaveValue(/beta-study--jane-doe/);
+  await expect(page.locator("#txtCadence")).toContainText("Beta Study");
+
+  await page.keyboard.press("BracketLeft");
+  await expect(page.locator("#selectSong")).toHaveValue(
+    /alpha-study--jane-doe/,
+  );
+
+  await page.keyboard.press("BracketLeft");
+  await expect(page.locator("#selectSong")).toHaveValue(
+    /gamma-study--jane-doe/,
+  );
+  await expect(page.locator("#txtCadence")).toContainText("Gamma Study");
+});
+
 test("Songs tab can practice a song in the current key instead of the original key", async ({
   page,
 }) => {
