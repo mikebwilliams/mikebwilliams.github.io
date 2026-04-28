@@ -692,24 +692,35 @@ const chordStructures = {
   mM7: [0, 3, 7, 11],
   dim7: [0, 3, 6, 9],
   m7b5: [0, 3, 6, 10],
+  M7b5: [0, 4, 6, 11],
   "7b5": [0, 4, 6, 10],
+  "M7#11": [0, 4, 7, 11, 18],
   aug7: [0, 4, 8, 10],
   augM7: [0, 4, 8, 11],
 
   9: [0, 4, 7, 10, 14],
   m9: [0, 3, 7, 10, 14],
   M9: [0, 4, 7, 11, 14],
+  "9b5": [0, 4, 6, 10, 14],
+  "9#11": [0, 4, 7, 10, 14, 18],
+  "M9#11": [0, 4, 7, 11, 14, 18],
 
-  11: [0, 4, 7, 10, 14],
+  11: [0, 4, 7, 10, 14, 17],
   m11: [0, 3, 7, 10, 14, 17],
-  M11: [0, 4, 7, 11, 14],
+  M11: [0, 4, 7, 11, 14, 17],
 
   13: [0, 4, 7, 10, 14, 21],
   m13: [0, 3, 7, 10, 14, 17, 21],
   M13: [0, 4, 7, 11, 14, 21],
+  "13b9": [0, 4, 7, 10, 13, 21],
+  "13#9": [0, 4, 7, 10, 15, 21],
+  "13#11": [0, 4, 7, 10, 14, 18, 21],
+  "M13#11": [0, 4, 7, 11, 14, 18, 21],
 
   "7b9": [0, 4, 7, 10, 13],
+  "7b9b5": [0, 4, 6, 10, 13],
   "7#9": [0, 4, 7, 10, 15],
+  "7#9b5": [0, 4, 6, 10, 15],
   "7#11": [0, 4, 7, 10, 18],
 };
 
@@ -731,12 +742,18 @@ const chordStructureNames = {
   mM7: ["mM7", "m maj7", "-△7", "-△"],
   dim7: ["dim7", "o7", "º7"],
   m7b5: ["m7b5", "-7b5", "ø", "ø7"],
+  M7b5: ["M7b5", "maj7b5", "ma7b5", "△7b5", "△b5"],
+  "7b5": ["7b5"],
+  "M7#11": ["M7#11", "ma7#11", "maj7#11", "△7#11"],
   aug7: ["7#5", "+7", "aug7"],
   augM7: ["M7#5", "+M7", "augM7"],
 
   9: ["9"],
   m9: ["m9", "min9", "-9"],
   M9: ["M9", "maj9", "△9"],
+  "9b5": ["9b5"],
+  "9#11": ["9#11"],
+  "M9#11": ["M9#11", "maj9#11", "△9#11"],
 
   11: ["11"],
   m11: ["m11", "min11", "-11"],
@@ -745,9 +762,15 @@ const chordStructureNames = {
   13: ["13"],
   m13: ["m13", "min13", "-13"],
   M13: ["M13", "maj13", "△13"],
+  "13b9": ["13b9"],
+  "13#9": ["13#9"],
+  "13#11": ["13#11"],
+  "M13#11": ["M13#11", "maj13#11", "△13#11"],
 
   "7b9": ["7b9"],
+  "7b9b5": ["7b9b5"],
   "7#9": ["7#9", "7+9"],
+  "7#9b5": ["7#9b5"],
   "7#11": ["7#11", "7+11"],
 };
 
@@ -844,7 +867,7 @@ function getTargetUpperIntervals(chordInternalName) {
 
   let fifthInterval = 7;
   if (/aug/.test(chordType)) fifthInterval = 8;
-  if (/m7b5|dim/.test(chordType)) fifthInterval = 6;
+  if (/b5|dim/.test(chordType)) fifthInterval = 6;
   const fifth = normalizePitchClass(rootVal + fifthInterval);
 
   const hasSharp9 = /(\+9|#9)/.test(chordType);
@@ -1549,11 +1572,13 @@ const IREAL_PRO_QUALITY_TO_INTERNAL = {
   h7: "m7b5",
   o7: "dim7",
   "^9": "M9",
+  "^11": "M11",
   "^13": "M13",
   6: "6",
   69: "6",
-  "^7#11": "M7",
-  "^9#11": "M9",
+  "^7#11": "M7#11",
+  "^9#11": "M9#11",
+  "^13#11": "M13#11",
   "^7#5": "augM7",
   "-6": "m6",
   "-69": "m6",
@@ -1565,29 +1590,30 @@ const IREAL_PRO_QUALITY_TO_INTERNAL = {
   h9: "m7b5",
   "-b6": "m6",
   "-#5": "m",
+  "^7b5": "M7b5",
   9: "9",
   "7b9": "7b9",
   "7#9": "7#9",
   "7#11": "7#11",
-  "7b5": "7",
+  "7b5": "7b5",
   "7#5": "aug7",
-  "9#11": "9",
-  "9b5": "9",
+  "9#11": "9#11",
+  "9b5": "9b5",
   "9#5": "9",
   "7b13": "7",
   "7#9#5": "7#9",
-  "7#9b5": "7#9",
+  "7#9b5": "7#9b5",
   "7#9#11": "7#9",
   "7b9#11": "7b9",
-  "7b9b5": "7b9",
+  "7b9b5": "7b9b5",
   "7b9#5": "7b9",
   "7b9#9": "7b9",
   "7b9b13": "7b9",
   "7alt": "7",
   13: "13",
-  "13#11": "13",
-  "13b9": "13",
-  "13#9": "13",
+  "13#11": "13#11",
+  "13b9": "13b9",
+  "13#9": "13#9",
   "7b9sus": "sus4",
   "7susadd3": "sus4",
   "9sus": "sus4",
@@ -1597,8 +1623,8 @@ const IREAL_PRO_QUALITY_TO_INTERNAL = {
   min13: "m13",
   "min^11": "m11",
   "min^13": "m13",
-  "maj13#11": "M13",
-  maj7b5: "M7",
+  "maj13#11": "M13#11",
+  maj7b5: "M7b5",
   "maj7#9": "M7",
   min7b6: "m7",
   min9b6: "m9",
@@ -2587,14 +2613,33 @@ function normalizeIRealProQualityToInternal(quality) {
     return "m";
   }
   if (normalized.startsWith("^")) {
+    if (normalized.includes("b5") && normalized.includes("7")) return "M7b5";
+    if (normalized.includes("#11")) {
+      if (normalized.includes("13")) return "M13#11";
+      if (normalized.includes("9")) return "M9#11";
+      if (normalized.includes("7")) return "M7#11";
+    }
+    if (normalized.includes("11")) return "M11";
     if (normalized.includes("13")) return "M13";
     if (normalized.includes("9")) return "M9";
     if (normalized.includes("7")) return "M7";
     return "";
   }
-  if (normalized.includes("#11")) return "7#11";
-  if (normalized.includes("#9")) return "7#9";
-  if (normalized.includes("b9")) return "7b9";
+  if (normalized.includes("b5")) {
+    if (normalized.includes("#9")) return "7#9b5";
+    if (normalized.includes("b9")) return "7b9b5";
+    if (normalized.includes("9")) return "9b5";
+    if (normalized.includes("7")) return "7b5";
+  }
+  if (normalized.includes("#11")) {
+    if (normalized.includes("13")) return "13#11";
+    if (normalized.includes("9")) return "9#11";
+    return "7#11";
+  }
+  if (normalized.includes("#9"))
+    return normalized.includes("13") ? "13#9" : "7#9";
+  if (normalized.includes("b9"))
+    return normalized.includes("13") ? "13b9" : "7b9";
   if (normalized.includes("13")) return "13";
   if (normalized.includes("11")) return "11";
   if (normalized.includes("9")) return "9";

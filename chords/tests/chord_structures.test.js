@@ -43,6 +43,16 @@ test("every alias in chordStructureNames round-trips correctly", () => {
   });
 });
 
+test("11th and 13th structures include their named tensions", () => {
+  expectChordMatches("C", "11", [0, 4, 7, 10, 14, 17]);
+  expectChordMatches("C", "M11", [0, 4, 7, 11, 14, 17]);
+  expectChordMatches("C", "M7#11", [0, 4, 7, 11, 18]);
+  expectChordMatches("C", "9#11", [0, 4, 7, 10, 14, 18]);
+  expectChordMatches("C", "M9#11", [0, 4, 7, 11, 14, 18]);
+  expectChordMatches("C", "13#11", [0, 4, 7, 10, 14, 18, 21]);
+  expectChordMatches("C", "M13#11", [0, 4, 7, 11, 14, 18, 21]);
+});
+
 let passed = 0;
 let failed = 0;
 tests.forEach(({ name, fn }) => {

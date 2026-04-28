@@ -76,6 +76,110 @@ test("buildPlayableSongEntries normalizes iReal qualities and repeats", () => {
   );
 });
 
+test("buildPlayableSongEntries preserves altered fifths and ninths", () => {
+  const source =
+    "irealb://Altered Study=Doe John==Medium Swing=Bb==[*AT44Bb7b5 |Bb9b5 |Bb7#9b5 |Bb7b9b5 |Bb^7b5 |Bb13b9 |Bb13#9 Z==0=0";
+  const parsed = parseIRealProSource(source);
+  const entries = buildPlayableSongEntries(parsed.songs[0]);
+
+  assert.deepStrictEqual(
+    entries.map((entry) => ({
+      label: entry.label,
+      rawLabel: entry.rawLabel,
+      playableChord: entry.playableChord,
+    })),
+    [
+      {
+        label: "B♭7♭5",
+        rawLabel: "Bb7b5",
+        playableChord: "Bb7b5",
+      },
+      {
+        label: "B♭9♭5",
+        rawLabel: "Bb9b5",
+        playableChord: "Bb9b5",
+      },
+      {
+        label: "B♭7♯9♭5",
+        rawLabel: "Bb7#9b5",
+        playableChord: "Bb7#9b5",
+      },
+      {
+        label: "B♭7♭9♭5",
+        rawLabel: "Bb7b9b5",
+        playableChord: "Bb7b9b5",
+      },
+      {
+        label: "B♭Δ7♭5",
+        rawLabel: "Bb^7b5",
+        playableChord: "BbM7b5",
+      },
+      {
+        label: "B♭13♭9",
+        rawLabel: "Bb13b9",
+        playableChord: "Bb13b9",
+      },
+      {
+        label: "B♭13♯9",
+        rawLabel: "Bb13#9",
+        playableChord: "Bb13#9",
+      },
+    ],
+  );
+});
+
+test("buildPlayableSongEntries preserves 11th and sharp-11 qualities", () => {
+  const source =
+    "irealb://Extension Study=Doe John==Medium Swing=C==[*AT44C11 |C^11 |C^7#11 |C9#11 |C^9#11 |C13#11 |C^13#11 Z==0=0";
+  const parsed = parseIRealProSource(source);
+  const entries = buildPlayableSongEntries(parsed.songs[0]);
+
+  assert.deepStrictEqual(
+    entries.map((entry) => ({
+      label: entry.label,
+      rawLabel: entry.rawLabel,
+      playableChord: entry.playableChord,
+    })),
+    [
+      {
+        label: "C11",
+        rawLabel: "C11",
+        playableChord: "C11",
+      },
+      {
+        label: "CΔ11",
+        rawLabel: "C^11",
+        playableChord: "CM11",
+      },
+      {
+        label: "CΔ7♯11",
+        rawLabel: "C^7#11",
+        playableChord: "CM7#11",
+      },
+      {
+        label: "C9♯11",
+        rawLabel: "C9#11",
+        playableChord: "C9#11",
+      },
+      {
+        label: "CΔ9♯11",
+        rawLabel: "C^9#11",
+        playableChord: "CM9#11",
+      },
+      {
+        label: "C13♯11",
+        rawLabel: "C13#11",
+        playableChord: "C13#11",
+      },
+      {
+        label: "CΔ13♯11",
+        rawLabel: "C^13#11",
+        playableChord: "CM13#11",
+      },
+    ],
+  );
+});
+
 test("buildPlayableSongEntries transposes songs into a requested target key", () => {
   const source =
     "irealb://Practice Song=Doe John==Medium Swing=Bb==[*AT44Bb^7/Eb |G-7 |C7 Z==0=0";

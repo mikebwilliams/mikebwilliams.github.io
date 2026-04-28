@@ -28,6 +28,15 @@ const seventhChordTypes = [
 
 const sixthChordTypes = ["6", "m6"];
 const susChordTypes = ["sus4", "sus2"];
+const alteredExtensionChordTypes = [
+  "7b5",
+  "M7b5",
+  "9b5",
+  "7#9b5",
+  "7b9b5",
+  "13b9",
+  "13#9",
+];
 
 const expectedUpperIntervals = {
   7: { third: 4, seventh: 10, ninth: 2, fifth: 7 },
@@ -36,12 +45,19 @@ const expectedUpperIntervals = {
   mM7: { third: 3, seventh: 11, ninth: 2, fifth: 7 },
   dim7: { third: 3, seventh: 9, ninth: 1, fifth: 6 },
   m7b5: { third: 3, seventh: 10, ninth: 2, fifth: 6 },
+  "7b5": { third: 4, seventh: 10, ninth: 2, fifth: 6 },
+  M7b5: { third: 4, seventh: 11, ninth: 2, fifth: 6 },
   aug7: { third: 4, seventh: 10, ninth: 2, fifth: 8 },
   augM7: { third: 4, seventh: 11, ninth: 2, fifth: 8 },
+  "9b5": { third: 4, seventh: 10, ninth: 2, fifth: 6 },
+  "7#9b5": { third: 4, seventh: 10, ninth: 3, fifth: 6 },
+  "7b9b5": { third: 4, seventh: 10, ninth: 1, fifth: 6 },
   6: { third: 4, seventh: 9, ninth: 2, fifth: 7 },
   m6: { third: 3, seventh: 9, ninth: 2, fifth: 7 },
   sus4: { third: 4, seventh: 10, ninth: 2, fifth: 7 },
   sus2: { third: 4, seventh: 10, ninth: 2, fifth: 7 },
+  "13b9": { third: 4, seventh: 10, ninth: 1, fifth: 7 },
+  "13#9": { third: 4, seventh: 10, ninth: 3, fifth: 7 },
 };
 
 const tests = [];
@@ -83,6 +99,13 @@ function expectShellR37(chordSuffix, expectedThird, expectedSeventh) {
 seventhChordTypes.forEach((suffix) => {
   const { third, seventh } = expectedUpperIntervals[suffix];
   test(`shell r37 keeps root/3/7 for ${suffix}`, () => {
+    expectShellR37(suffix, third, seventh);
+  });
+});
+
+alteredExtensionChordTypes.forEach((suffix) => {
+  const { third, seventh } = expectedUpperIntervals[suffix];
+  test(`shell r37 keeps altered extensions for ${suffix}`, () => {
     expectShellR37(suffix, third, seventh);
   });
 });
