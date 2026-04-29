@@ -3424,7 +3424,7 @@ function checkTypedVoicing(activeNotes, requiredLength, orderA, orderB, mode) {
   return false;
 }
 
-// Apply selected voicing (Upper Type A/B takes precedence over Shell)
+// Apply selected voicing (typed upper voicings take precedence).
 function applySelectedVoicing(notes) {
   try {
     currentShellVoicingAlternates = null;
@@ -3444,6 +3444,18 @@ function applySelectedVoicing(notes) {
       const upperMode = getUpperMode();
       const resolved = resolveUpperVoicing(upperMode, 4, ensureIntervals);
       if (resolved) return resolved;
+    }
+    if (
+      typeof applyVoicingToNotes === "function" &&
+      typeof getVoicingMode === "function"
+    ) {
+      const result = applyVoicingToNotes(
+        notes,
+        currentChordInternalName,
+        getVoicingMode(),
+      );
+      currentShellVoicingAlternates = result.alternates;
+      return Array.isArray(result.notes) ? result.notes : notes;
     }
     return applyShellVoicing(notes);
   } catch (_) {
@@ -3467,7 +3479,12 @@ if (documentAvailable) {
       try {
         const voicingMode =
           typeof getVoicingMode === "function" ? getVoicingMode() : "default";
-        const requiresFour = voicingMode !== "default";
+        const requiresFour =
+          typeof voicingModeRequiresFourNotes === "function"
+            ? voicingModeRequiresFourNotes(voicingMode)
+            : voicingMode.startsWith("shell:") ||
+              voicingMode.startsWith("upper:") ||
+              voicingMode.startsWith("upper1:");
         if (requiresFour && base.length < 4) {
           nextChord(true);
           return;

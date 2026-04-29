@@ -100,18 +100,27 @@ function getUpper1Mode() {
   return "off";
 }
 
+function voicingModeRequiresFourNotes(mode = getVoicingMode()) {
+  return (
+    typeof mode === "string" &&
+    (mode.startsWith("shell:") ||
+      mode.startsWith("upper:") ||
+      mode.startsWith("upper1:"))
+  );
+}
+
 // Disable chord types that have fewer than 4 notes (triads/sus)
-// whenever a non-default voicing is selected. Re-enable for default,
-// restoring their prior checked state.
+// only for voicing modes that require a 4-note source chord.
 let _prevTriadCheckedState = null;
 let _lastVoicingMode = null;
 function enforceVoicingChordConstraints() {
   const currentMode = getVoicingMode();
-  const isDefault = currentMode === "default";
+  const restrictTriads = voicingModeRequiresFourNotes(currentMode);
+  const lastRestricted = voicingModeRequiresFourNotes(_lastVoicingMode);
   const triadIds = getChordGroupIds("triads");
 
-  // Capture prior checked state when leaving default mode
-  if (_lastVoicingMode === "default" && !isDefault) {
+  // Capture prior checked state when entering a restrictive voicing mode.
+  if (!lastRestricted && restrictTriads) {
     _prevTriadCheckedState = {};
     triadIds.forEach((id) => {
       _prevTriadCheckedState[id] = dom.chordCheckboxes[id].checked;
@@ -120,20 +129,18 @@ function enforceVoicingChordConstraints() {
 
   triadIds.forEach((id) => {
     const el = dom.chordCheckboxes[id];
-    if (isDefault) {
+    if (!restrictTriads) {
       el.disabled = false;
-      // Restore previous checked state if we have it
       if (_prevTriadCheckedState && id in _prevTriadCheckedState) {
         el.checked = _prevTriadCheckedState[id];
       }
     } else {
-      el.checked = false; // exclude from selection pool
-      el.disabled = true; // visually disable
+      el.checked = false;
+      el.disabled = true;
     }
   });
 
-  if (!isDefault) {
-    // Ensure at least one 4+ note chord type is selected
+  if (restrictTriads) {
     const anyChecked = fourNoteChordIds.some(
       (id) => dom.chordCheckboxes[id].checked,
     );

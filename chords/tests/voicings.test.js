@@ -8,6 +8,7 @@ const {
   normalizePitchClass,
   getTargetUpperIntervals,
   computeShellVoicing,
+  computeNormalVoicing,
   computeUpperVoicingForMode,
   applyVoicingMode,
 } = voicingUtils;
@@ -318,6 +319,66 @@ test("default voicing returns base notes", () => {
     const { notes } = applyVoicingMode(chord, "default");
     assert.deepStrictEqual(notes, base);
   });
+});
+
+test("normal voicings support root, triad, and noExtensions", () => {
+  const dominant13 = ROOT + "13";
+  const dominant13Base = generateNotesFromChordName(dominant13);
+  assertNormalizedEqual(
+    computeNormalVoicing(dominant13Base, dominant13, "root").notes,
+    [ROOT_PC],
+    `root mismatch for ${dominant13}`,
+  );
+  assertNormalizedEqual(
+    computeNormalVoicing(dominant13Base, dominant13, "triad").notes,
+    [ROOT_PC, 4, 7],
+    `triad mismatch for ${dominant13}`,
+  );
+  assertNormalizedEqual(
+    computeNormalVoicing(dominant13Base, dominant13, "noExtensions").notes,
+    [ROOT_PC, 4, 7, 10],
+    `noExtensions mismatch for ${dominant13}`,
+  );
+
+  const majorSevenSharpEleven = ROOT + "M7#11";
+  const majorSevenSharpElevenBase = generateNotesFromChordName(
+    majorSevenSharpEleven,
+  );
+  assertNormalizedEqual(
+    computeNormalVoicing(
+      majorSevenSharpElevenBase,
+      majorSevenSharpEleven,
+      "noExtensions",
+    ).notes,
+    [ROOT_PC, 4, 7, 11],
+    `noExtensions mismatch for ${majorSevenSharpEleven}`,
+  );
+
+  const susChord = ROOT + "sus4";
+  const susBase = generateNotesFromChordName(susChord);
+  assertNormalizedEqual(
+    computeNormalVoicing(susBase, susChord, "triad").notes,
+    [ROOT_PC, 5, 7],
+    `triad mismatch for ${susChord}`,
+  );
+
+  const sixChord = ROOT + "6";
+  const sixBase = generateNotesFromChordName(sixChord);
+  assertNormalizedEqual(
+    computeNormalVoicing(sixBase, sixChord, "noExtensions").notes,
+    [ROOT_PC, 4, 7, 9],
+    `noExtensions mismatch for ${sixChord}`,
+  );
+});
+
+test("applyVoicingMode proxies to normal voicings", () => {
+  const chord = ROOT + "9";
+  const result = applyVoicingMode(chord, "normal:noExtensions");
+  assertNormalizedEqual(
+    result.notes,
+    [ROOT_PC, 4, 7, 10],
+    `proxy mismatch for ${chord}`,
+  );
 });
 
 test("applyVoicingMode proxies to shell", () => {

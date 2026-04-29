@@ -446,6 +446,9 @@ const radioGroups = {
   ]),
   voicingMode: createRadioGroup("voicingMode", [
     { id: "radVoicingDefault", value: "default", defaultChecked: true },
+    { id: "radVoicingRoot", value: "normal:root" },
+    { id: "radVoicingTriad", value: "normal:triad" },
+    { id: "radVoicingNoExtensions", value: "normal:noExtensions" },
     { id: "radVoicingShellR37", value: "shell:r37" },
     { id: "radVoicingShellR3Or7", value: "shell:r3or7" },
     { id: "radVoicingShell37", value: "shell:37" },
@@ -998,6 +1001,33 @@ function computeShellVoicing(notes, chordInternalName, mode) {
   return { notes: notes.slice(), alternates: null };
 }
 
+function computeNormalVoicing(notes, chordInternalName, mode) {
+  if (!Array.isArray(notes) || !notes.length) {
+    return { notes: [], alternates: null };
+  }
+
+  if (!mode || mode === "default" || mode === "off") {
+    return { notes: notes.slice(), alternates: null };
+  }
+
+  if (mode === "root") {
+    return { notes: [notes[0]], alternates: null };
+  }
+
+  if (mode === "triad") {
+    return { notes: notes.slice(0, 3), alternates: null };
+  }
+
+  if (mode === "noExtensions") {
+    if (notes.length > 4) {
+      return { notes: notes.slice(0, 4), alternates: null };
+    }
+    return { notes: notes.slice(), alternates: null };
+  }
+
+  return { notes: notes.slice(), alternates: null };
+}
+
 function computeUpperVoicingForMode(chordInternalName, voicingMode) {
   if (!voicingMode) return null;
   const [family, mode] = voicingMode.split(":");
@@ -1014,6 +1044,13 @@ function applyVoicingToNotes(notes, chordInternalName, voicingMode) {
   }
   if (!voicingMode || voicingMode === "default") {
     return { notes: notes.slice(), alternates: null };
+  }
+  if (voicingMode.startsWith("normal:")) {
+    return computeNormalVoicing(
+      notes,
+      chordInternalName,
+      voicingMode.split(":")[1],
+    );
   }
   if (voicingMode.startsWith("upper:")) {
     const resolved = computeUpperVoicingForMode(chordInternalName, voicingMode);
@@ -1054,6 +1091,7 @@ const voicingUtils = {
   resolveUpperVoicing,
   matchesVoicingOrderSorted,
   computeShellVoicing,
+  computeNormalVoicing,
   computeUpperVoicingForMode,
   applyVoicingToNotes,
   applyVoicingMode,
