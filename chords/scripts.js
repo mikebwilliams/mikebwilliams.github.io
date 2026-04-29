@@ -1,6 +1,7 @@
 let midiAccess = null;
 let selectedMidiInputIds = new Set();
 let selectedMidiOutputIds = new Set();
+let songAnswerTimer = null;
 
 // This string is the name of the chord, with possible alternative spellings
 let currentChordName = "";
@@ -1172,6 +1173,7 @@ async function startMetronome() {
 
 function stopMetronome() {
   metronomeState.isRunning = false;
+  clearSongAnswerTimer();
   if (metronomeState.schedulerTimer) {
     clearInterval(metronomeState.schedulerTimer);
     metronomeState.schedulerTimer = null;
@@ -2180,6 +2182,19 @@ function sendMidiNote(note, velocity, time) {
   });
 }
 
+function clearSongAnswerTimer() {
+  if (!songAnswerTimer) return;
+  clearTimeout(songAnswerTimer);
+  songAnswerTimer = null;
+}
+
+function playAnswerNoteSet(notes, duration = 1000) {
+  if (!Array.isArray(notes) || !notes.length) return;
+  notes.forEach((note) => {
+    sendMidiNote(note + 48, 70, duration);
+  });
+}
+
 // Returns the current chord notes wrapped around the octave and sorted
 function getSortedAnswerNotes() {
   return [...new Set(currentChordNotes.map(normalizePitchClass))].sort(
@@ -2188,10 +2203,13 @@ function getSortedAnswerNotes() {
 }
 
 function playAnswerNotes() {
+  if (modeIsSongs() && isSongMetronomeSyncActive()) {
+    playAnswerNoteSet(currentChordNotes);
+    return;
+  }
+
   if (modeIsChords()) {
-    currentChordNotes.forEach((note) => {
-      sendMidiNote(note + 48, 70, 1000);
-    });
+    playAnswerNoteSet(currentChordNotes);
   } else if (
     modeIsScales() ||
     modeIsJazz() ||
@@ -2443,6 +2461,39 @@ function highlightCorrectKeys() {
   highlightTimer = setTimeout(applyHighlight, delay);
 }
 
+function refreshSyncedSongKeyboardFeedback() {
+  clearSongAnswerTimer();
+  highlightCorrectKeys();
+
+  if (
+    !(
+      modeIsSongs() &&
+      isSongMetronomeSyncActive() &&
+      metronomeState.isRunning &&
+      dom.sendMidiNotes &&
+      dom.sendMidiNotes.checked &&
+      currentChordNotes.length
+    )
+  ) {
+    return;
+  }
+
+  const notesToPlay = currentChordNotes.slice();
+  songAnswerTimer = setTimeout(() => {
+    songAnswerTimer = null;
+    if (
+      !(
+        modeIsSongs() &&
+        isSongMetronomeSyncActive() &&
+        metronomeState.isRunning
+      )
+    ) {
+      return;
+    }
+    playAnswerNoteSet(notesToPlay, 500);
+  }, 200);
+}
+
 function onMIDISuccess(midiAccessResult) {
   midiAccess = midiAccessResult;
 
@@ -2685,6 +2736,7 @@ function loadCurrentProgressionChord() {
       currentChordName = "";
       currentChordInternalName = "";
       currentChordNotes = [];
+      refreshSyncedSongKeyboardFeedback();
       return;
     }
     setRandomChord();
@@ -2699,6 +2751,7 @@ function loadCurrentProgressionChord() {
       currentChordName = "";
       currentChordInternalName = "";
       currentChordNotes = [];
+      refreshSyncedSongKeyboardFeedback();
       return;
     }
   }
@@ -2722,6 +2775,7 @@ function loadCurrentProgressionChord() {
       currentChordName = "";
       currentChordInternalName = "";
       currentChordNotes = [];
+      refreshSyncedSongKeyboardFeedback();
       return;
     }
     setRandomChord();
@@ -2736,6 +2790,7 @@ function loadCurrentProgressionChord() {
     currentChordName = resolved.name;
     currentChordNotes = resolved.notes;
     currentChordInternalName = resolved.internalName;
+    refreshSyncedSongKeyboardFeedback();
     return;
   }
 
@@ -2745,6 +2800,7 @@ function loadCurrentProgressionChord() {
 function resetFlow() {
   clearTimeout(highlightTimer);
   highlightTimer = null;
+  clearSongAnswerTimer();
   clearChordFeedbackState();
   isIncorrect = false;
   activeKeys = [];

@@ -431,6 +431,94 @@ test("Songs tab can sync measure timing to the metronome", async ({ page }) => {
   await page.click("#btnMetronomeToggle");
 });
 
+test("Songs tab sync updates keyboard hints and answer-note output for the active chord", async ({
+  page,
+}) => {
+  test.setTimeout(7000);
+  const songUrl =
+    "irealbook://Keyboard Study=Doe Jane=Medium Swing=C=n=[*AT44C7,G7 |F7 Z";
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.click("label[for='tabModeSongs']");
+  await page.fill("#inputSongsUrl", songUrl);
+  await page.click("#btnSongsImport");
+
+  await page.check("#chkDisplayHighlightKeys");
+  await page.fill("#inputDisplayHighlightDelay", "0.1");
+  await page.locator("#inputDisplayHighlightDelay").blur();
+  await page.check("#chkEarSendMidi");
+
+  await page.evaluate(() => {
+    window.__sentMidiMessages = [];
+    midiAccess = {
+      inputs: new Map(),
+      outputs: new Map([
+        [
+          "fake-output",
+          {
+            id: "fake-output",
+            name: "Fake Output",
+            send(message) {
+              window.__sentMidiMessages.push(message.slice());
+            },
+          },
+        ],
+      ]),
+    };
+    selectedMidiOutputIds = new Set();
+  });
+
+  await page.click("#panelMetronome > summary");
+  await page.fill("#inputMetronomeTempoNumber", "240");
+  await page.locator("#inputMetronomeTempoNumber").blur();
+  await page.fill("#inputMetronomeCountInMeasures", "1");
+  await page.locator("#inputMetronomeCountInMeasures").blur();
+  await page.check("#chkMetronomeSyncSongs");
+
+  const firstChord = page.locator("#txtProgression .songMeasureChord").nth(0);
+  const secondChord = page.locator("#txtProgression .songMeasureChord").nth(1);
+  const eKey = page.locator('.key[data-note="52"]');
+  const bKey = page.locator('.key[data-note="59"]');
+
+  await page.click("#btnMetronomeToggle");
+  await page.waitForTimeout(900);
+  await expect(firstChord).toHaveClass(/songMeasureChord--current/);
+
+  await page.waitForTimeout(250);
+  await expect(eKey).toHaveClass(/highlight/);
+  let firstAnswerNotes = await page.evaluate(() =>
+    window.__sentMidiMessages
+      .filter((message) => message[0] === 144)
+      .map((message) => message[1]),
+  );
+  expect(firstAnswerNotes).toEqual(expect.arrayContaining([48, 52, 55, 58]));
+
+  await page.evaluate(() => {
+    window.__sentMidiMessages = [];
+    [48, 52, 55, 58].forEach((note) => handleKeyPressed(note));
+    checkChord();
+    [48, 52, 55, 58].forEach((note) => handleKeyReleased(note));
+    checkChord();
+  });
+
+  await expect(secondChord).toHaveClass(/songMeasureChord--current/);
+  await page.waitForTimeout(250);
+  await expect(eKey).not.toHaveClass(/highlight/);
+  await expect(bKey).toHaveClass(/highlight/);
+
+  const secondAnswerNotes = await page.evaluate(() =>
+    window.__sentMidiMessages
+      .filter((message) => message[0] === 144)
+      .map((message) => message[1]),
+  );
+  expect(secondAnswerNotes).toEqual(expect.arrayContaining([55, 59, 62, 65]));
+
+  await page.click("#btnMetronomeToggle");
+});
+
 test("Songs tab accepts anticipated chords at the barline in metronome sync mode", async ({
   page,
 }) => {
