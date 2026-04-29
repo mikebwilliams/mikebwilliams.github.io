@@ -2724,6 +2724,7 @@ function formatIRealProChordDisplay(chord) {
   if (chord.kind === "noChord") return "N.C.";
   if (chord.kind === "repeatOne") return "%";
   if (chord.kind === "repeatTwo") return "%%";
+  if (chord.kind === "slash") return "/";
 
   const root = formatIRealProDisplayNote(chord.root);
   const quality = formatIRealProDisplayQuality(chord.quality);
@@ -2779,6 +2780,7 @@ function buildAsciiChordLabel(chord) {
   if (chord.kind === "noChord") return "N.C.";
   if (chord.kind === "repeatOne") return "%";
   if (chord.kind === "repeatTwo") return "%%";
+  if (chord.kind === "slash") return "/";
   const root = normalizeTextValue(chord.root);
   const quality = normalizeTextValue(chord.quality);
   const bass =
@@ -2791,15 +2793,22 @@ function buildAsciiChordLabel(chord) {
   return `${root}${quality}${bass}${alternate}`;
 }
 
-function buildPlayableSongEntry(chord, measureIndex, chordIndex, options = {}) {
-  if (!chord || chord.kind !== "chord" || !chord.root) return null;
+function resolvePlayableSongChordReference(
+  chord,
+  previousReference,
+  options = {},
+) {
+  if (!chord || typeof chord !== "object") return null;
+  if (chord.kind === "slash") {
+    return previousReference ? cloneObject(previousReference) : null;
+  }
+  if (chord.kind !== "chord" || !chord.root) return null;
   const transposedChord = transposeIRealProChord(
     chord,
     options.semitoneOffset || 0,
     options.targetKey || chord.root,
   );
   return {
-    kind: "songChord",
     label: formatIRealProChordDisplay(transposedChord),
     rawLabel: buildAsciiChordLabel(transposedChord) || chord.raw || chord.root,
     playableChord:
@@ -2809,6 +2818,17 @@ function buildPlayableSongEntry(chord, measureIndex, chordIndex, options = {}) {
       transposedChord.bass && transposedChord.bass.root
         ? transposedChord.bass.root
         : "",
+  };
+}
+
+function buildPlayableSongEntry(reference, measureIndex, chordIndex) {
+  if (!reference || typeof reference !== "object") return null;
+  return {
+    kind: "songChord",
+    label: reference.label,
+    rawLabel: reference.rawLabel,
+    playableChord: reference.playableChord,
+    bassNote: reference.bassNote,
     measureIndex,
     chordIndex,
     sourceMeasureIndex: measureIndex,
@@ -2839,6 +2859,7 @@ function buildPlayableSongEntries(song, options = {}) {
       : 0;
   const resolvedMeasures = [];
   const sequence = [];
+  let previousReference = null;
   chart.measures.forEach((measure, measureIndex) => {
     let measureEntries = [];
     let hasRepeatOne = false;
@@ -2855,11 +2876,19 @@ function buildPlayableSongEntries(song, options = {}) {
         repeatChordIndex = chordIndex;
         return;
       }
-      const entry = buildPlayableSongEntry(chord, measureIndex, chordIndex, {
-        semitoneOffset,
-        targetKey,
-      });
-      if (entry) measureEntries.push(entry);
+      const reference = resolvePlayableSongChordReference(
+        chord,
+        previousReference,
+        {
+          semitoneOffset,
+          targetKey,
+        },
+      );
+      const entry = buildPlayableSongEntry(reference, measureIndex, chordIndex);
+      if (entry) {
+        measureEntries.push(entry);
+        previousReference = reference;
+      }
     });
     if (!measureEntries.length && hasRepeatTwo && resolvedMeasures.length) {
       measureEntries = resolvedMeasures
@@ -2882,6 +2911,15 @@ function buildPlayableSongEntries(song, options = {}) {
           chordIndex: repeatChordIndex >= 0 ? repeatChordIndex : 0,
         }),
       );
+    }
+    if (measureEntries.length) {
+      const lastEntry = measureEntries[measureEntries.length - 1];
+      previousReference = {
+        label: lastEntry.label,
+        rawLabel: lastEntry.rawLabel,
+        playableChord: lastEntry.playableChord,
+        bassNote: lastEntry.bassNote,
+      };
     }
     resolvedMeasures.push(measureEntries);
     measureEntries.forEach((entry) => {
@@ -2920,6 +2958,7 @@ function buildSongDisplayRows(song, barsPerRow = 4, options = {}) {
       : 0;
 
   let previousTimeSignature = "";
+  let previousReference = null;
   const measures = chart.measures.map((measure, measureIndex) => {
     const timeSignature = normalizeTextValue(measure.timeSignature);
     const result = {
@@ -2934,20 +2973,43 @@ function buildSongDisplayRows(song, barsPerRow = 4, options = {}) {
       leftBar: measure.leftBar ? cloneObject(measure.leftBar) : null,
       rightBar: measure.rightBar ? cloneObject(measure.rightBar) : null,
       finalBar: !!measure.finalBar,
-      chords: Array.isArray(measure.chords)
-        ? measure.chords.map((chord, chordIndex) => ({
-            measureIndex,
-            chordIndex,
-            kind: normalizeTextValue(chord.kind),
-            rawLabel: buildAsciiChordLabel(
-              transposeIRealProChord(chord, semitoneOffset, targetKey),
-            ),
-            label: formatSongMeasureChordLabel(
-              transposeIRealProChord(chord, semitoneOffset, targetKey),
-            ),
-          }))
-        : [],
+      chords: [],
     };
+    if (Array.isArray(measure.chords)) {
+      result.chords = measure.chords.map((chord, chordIndex) => {
+        const reference = resolvePlayableSongChordReference(
+          chord,
+          previousReference,
+          {
+            semitoneOffset,
+            targetKey,
+          },
+        );
+        const transposedChord = transposeIRealProChord(
+          chord,
+          semitoneOffset,
+          targetKey,
+        );
+        const isSlash = normalizeTextValue(chord.kind) === "slash";
+        const displayChord = {
+          measureIndex,
+          chordIndex,
+          kind: normalizeTextValue(chord.kind),
+          rawLabel: reference
+            ? reference.rawLabel
+            : buildAsciiChordLabel(transposedChord),
+          label: isSlash
+            ? "/"
+            : reference
+              ? reference.label
+              : formatSongMeasureChordLabel(transposedChord),
+        };
+        if (reference) {
+          previousReference = cloneObject(reference);
+        }
+        return displayChord;
+      });
+    }
     previousTimeSignature = timeSignature || previousTimeSignature;
     return result;
   });

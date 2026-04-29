@@ -96,6 +96,38 @@ test("Songs tab marks repeat symbols after the original chord is completed", asy
   await expect(repeatChord).toHaveClass(/songMeasureChord--current/);
 });
 
+test("Songs tab shows slash cells instead of raw p markers", async ({
+  page,
+}) => {
+  const songUrl =
+    "irealbook://Slash Study=Doe John=Medium Swing=C=n=[*AT44C7,p,p,Gb7b9 |p,A-7 Z";
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.click("label[for='tabModeSongs']");
+  await page.fill("#inputSongsUrl", songUrl);
+  await page.click("#btnSongsImport");
+
+  const firstMeasureChords = page
+    .locator("#txtProgression .songMeasure")
+    .nth(0)
+    .locator(".songMeasureChord");
+  const secondMeasureChords = page
+    .locator("#txtProgression .songMeasure")
+    .nth(1)
+    .locator(".songMeasureChord");
+
+  await expect(firstMeasureChords).toHaveCount(4);
+  await expect(firstMeasureChords.nth(0)).toHaveText("C7");
+  await expect(firstMeasureChords.nth(1)).toHaveText("/");
+  await expect(firstMeasureChords.nth(2)).toHaveText("/");
+  await expect(firstMeasureChords.nth(3)).toHaveText("G♭7♭9");
+  await expect(secondMeasureChords.nth(0)).toHaveText("/");
+  await expect(secondMeasureChords.nth(1)).toHaveText("A-7");
+});
+
 test("Songs tab advances immediately for legato chord changes", async ({
   page,
 }) => {

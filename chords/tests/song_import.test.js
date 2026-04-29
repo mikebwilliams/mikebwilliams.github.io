@@ -128,6 +128,83 @@ test("buildPlayableSongEntries preserves altered fifths and ninths", () => {
   );
 });
 
+test("buildPlayableSongEntries expands slash cells into repeated chords", () => {
+  const source =
+    "irealb://Slash Study=Doe John==Medium Swing=C==[*AT44C7,p,p,Gb7b9 |p,A-7 Z==0=0";
+  const parsed = parseIRealProSource(source);
+  const entries = buildPlayableSongEntries(parsed.songs[0]);
+  const rows = buildSongDisplayRows(parsed.songs[0]);
+
+  assert.deepStrictEqual(
+    entries.map((entry) => ({
+      label: entry.label,
+      rawLabel: entry.rawLabel,
+      playableChord: entry.playableChord,
+      measureIndex: entry.measureIndex,
+      chordIndex: entry.chordIndex,
+    })),
+    [
+      {
+        label: "C7",
+        rawLabel: "C7",
+        playableChord: "C7",
+        measureIndex: 0,
+        chordIndex: 0,
+      },
+      {
+        label: "C7",
+        rawLabel: "C7",
+        playableChord: "C7",
+        measureIndex: 0,
+        chordIndex: 1,
+      },
+      {
+        label: "C7",
+        rawLabel: "C7",
+        playableChord: "C7",
+        measureIndex: 0,
+        chordIndex: 2,
+      },
+      {
+        label: "G♭7♭9",
+        rawLabel: "Gb7b9",
+        playableChord: "Gb7b9",
+        measureIndex: 0,
+        chordIndex: 3,
+      },
+      {
+        label: "G♭7♭9",
+        rawLabel: "Gb7b9",
+        playableChord: "Gb7b9",
+        measureIndex: 1,
+        chordIndex: 0,
+      },
+      {
+        label: "A-7",
+        rawLabel: "A-7",
+        playableChord: "Am7",
+        measureIndex: 1,
+        chordIndex: 1,
+      },
+    ],
+  );
+
+  assert.deepStrictEqual(
+    rows[0].map((measure) => measure.chords.map((chord) => chord.label)),
+    [
+      ["C7", "/", "/", "G♭7♭9"],
+      ["/", "A-7"],
+    ],
+  );
+  assert.deepStrictEqual(
+    rows[0].map((measure) => measure.chords.map((chord) => chord.rawLabel)),
+    [
+      ["C7", "C7", "C7", "Gb7b9"],
+      ["Gb7b9", "A-7"],
+    ],
+  );
+});
+
 test("buildPlayableSongEntries preserves 11th and sharp-11 qualities", () => {
   const source =
     "irealb://Extension Study=Doe John==Medium Swing=C==[*AT44C11 |C^11 |C^7#11 |C9#11 |C^9#11 |C13#11 |C^13#11 Z==0=0";
