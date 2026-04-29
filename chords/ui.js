@@ -358,6 +358,12 @@ function syncSongKeyControls() {
   dom.songAdvanceKeyOnSongChange.disabled = useOriginalKey;
 }
 
+function refreshSongPracticeDisplay() {
+  if (modeIsSongs() && typeof resetFlow === "function") {
+    resetFlow();
+  }
+}
+
 function refreshSongSelect(selectedId = "") {
   if (!dom.songSelect || !uiSongsStore) return;
   const songs = uiSongsStore.listSongs();
@@ -409,6 +415,7 @@ function refreshSongSelect(selectedId = "") {
 uiGlobals.refreshSongSelect = refreshSongSelect;
 uiGlobals.syncSongFavoriteToggle = syncSongFavoriteToggle;
 uiGlobals.syncSongKeyControls = syncSongKeyControls;
+uiGlobals.refreshSongPracticeDisplay = refreshSongPracticeDisplay;
 
 function handleSongImport() {
   if (!dom.songUrlInput || !uiSongsStore) return;
@@ -503,6 +510,14 @@ if (dom.songAdvanceKeyOnRepeat) {
 }
 if (dom.songAdvanceKeyOnSongChange) {
   dom.songAdvanceKeyOnSongChange.addEventListener("change", syncSettingsStore);
+}
+if (dom.songDisplayRomanNumerals) {
+  dom.songDisplayRomanNumerals.addEventListener("change", () => {
+    syncSettingsStore();
+    if (modeIsSongs() && typeof resetFlow === "function") {
+      resetFlow();
+    }
+  });
 }
 refreshSongSelect();
 syncSongKeyControls();

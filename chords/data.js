@@ -566,6 +566,7 @@ const domElements = {
   songAdvanceKeyOnRepeat: requireElement("chkSongAdvanceKeyOnRepeat"),
   songAdvanceKeyOnSongChange: requireElement("chkSongAdvanceKeyOnSongChange"),
   songCountGoals: requireElement("chkSongCountsTowardGoals"),
+  songDisplayRomanNumerals: requireElement("chkSongDisplayRomanNumerals"),
   songStatus: requireElement("txtSongsStatus"),
   metronomeDetails: requireElement("panelMetronome"),
   metronomeToggleButton: requireElement("btnMetronomeToggle"),
@@ -1817,6 +1818,7 @@ function sanitizeSongsPracticeSettings(source) {
       !Object.prototype.hasOwnProperty.call(settings, "countChordsTowardGoals")
         ? true
         : !!settings.countChordsTowardGoals,
+    displayRomanNumerals: !!(settings && settings.displayRomanNumerals),
   };
 }
 
@@ -2704,6 +2706,27 @@ function formatIRealProDisplayNote(note) {
   return normalizeTextValue(note).replace(/b/g, "♭").replace(/#/g, "♯");
 }
 
+function formatRomanScaleDegree(note, key, lowercase = false) {
+  const tonic = extractKeyTonic(key);
+  const normalized = extractKeyTonic(note);
+  if (
+    !tonic ||
+    !normalized ||
+    !Object.prototype.hasOwnProperty.call(noteValues, tonic) ||
+    !Object.prototype.hasOwnProperty.call(noteValues, normalized)
+  ) {
+    return formatIRealProDisplayNote(note);
+  }
+  const interval = (noteValues[normalized] - noteValues[tonic] + 12) % 12;
+  const mapped = stepsToNames[interval];
+  if (!mapped || !mapped.numeral) {
+    return formatIRealProDisplayNote(note);
+  }
+  const accidentalized = mapped.numeral.replace(/b/g, "♭").replace(/#/g, "♯");
+  if (!lowercase) return accidentalized;
+  return accidentalized.replace(/[IV]+/g, (match) => match.toLowerCase());
+}
+
 function formatIRealProDisplayQuality(quality) {
   let formatted = normalizeTextValue(quality);
   if (!formatted) return "";
@@ -2717,6 +2740,61 @@ function formatIRealProDisplayQuality(quality) {
     .replace(/o/g, "°")
     .replace(/#/g, "♯")
     .replace(/b/g, "♭");
+}
+
+function formatIRealProRomanQuality(quality) {
+  const internal = normalizeIRealProQualityToInternal(quality || "");
+  let formatted = formatIRealProDisplayQuality(quality);
+  const isMinorish =
+    internal === "m" ||
+    internal.startsWith("m") ||
+    internal === "dim" ||
+    internal === "dim7";
+
+  if (internal === "m7b5") {
+    if (formatted.startsWith("ø")) return formatted;
+    return /\d/.test(formatted) ? `ø${formatted.replace(/^-?\d*/, "")}` : "ø";
+  }
+  if (internal === "dim") return formatted.includes("°") ? formatted : "°";
+  if (internal === "dim7") return formatted.includes("°") ? formatted : "°7";
+  if (isMinorish && formatted.startsWith("-")) {
+    return formatted.slice(1);
+  }
+  return formatted;
+}
+
+function formatIRealProRomanChordDisplay(chord, targetKey = "") {
+  if (!chord || typeof chord !== "object") return "";
+  if (chord.kind === "noChord") return "N.C.";
+  if (chord.kind === "repeatOne") return "%";
+  if (chord.kind === "repeatTwo") return "%%";
+  if (chord.kind === "slash") return "/";
+
+  const internal = normalizeIRealProQualityToInternal(chord.quality || "");
+  const isMinorish =
+    internal === "m" ||
+    internal.startsWith("m") ||
+    internal === "dim" ||
+    internal === "dim7";
+  const root =
+    chord.kind === "invisibleRoot"
+      ? ""
+      : formatRomanScaleDegree(chord.root, targetKey, isMinorish);
+  const quality = formatIRealProRomanQuality(chord.quality || "");
+  const bass =
+    chord.bass && chord.bass.root
+      ? `/${formatRomanScaleDegree(chord.bass.root, targetKey)}`
+      : "";
+  const alternate = chord.alternate
+    ? ` (${formatIRealProRomanChordDisplay(chord.alternate, targetKey)})`
+    : "";
+
+  if (root && chord.kind !== "invisibleRoot" && chord.kind !== "slash") {
+    return `${root}${quality}${bass}${alternate}`;
+  }
+
+  const raw = normalizeTextValue(chord.raw);
+  return raw.replace(/\^/g, "Δ").replace(/#/g, "♯").replace(/b/g, "♭");
 }
 
 function formatIRealProChordDisplay(chord) {
@@ -2809,7 +2887,13 @@ function resolvePlayableSongChordReference(
     options.targetKey || chord.root,
   );
   return {
-    label: formatIRealProChordDisplay(transposedChord),
+    label:
+      options.displayRomanNumerals && options.targetKey
+        ? formatIRealProRomanChordDisplay(
+            transposedChord,
+            options.targetKey || chord.root,
+          )
+        : formatIRealProChordDisplay(transposedChord),
     rawLabel: buildAsciiChordLabel(transposedChord) || chord.raw || chord.root,
     playableChord:
       transposedChord.root +
@@ -2882,6 +2966,7 @@ function buildPlayableSongEntries(song, options = {}) {
         {
           semitoneOffset,
           targetKey,
+          displayRomanNumerals: !!options.displayRomanNumerals,
         },
       );
       const entry = buildPlayableSongEntry(reference, measureIndex, chordIndex);
@@ -2929,8 +3014,10 @@ function buildPlayableSongEntries(song, options = {}) {
   return sequence;
 }
 
-function formatSongMeasureChordLabel(chord) {
-  return formatIRealProChordDisplay(chord);
+function formatSongMeasureChordLabel(chord, options = {}) {
+  return options.displayRomanNumerals && options.targetKey
+    ? formatIRealProRomanChordDisplay(chord, options.targetKey)
+    : formatIRealProChordDisplay(chord);
 }
 
 function buildSongDisplayRows(song, barsPerRow = 4, options = {}) {
@@ -2983,6 +3070,7 @@ function buildSongDisplayRows(song, barsPerRow = 4, options = {}) {
           {
             semitoneOffset,
             targetKey,
+            displayRomanNumerals: !!options.displayRomanNumerals,
           },
         );
         const transposedChord = transposeIRealProChord(
@@ -3002,7 +3090,10 @@ function buildSongDisplayRows(song, barsPerRow = 4, options = {}) {
             ? "/"
             : reference
               ? reference.label
-              : formatSongMeasureChordLabel(transposedChord),
+              : formatSongMeasureChordLabel(transposedChord, {
+                  targetKey,
+                  displayRomanNumerals: !!options.displayRomanNumerals,
+                }),
         };
         if (reference) {
           previousReference = cloneObject(reference);
@@ -3811,13 +3902,21 @@ function notifySongsSettingsChange() {
     appGlobals && typeof appGlobals.syncSongKeyControls === "function"
       ? appGlobals.syncSongKeyControls
       : null,
+    globalRoot && typeof globalRoot.refreshSongPracticeDisplay === "function"
+      ? globalRoot.refreshSongPracticeDisplay
+      : null,
+    appGlobals && typeof appGlobals.refreshSongPracticeDisplay === "function"
+      ? appGlobals.refreshSongPracticeDisplay
+      : null,
   ];
-  const handler = candidates.find((fn) => typeof fn === "function");
-  if (handler) {
+  const handlers = [
+    ...new Set(candidates.filter((fn) => typeof fn === "function")),
+  ];
+  handlers.forEach((handler) => {
     try {
       handler();
     } catch (_) {}
-  }
+  });
 }
 
 function notifyMetronomeSettingsChange() {
@@ -3886,6 +3985,7 @@ function captureSimpleSettings() {
       finishAction: domElements.songFinishAction.value,
       repeatCount: domElements.songRepeatCount.value,
       countChordsTowardGoals: !!domElements.songCountGoals.checked,
+      displayRomanNumerals: !!domElements.songDisplayRomanNumerals.checked,
     }),
     voicing: {
       mode: getRadioValue("voicingMode", "default"),
@@ -3999,6 +4099,8 @@ function applySimpleSettings(settings) {
     domElements.songFinishAction.value = songSettings.finishAction;
     domElements.songRepeatCount.value = String(songSettings.repeatCount);
     domElements.songCountGoals.checked = !!songSettings.countChordsTowardGoals;
+    domElements.songDisplayRomanNumerals.checked =
+      !!songSettings.displayRomanNumerals;
     notifySongsSettingsChange();
   }
   if (settings.voicing) {
@@ -4183,6 +4285,7 @@ function settingsStoreFactory() {
       this.watchElement(domElements.songAdvanceKeyOnRepeat);
       this.watchElement(domElements.songAdvanceKeyOnSongChange);
       this.watchElement(domElements.songCountGoals);
+      this.watchElement(domElements.songDisplayRomanNumerals);
       Object.values(domElements.statGoals || {}).forEach((group) => {
         if (!group) return;
         this.watchElement(group.correct, "input");

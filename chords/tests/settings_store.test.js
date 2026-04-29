@@ -79,6 +79,7 @@ test("settings store saves and loads presets round-trip", () => {
   dom.songFinishAction.value = "randomSong";
   dom.songRepeatCount.value = "6";
   dom.songCountGoals.checked = false;
+  dom.songDisplayRomanNumerals.checked = true;
   dom.statGoals.chords.correct.value = "7";
   dom.statGoals.chords.total.value = "0";
   dom.statGoals.progressions.correct.value = "5";
@@ -126,6 +127,7 @@ test("settings store saves and loads presets round-trip", () => {
   dom.songFinishAction.value = "nothing";
   dom.songRepeatCount.value = "2";
   dom.songCountGoals.checked = true;
+  dom.songDisplayRomanNumerals.checked = false;
   dom.statGoals.chords.correct.value = "1";
   dom.statGoals.chords.total.value = "0";
   dom.statGoals.progressions.correct.value = "0";
@@ -162,6 +164,7 @@ test("settings store saves and loads presets round-trip", () => {
   assert.strictEqual(dom.songFinishAction.value, "randomSong");
   assert.strictEqual(dom.songRepeatCount.value, "6");
   assert.strictEqual(dom.songCountGoals.checked, false);
+  assert.strictEqual(dom.songDisplayRomanNumerals.checked, true);
   assert.strictEqual(dom.statGoals.chords.correct.value, "7");
   assert.strictEqual(dom.statGoals.chords.total.value, "0");
   assert.strictEqual(dom.statGoals.progressions.correct.value, "5");

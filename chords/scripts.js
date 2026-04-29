@@ -1426,8 +1426,10 @@ function rebuildSongMetronomeTimeline() {
   resetSongMetronomeState();
   if (!modeIsSongs() || !currentSong) return;
   const metronomeSettings = getMetronomeSettingsFromDom();
+  const songSettings = getSongPracticeSettings();
   songMetronomeState.timeline = logicBuildSongPracticeTimeline(currentSong, {
     targetKey: getCurrentSongTargetKey(currentSong),
+    displayRomanNumerals: !!songSettings.displayRomanNumerals,
   });
   songMetronomeState.countInMeasuresTotal = metronomeSettings.countInMeasures;
 }
@@ -1536,8 +1538,10 @@ function buildSongChartHtml(
   hideLabels,
   songSyncState = null,
 ) {
+  const songSettings = getSongPracticeSettings();
   const rows = buildSongDisplayRows(song, 4, {
     targetKey: getCurrentSongTargetKey(song),
+    displayRomanNumerals: !!songSettings.displayRomanNumerals,
   });
   if (!rows.length) return "";
 
@@ -1846,6 +1850,9 @@ function getSongPracticeSettings() {
     countChordsTowardGoals: dom.songCountGoals
       ? !!dom.songCountGoals.checked
       : true,
+    displayRomanNumerals: dom.songDisplayRomanNumerals
+      ? !!dom.songDisplayRomanNumerals.checked
+      : false,
   });
 }
 
@@ -3282,6 +3289,7 @@ function generateProgression() {
     }
     currentProgression = buildPlayableSongEntries(song, {
       targetKey: getCurrentSongTargetKey(song),
+      displayRomanNumerals: !!songSettings.displayRomanNumerals,
     });
     currentProgressionName = song.title;
     rebuildSongMetronomeTimeline();

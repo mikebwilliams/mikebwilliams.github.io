@@ -257,6 +257,50 @@ test("buildPlayableSongEntries preserves 11th and sharp-11 qualities", () => {
   );
 });
 
+test("buildPlayableSongEntries can label songs with roman numerals", () => {
+  const source =
+    "irealb://Roman Study=Doe John==Medium Swing=C==[*AT44C^7/E |A-7 |D7 |G7 Z==0=0";
+  const parsed = parseIRealProSource(source);
+  const entries = buildPlayableSongEntries(parsed.songs[0], {
+    displayRomanNumerals: true,
+  });
+
+  assert.deepStrictEqual(
+    entries.map((entry) => ({
+      label: entry.label,
+      rawLabel: entry.rawLabel,
+      playableChord: entry.playableChord,
+      bassNote: entry.bassNote,
+    })),
+    [
+      {
+        label: "IΔ7/III",
+        rawLabel: "C^7/E",
+        playableChord: "CM7",
+        bassNote: "E",
+      },
+      {
+        label: "vi7",
+        rawLabel: "A-7",
+        playableChord: "Am7",
+        bassNote: "",
+      },
+      {
+        label: "II7",
+        rawLabel: "D7",
+        playableChord: "D7",
+        bassNote: "",
+      },
+      {
+        label: "V7",
+        rawLabel: "G7",
+        playableChord: "G7",
+        bassNote: "",
+      },
+    ],
+  );
+});
+
 test("buildPlayableSongEntries transposes songs into a requested target key", () => {
   const source =
     "irealb://Practice Song=Doe John==Medium Swing=Bb==[*AT44Bb^7/Eb |G-7 |C7 Z==0=0";
@@ -324,6 +368,23 @@ test("buildSongDisplayRows transposes displayed chord labels when requested", ()
       measure.chords.map((chord) => chord.label).join(" "),
     ),
     ["CΔ7", "A-7", "D7", "G7"],
+  );
+});
+
+test("buildSongDisplayRows can render roman numeral labels", () => {
+  const source =
+    "irealb://Practice Song=Doe John==Medium Swing=Bb==[*AT44Bb^7 |G-7 |C7 |F7 Z==0=0";
+  const parsed = parseIRealProSource(source);
+  const rows = buildSongDisplayRows(parsed.songs[0], 4, {
+    targetKey: "C",
+    displayRomanNumerals: true,
+  });
+
+  assert.deepStrictEqual(
+    rows[0].map((measure) =>
+      measure.chords.map((chord) => chord.label).join(" "),
+    ),
+    ["IΔ7", "vi7", "II7", "V7"],
   );
 });
 

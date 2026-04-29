@@ -122,6 +122,7 @@ test("songs store preserves favorites across re-import and song settings sanitiz
       finishAction: "nothing",
       repeatCount: 3,
       countChordsTowardGoals: false,
+      displayRomanNumerals: false,
     },
   );
 });
