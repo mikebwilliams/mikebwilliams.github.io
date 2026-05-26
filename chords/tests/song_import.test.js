@@ -78,7 +78,7 @@ test("buildPlayableSongEntries normalizes iReal qualities and repeats", () => {
 
 test("buildPlayableSongEntries preserves altered fifths and ninths", () => {
   const source =
-    "irealb://Altered Study=Doe John==Medium Swing=Bb==[*AT44Bb7b5 |Bb9b5 |Bb7#9b5 |Bb7b9b5 |Bb^7b5 |Bb13b9 |Bb13#9 Z==0=0";
+    "irealb://Altered Study=Doe John==Medium Swing=Bb==[*AT44Bb7alt |Bb7b5 |Bb9b5 |Bb7#9b5 |Bb7b9b5 |Bb^7b5 |Bb13b9 |Bb13#9 Z==0=0";
   const parsed = parseIRealProSource(source);
   const entries = buildPlayableSongEntries(parsed.songs[0]);
 
@@ -89,6 +89,11 @@ test("buildPlayableSongEntries preserves altered fifths and ninths", () => {
       playableChord: entry.playableChord,
     })),
     [
+      {
+        label: "B♭7alt",
+        rawLabel: "Bb7alt",
+        playableChord: "Bb7alt",
+      },
       {
         label: "B♭7♭5",
         rawLabel: "Bb7b5",
@@ -201,6 +206,146 @@ test("buildPlayableSongEntries expands slash cells into repeated chords", () => 
     [
       ["C7", "C7", "C7", "Gb7b9"],
       ["Gb7b9", "A-7"],
+    ],
+  );
+});
+
+test("buildPlayableSongEntries resolves invisible roots over a bass note", () => {
+  const source =
+    "irealb://Invisible Root Study=Doe John==Medium Swing=C==[*AT44C7 |W/D |W/E |F7 Z==0=0";
+  const parsed = parseIRealProSource(source);
+  const entries = buildPlayableSongEntries(parsed.songs[0]);
+  const rows = buildSongDisplayRows(parsed.songs[0]);
+
+  assert.deepStrictEqual(
+    entries.map((entry) => ({
+      label: entry.label,
+      rawLabel: entry.rawLabel,
+      playableChord: entry.playableChord,
+      bassNote: entry.bassNote,
+      measureIndex: entry.measureIndex,
+      chordIndex: entry.chordIndex,
+    })),
+    [
+      {
+        label: "C7",
+        rawLabel: "C7",
+        playableChord: "C7",
+        bassNote: "",
+        measureIndex: 0,
+        chordIndex: 0,
+      },
+      {
+        label: "/D",
+        rawLabel: "C7/D",
+        playableChord: "C7",
+        bassNote: "D",
+        measureIndex: 1,
+        chordIndex: 0,
+      },
+      {
+        label: "/E",
+        rawLabel: "C7/E",
+        playableChord: "C7",
+        bassNote: "E",
+        measureIndex: 2,
+        chordIndex: 0,
+      },
+      {
+        label: "F7",
+        rawLabel: "F7",
+        playableChord: "F7",
+        bassNote: "",
+        measureIndex: 3,
+        chordIndex: 0,
+      },
+    ],
+  );
+  assert.deepStrictEqual(
+    rows[0].map((measure) => measure.chords.map((chord) => chord.label)),
+    [["C7"], ["/D"], ["/E"], ["F7"]],
+  );
+  assert.deepStrictEqual(
+    rows[0].map((measure) => measure.chords.map((chord) => chord.rawLabel)),
+    [["C7"], ["C7/D"], ["C7/E"], ["F7"]],
+  );
+});
+
+test("buildPlayableSongEntries resolves spaced slash bass over previous harmony", () => {
+  const source =
+    "irealb://Descending Bass Study=Doe John==Medium Swing=C==[*AT44C- /B |C-7/Bb Z==0=0";
+  const parsed = parseIRealProSource(source);
+  const entries = buildPlayableSongEntries(parsed.songs[0]);
+  const rows = buildSongDisplayRows(parsed.songs[0]);
+
+  assert.deepStrictEqual(
+    entries.map((entry) => ({
+      label: entry.label,
+      rawLabel: entry.rawLabel,
+      playableChord: entry.playableChord,
+      bassNote: entry.bassNote,
+      measureIndex: entry.measureIndex,
+      chordIndex: entry.chordIndex,
+    })),
+    [
+      {
+        label: "C-",
+        rawLabel: "C-",
+        playableChord: "Cm",
+        bassNote: "",
+        measureIndex: 0,
+        chordIndex: 0,
+      },
+      {
+        label: "/B",
+rawLabel: "C-/B",
+        playableChord: "Cm",
+        bassNote: "B",
+measureIndex: 0,
+chordIndex: 1,
+      },
+      {
+        label: "C-7/B♭",
+        rawLabel: "C-7/Bb",
+        playableChord: "Cm7",
+        bassNote: "Bb",
+measureIndex: 1,
+        chordIndex: 0,
+      },
+    ],
+  );
+  assert.deepStrictEqual(
+    rows[0].map((measure) => measure.chords.map((chord) => chord.label)),
+    [["C-", "/B"], ["C-7/B♭"]],
+  );
+});
+
+test("buildPlayableSongEntries transposes invisible-root bass notes", () => {
+  const source =
+    "irealb://Invisible Root Transpose=Doe John==Medium Swing=C==[*AT44C7 |W/D Z==0=0";
+  const parsed = parseIRealProSource(source);
+  const entries = buildPlayableSongEntries(parsed.songs[0], { targetKey: "D" });
+
+  assert.deepStrictEqual(
+    entries.map((entry) => ({
+      label: entry.label,
+      rawLabel: entry.rawLabel,
+      playableChord: entry.playableChord,
+      bassNote: entry.bassNote,
+    })),
+    [
+      {
+        label: "D7",
+        rawLabel: "D7",
+        playableChord: "D7",
+        bassNote: "",
+      },
+      {
+        label: "/E",
+        rawLabel: "D7/E",
+        playableChord: "D7",
+        bassNote: "E",
+      },
     ],
   );
 });

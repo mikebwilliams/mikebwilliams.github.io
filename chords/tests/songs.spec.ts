@@ -128,6 +128,46 @@ test("Songs tab shows slash cells instead of raw p markers", async ({
   await expect(secondMeasureChords.nth(1)).toHaveText("A-7");
 });
 
+test("Songs tab treats invisible roots as previous harmony over a bass note", async ({
+  page,
+}) => {
+  const songUrl =
+    "irealbook://Invisible Root Study=Doe John=Medium Swing=C=n=[*AT44C7 |W/D |F7 Z";
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.click("label[for='tabModeSongs']");
+  await page.fill("#inputSongsUrl", songUrl);
+  await page.click("#btnSongsImport");
+
+  const firstChord = page.locator("#txtProgression .songMeasureChord").nth(0);
+  const bassChord = page.locator("#txtProgression .songMeasureChord").nth(1);
+  const thirdChord = page.locator("#txtProgression .songMeasureChord").nth(2);
+
+  await expect(firstChord).toHaveText("C7");
+  await expect(bassChord).toHaveText("/D");
+  await expect(firstChord).toHaveClass(/songMeasureChord--current/);
+
+  await page.evaluate(() => {
+    [48, 52, 55, 58].forEach((note) =>
+      handleMidiMessage({ data: [144, note, 100] }),
+    );
+  });
+
+  await expect(firstChord).toHaveClass(/songMeasureChord--complete/);
+  await expect(bassChord).toHaveClass(/songMeasureChord--current/);
+  await expect(bassChord).not.toHaveClass(/songMeasureChord--complete/);
+
+  await page.evaluate(() => {
+    handleMidiMessage({ data: [144, 50, 100] });
+  });
+
+  await expect(bassChord).toHaveClass(/songMeasureChord--complete/);
+  await expect(thirdChord).toHaveClass(/songMeasureChord--current/);
+});
+
 test("Songs tab advances immediately for legato chord changes", async ({
   page,
 }) => {
@@ -165,6 +205,132 @@ test("Songs tab advances immediately for legato chord changes", async ({
 
   await expect(secondChord).toHaveClass(/songMeasureChord--complete/);
   await expect(thirdChord).toHaveClass(/songMeasureChord--current/);
+});
+
+test("Songs tab accepts either altered fifth for alt chords", async ({
+  page,
+}) => {
+  const songUrl =
+    "irealbook://Altered Study=Doe John=Medium Swing=C=n=[*AT44C7alt |C7alt |F7 Z";
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.click("label[for='tabModeSongs']");
+  await page.fill("#inputSongsUrl", songUrl);
+  await page.click("#btnSongsImport");
+
+  const firstChord = page.locator("#txtProgression .songMeasureChord").nth(0);
+  const secondChord = page.locator("#txtProgression .songMeasureChord").nth(1);
+  const thirdChord = page.locator("#txtProgression .songMeasureChord").nth(2);
+
+  await expect(firstChord).toHaveText("C7alt");
+  await expect(firstChord).toHaveClass(/songMeasureChord--current/);
+
+  await page.evaluate(() => {
+    [48, 52, 54, 58].forEach((note) =>
+      handleMidiMessage({ data: [144, note, 100] }),
+    );
+  });
+
+  await expect(firstChord).toHaveClass(/songMeasureChord--complete/);
+  await expect(secondChord).toHaveClass(/songMeasureChord--current/);
+
+  await page.evaluate(() => {
+    [48, 52, 54, 58].forEach((note) =>
+      handleMidiMessage({ data: [128, note, 0] }),
+    );
+    [48, 52, 56, 58].forEach((note) =>
+      handleMidiMessage({ data: [144, note, 100] }),
+    );
+  });
+
+  await expect(secondChord).toHaveClass(/songMeasureChord--complete/);
+  await expect(thirdChord).toHaveClass(/songMeasureChord--current/);
+});
+
+test("Songs tab applies major seventh notes after an altered dominant", async ({
+  page,
+}) => {
+  const songUrl =
+    "irealbook://Altered Resolution=Doe John=Medium Swing=Bb=n=[*AT44Bb7alt |Eb^7 |F7 Z";
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.click("label[for='tabModeSongs']");
+  await page.fill("#inputSongsUrl", songUrl);
+  await page.click("#btnSongsImport");
+
+  const firstChord = page.locator("#txtProgression .songMeasureChord").nth(0);
+  const secondChord = page.locator("#txtProgression .songMeasureChord").nth(1);
+  const thirdChord = page.locator("#txtProgression .songMeasureChord").nth(2);
+
+  await expect(firstChord).toHaveText("B♭7alt");
+  await expect(secondChord).toHaveText("E♭Δ7");
+  await expect(firstChord).toHaveClass(/songMeasureChord--current/);
+
+  await page.evaluate(() => {
+    [58, 62, 64, 68].forEach((note) =>
+      handleMidiMessage({ data: [144, note, 100] }),
+    );
+  });
+
+  await expect(firstChord).toHaveClass(/songMeasureChord--complete/);
+  await expect(secondChord).toHaveClass(/songMeasureChord--current/);
+
+  await page.evaluate(() => {
+    [58, 62, 64, 68].forEach((note) =>
+      handleMidiMessage({ data: [128, note, 0] }),
+    );
+    [51, 55, 58, 62].forEach((note) =>
+      handleMidiMessage({ data: [144, note, 100] }),
+    );
+  });
+
+  await expect(secondChord).toHaveClass(/songMeasureChord--complete/);
+  await expect(thirdChord).toHaveClass(/songMeasureChord--current/);
+});
+
+test("Songs tab places parsed slash bass notes at the bottom", async ({
+  page,
+}) => {
+  const songUrl =
+    "irealb://Descending Bass Study=Doe John==Medium Swing=C==[*AT44C- /B |C-7/Bb Z==0=0";
+
+  await page.goto(TEST_URL);
+
+  const resolved = await page.evaluate((source) => {
+    const parsed = parseIRealProSource(source);
+    return buildPlayableSongEntries(parsed.songs[0]).map((entry) => ({
+      label: entry.label,
+      rawLabel: entry.rawLabel,
+      notes: resolveProgressionEntry(entry, {
+        wrap: true,
+        applyVoicing: false,
+      }).notes,
+    }));
+  }, songUrl);
+
+  expect(resolved).toEqual([
+    {
+      label: "C-",
+      rawLabel: "C-",
+      notes: [0, 3, 7],
+    },
+    {
+      label: "/B",
+rawLabel: "C-/B",
+      notes: [11, 0, 3, 7],
+    },
+    {
+      label: "C-7/B♭",
+      rawLabel: "C-7/Bb",
+      notes: [10, 0, 3, 7],
+    },
+  ]);
 });
 
 test("Songs tab restores the last selected song after reload", async ({

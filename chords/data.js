@@ -721,6 +721,7 @@ const chordStructures = {
   "13#11": [0, 4, 7, 10, 14, 18, 21],
   "M13#11": [0, 4, 7, 11, 14, 18, 21],
 
+  "7alt": [0, 4, 6, 10],
   "7b9": [0, 4, 7, 10, 13],
   "7b9b5": [0, 4, 6, 10, 13],
   "7#9": [0, 4, 7, 10, 15],
@@ -771,6 +772,7 @@ const chordStructureNames = {
   "13#11": ["13#11"],
   "M13#11": ["M13#11", "maj13#11", "△13#11"],
 
+  "7alt": ["7alt", "alt"],
   "7b9": ["7b9"],
   "7b9b5": ["7b9b5"],
   "7#9": ["7#9", "7+9"],
@@ -787,6 +789,10 @@ function splitChordInternalName(chordInternalName) {
     ? chordInternalName.slice(rootName.length)
     : "";
   return { rootName, chordType };
+}
+
+function isAlteredDominantChordType(chordType) {
+  return chordType === "7alt";
 }
 
 function generateNotesFromChordName(chordName) {
@@ -859,6 +865,7 @@ function getTargetUpperIntervals(chordInternalName) {
   const { rootName, chordType } = splitChordInternalName(chordInternalName);
   const rootVal = noteValues[rootName];
   const isMinorish = /(^m(?!aj)|m(?!aj)|dim|ø)/.test(chordType);
+  const isAlteredDominant = isAlteredDominantChordType(chordType);
   const third = normalizePitchClass(rootVal + (isMinorish ? 3 : 4));
 
   let seventhInterval;
@@ -872,17 +879,46 @@ function getTargetUpperIntervals(chordInternalName) {
   let fifthInterval = 7;
   if (/aug/.test(chordType)) fifthInterval = 8;
   if (/b5|dim/.test(chordType)) fifthInterval = 6;
+  if (isAlteredDominant) fifthInterval = 6;
   const fifth = normalizePitchClass(rootVal + fifthInterval);
 
   const hasSharp9 = /(\+9|#9)/.test(chordType);
   const hasFlat9 = /b9/.test(chordType);
   let ninthInterval = 14;
   if (/dim7/.test(chordType)) ninthInterval = 13;
+  if (isAlteredDominant) ninthInterval = 13;
   if (hasSharp9) ninthInterval = 15;
   else if (hasFlat9) ninthInterval = 13;
   const ninth = normalizePitchClass(rootVal + ninthInterval);
 
   return { third, seventh, ninth, fifth };
+}
+
+function getTargetUpperIntervalVariants(chordInternalName) {
+  const intervals = getTargetUpperIntervals(chordInternalName);
+  const { rootName, chordType } = splitChordInternalName(chordInternalName);
+  const rootVal = noteValues[rootName];
+  if (!isAlteredDominantChordType(chordType) || typeof rootVal !== "number") {
+    return [intervals];
+  }
+
+  const third = normalizePitchClass(rootVal + 4);
+  const seventh = normalizePitchClass(rootVal + 10);
+  const ninths = [
+    normalizePitchClass(rootVal + 13),
+    normalizePitchClass(rootVal + 15),
+  ];
+  const fifths = [
+    normalizePitchClass(rootVal + 6),
+    normalizePitchClass(rootVal + 8),
+  ];
+  const variants = [];
+  ninths.forEach((ninth) => {
+    fifths.forEach((fifth) => {
+      variants.push({ third, seventh, ninth, fifth });
+    });
+  });
+  return variants;
 }
 
 function resolveUpperVoicing(mode, requiredLength, intervalsOrProvider) {
@@ -1039,19 +1075,66 @@ function computeUpperVoicingForMode(chordInternalName, voicingMode) {
   );
 }
 
+function getAlteredDominantVoicingAlternates(chordInternalName, voicingMode) {
+  const { rootName, chordType } = splitChordInternalName(
+    chordInternalName || "",
+  );
+  const root = noteValues[rootName];
+  if (!isAlteredDominantChordType(chordType) || typeof root !== "number") {
+    return null;
+  }
+
+  const third = root + 4;
+  const flatFifth = root + 6;
+  const sharpFifth = root + 8;
+  const seventh = root + 10;
+  const mode = voicingMode || "default";
+
+  if (mode === "default" || mode === "off" || mode === "normal:noExtensions") {
+    return [
+      [root, third, flatFifth, seventh],
+      [root, third, sharpFifth, seventh],
+    ];
+  }
+  if (mode === "normal:triad") {
+    return [
+      [root, third, flatFifth],
+      [root, third, sharpFifth],
+    ];
+  }
+  return null;
+}
+
 function applyVoicingToNotes(notes, chordInternalName, voicingMode) {
   if (!Array.isArray(notes)) {
     return { notes: [], alternates: null };
   }
+  const alteredDominantAlternates = getAlteredDominantVoicingAlternates(
+    chordInternalName,
+    voicingMode,
+  );
   if (!voicingMode || voicingMode === "default") {
+    if (alteredDominantAlternates) {
+      return {
+        notes: alteredDominantAlternates[0],
+        alternates: alteredDominantAlternates,
+      };
+    }
     return { notes: notes.slice(), alternates: null };
   }
   if (voicingMode.startsWith("normal:")) {
-    return computeNormalVoicing(
+    const result = computeNormalVoicing(
       notes,
       chordInternalName,
       voicingMode.split(":")[1],
     );
+    if (alteredDominantAlternates) {
+      return {
+        notes: alteredDominantAlternates[0],
+        alternates: alteredDominantAlternates,
+      };
+    }
+    return result;
   }
   if (voicingMode.startsWith("upper:")) {
     const resolved = computeUpperVoicingForMode(chordInternalName, voicingMode);
@@ -1089,6 +1172,7 @@ const voicingUtils = {
   buildAscendingVoicingFromOrder,
   buildVoicingOrders,
   getTargetUpperIntervals,
+  getTargetUpperIntervalVariants,
   resolveUpperVoicing,
   matchesVoicingOrderSorted,
   computeShellVoicing,
@@ -1648,7 +1732,8 @@ const IREAL_PRO_QUALITY_TO_INTERNAL = {
   "7b9#5": "7b9",
   "7b9#9": "7b9",
   "7b9b13": "7b9",
-  "7alt": "7",
+  alt: "7alt",
+  "7alt": "7alt",
   13: "13",
   "13#11": "13#11",
   "13b9": "13b9",
@@ -2124,7 +2209,7 @@ function parseIRealProChordMatch(match) {
           ? "repeatOne"
           : note === "r"
             ? "repeatTwo"
-            : note === "W"
+            : note === "W" || (note === " " && bass)
               ? "invisibleRoot"
               : note === "p"
                 ? "slash"
@@ -2665,6 +2750,7 @@ function normalizeIRealProQualityToInternal(quality) {
     if (normalized.includes("7")) return "M7";
     return "";
   }
+  if (normalized.includes("alt")) return "7alt";
   if (normalized.includes("b5")) {
     if (normalized.includes("#9")) return "7#9b5";
     if (normalized.includes("b9")) return "7b9b5";
@@ -2871,6 +2957,29 @@ function buildAsciiChordLabel(chord) {
   return `${root}${quality}${bass}${alternate}`;
 }
 
+function replaceAsciiChordBass(rawLabel, bassNote, fallbackLabel = "") {
+  const bass = normalizeTextValue(bassNote);
+  const fallback = normalizeTextValue(fallbackLabel);
+  let raw = normalizeTextValue(rawLabel);
+  if (!bass) return raw || fallback;
+  if (!raw || raw.startsWith("/")) raw = fallback;
+
+  const alternateMatch = raw.match(/(\([^()]*\))$/);
+  const alternate = alternateMatch ? alternateMatch[1] : "";
+  const base = alternate ? raw.slice(0, -alternate.length) : raw;
+  const strippedBase = base.replace(/\/[A-G][#b]?$/, "") || fallback;
+  return `${strippedBase}/${bass}${alternate}`;
+}
+
+function formatInvisibleRootBassLabel(bassNote, options = {}) {
+  const bass = normalizeTextValue(bassNote);
+  if (!bass) return "";
+  if (options.displayRomanNumerals && options.targetKey) {
+    return `/${formatRomanScaleDegree(bass, options.targetKey)}`;
+  }
+  return `/${formatIRealProDisplayNote(bass)}`;
+}
+
 function resolvePlayableSongChordReference(
   chord,
   previousReference,
@@ -2880,12 +2989,26 @@ function resolvePlayableSongChordReference(
   if (chord.kind === "slash") {
     return previousReference ? cloneObject(previousReference) : null;
   }
-  if (chord.kind !== "chord" || !chord.root) return null;
   const transposedChord = transposeIRealProChord(
     chord,
     options.semitoneOffset || 0,
     options.targetKey || chord.root,
   );
+  if (chord.kind === "invisibleRoot") {
+    if (!previousReference || !transposedChord.bass) return null;
+    const bassNote = normalizeTextValue(transposedChord.bass.root);
+    return {
+      ...cloneObject(previousReference),
+      label: formatInvisibleRootBassLabel(bassNote, options),
+      rawLabel: replaceAsciiChordBass(
+        previousReference.rawLabel,
+        bassNote,
+        previousReference.playableChord,
+      ),
+      bassNote,
+    };
+  }
+  if (chord.kind !== "chord" || !chord.root) return null;
   return {
     label:
       options.displayRomanNumerals && options.targetKey

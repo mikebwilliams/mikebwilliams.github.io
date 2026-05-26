@@ -7,6 +7,7 @@ const {
   generateNotesFromChordName,
   normalizePitchClass,
   getTargetUpperIntervals,
+  getTargetUpperIntervalVariants,
   computeShellVoicing,
   computeNormalVoicing,
   computeUpperVoicingForMode,
@@ -30,6 +31,7 @@ const seventhChordTypes = [
 const sixthChordTypes = ["6", "m6"];
 const susChordTypes = ["sus4", "sus2"];
 const alteredExtensionChordTypes = [
+  "7alt",
   "7b5",
   "M7b5",
   "9b5",
@@ -46,6 +48,7 @@ const expectedUpperIntervals = {
   mM7: { third: 3, seventh: 11, ninth: 2, fifth: 7 },
   dim7: { third: 3, seventh: 9, ninth: 1, fifth: 6 },
   m7b5: { third: 3, seventh: 10, ninth: 2, fifth: 6 },
+  "7alt": { third: 4, seventh: 10, ninth: 1, fifth: 6 },
   "7b5": { third: 4, seventh: 10, ninth: 2, fifth: 6 },
   M7b5: { third: 4, seventh: 11, ninth: 2, fifth: 6 },
   aug7: { third: 4, seventh: 10, ninth: 2, fifth: 8 },
@@ -84,6 +87,15 @@ test("upper interval helpers cover supported chord types", () => {
       `interval mismatch for ${chord}`,
     );
   });
+});
+
+test("altered dominant upper intervals cover altered ninths and fifths", () => {
+  assert.deepStrictEqual(getTargetUpperIntervalVariants("C7alt"), [
+    { third: 4, seventh: 10, ninth: 1, fifth: 6 },
+    { third: 4, seventh: 10, ninth: 1, fifth: 8 },
+    { third: 4, seventh: 10, ninth: 3, fifth: 6 },
+    { third: 4, seventh: 10, ninth: 3, fifth: 8 },
+  ]);
 });
 
 function expectShellR37(chordSuffix, expectedThird, expectedSeventh) {
@@ -319,6 +331,15 @@ test("default voicing returns base notes", () => {
     const { notes } = applyVoicingMode(chord, "default");
     assert.deepStrictEqual(notes, base);
   });
+});
+
+test("altered dominant default voicing accepts either altered fifth", () => {
+  const result = applyVoicingMode("C7alt", "default");
+  assertNormalizedEqual(result.notes, [0, 4, 6, 10]);
+  assert.deepStrictEqual(result.alternates.map(normalized), [
+    [0, 4, 6, 10],
+    [0, 4, 8, 10],
+  ]);
 });
 
 test("normal voicings support root, triad, and noExtensions", () => {

@@ -1651,10 +1651,9 @@ function addBassNoteToNotes(notes, bassNote) {
     return notes.slice();
   }
   const bassValue = noteValues[bassNote];
-  if (notes.some((note) => normalizePitchClass(note) === bassValue)) {
-    return notes.slice();
-  }
-  return [bassValue].concat(notes);
+  return [bassValue].concat(
+    notes.filter((note) => normalizePitchClass(note) !== bassValue),
+  );
 }
 
 function resolveProgressionEntry(entry, options = {}) {
@@ -1662,15 +1661,16 @@ function resolveProgressionEntry(entry, options = {}) {
   const shouldApplyVoicing = !!options.applyVoicing;
 
   if (isSongChordEntry(entry)) {
+    const internalName = entry.playableChord;
     let notes = generateNotesFromChordName(entry.playableChord);
     notes = addBassNoteToNotes(notes, entry.bassNote);
     if (shouldApplyVoicing) {
-      notes = applySelectedVoicing(notes);
+      notes = applySelectedVoicing(notes, internalName);
     }
     return {
       name: entry.label,
       notes,
-      internalName: entry.playableChord,
+      internalName,
     };
   }
 
@@ -1682,25 +1682,27 @@ function resolveProgressionEntry(entry, options = {}) {
       entry,
       wrap,
     );
+    const internalName = currentChordInternalName;
     if (shouldApplyVoicing) {
-      notes = applySelectedVoicing(notes);
+      notes = applySelectedVoicing(notes, internalName);
     }
     return {
       name,
       notes,
-      internalName: currentChordInternalName,
+      internalName,
     };
   }
 
   if (isNamedChord(entry)) {
+    const internalName = entry;
     let notes = generateNotesFromChordName(entry);
     if (shouldApplyVoicing) {
-      notes = applySelectedVoicing(notes);
+      notes = applySelectedVoicing(notes, internalName);
     }
     return {
       name: generateChordName(entry, ""),
       notes,
-      internalName: entry,
+      internalName,
     };
   }
 
@@ -2325,11 +2327,21 @@ function checkChord() {
 
   if (modeIsChords() || modeIsProgressions() || modeIsJazz() || modeIsSongs()) {
     let cachedIntervals = null;
+    let cachedIntervalVariants = null;
     const ensureIntervals = () => {
       if (!cachedIntervals) {
         cachedIntervals = getTargetUpperIntervals(currentChordInternalName);
       }
       return cachedIntervals;
+    };
+    const ensureIntervalVariants = () => {
+      if (!cachedIntervalVariants) {
+        cachedIntervalVariants =
+          typeof getTargetUpperIntervalVariants === "function"
+            ? getTargetUpperIntervalVariants(currentChordInternalName)
+            : [ensureIntervals()];
+      }
+      return cachedIntervalVariants;
     };
 
     if (typeof getUpper1Mode === "function") {
@@ -2343,7 +2355,7 @@ function checkChord() {
           activeKeys,
           upper1Mode,
           3,
-          ensureIntervals(),
+          ensureIntervalVariants(),
         );
         if (outcome === "waiting" || outcome === "handled") return;
       }
@@ -2360,7 +2372,7 @@ function checkChord() {
           activeKeys,
           upperMode,
           4,
-          ensureIntervals(),
+          ensureIntervalVariants(),
         );
         if (outcome === "waiting" || outcome === "handled") return;
       }
@@ -3443,7 +3455,10 @@ if (documentAvailable) {
 }
 syncMetronomeSettings();
 // Apply shell voicing according to selected mode (all chord-based modes)
-function applyShellVoicing(notes) {
+function applyShellVoicing(
+  notes,
+  chordInternalName = currentChordInternalName,
+) {
   try {
     if (!Array.isArray(notes)) return notes;
     if (typeof getShellMode !== "function") return notes;
@@ -3454,7 +3469,7 @@ function applyShellVoicing(notes) {
     }
     const mode = getShellMode();
     if (mode === "off") return notes;
-    const result = computeShellVoicing(notes, currentChordInternalName, mode);
+    const result = computeShellVoicing(notes, chordInternalName, mode);
     currentShellVoicingAlternates = result.alternates;
     return Array.isArray(result.notes) ? result.notes : notes;
   } catch (_) {
@@ -3468,8 +3483,13 @@ function handleTypedVoicingSuccess() {
 
 function enforceTypedVoicing(activeNotes, mode, requiredLength, intervals) {
   if (mode !== "typeA" && mode !== "typeB" && mode !== "either") return "none";
-  const { orderA, orderB } = buildVoicingOrders(intervals, requiredLength);
-  if (!checkTypedVoicing(activeNotes, requiredLength, orderA, orderB, mode)) {
+  const variants = Array.isArray(intervals) ? intervals : [intervals];
+  const matchesVariant = variants.some((intervalSet) => {
+    if (!intervalSet) return false;
+    const { orderA, orderB } = buildVoicingOrders(intervalSet, requiredLength);
+    return checkTypedVoicing(activeNotes, requiredLength, orderA, orderB, mode);
+  });
+  if (!matchesVariant) {
     return "waiting";
   }
   handleTypedVoicingSuccess();
@@ -3489,13 +3509,17 @@ function checkTypedVoicing(activeNotes, requiredLength, orderA, orderB, mode) {
 }
 
 // Apply selected voicing (typed upper voicings take precedence).
-function applySelectedVoicing(notes) {
+function applySelectedVoicing(
+  notes,
+  chordInternalName = currentChordInternalName,
+) {
   try {
     currentShellVoicingAlternates = null;
     let intervalsCache = null;
     const ensureIntervals = () => {
-      if (!intervalsCache)
-        intervalsCache = getTargetUpperIntervals(currentChordInternalName);
+      if (!intervalsCache) {
+        intervalsCache = getTargetUpperIntervals(chordInternalName);
+      }
       return intervalsCache;
     };
 
@@ -3515,13 +3539,13 @@ function applySelectedVoicing(notes) {
     ) {
       const result = applyVoicingToNotes(
         notes,
-        currentChordInternalName,
+        chordInternalName,
         getVoicingMode(),
       );
       currentShellVoicingAlternates = result.alternates;
       return Array.isArray(result.notes) ? result.notes : notes;
     }
-    return applyShellVoicing(notes);
+    return applyShellVoicing(notes, chordInternalName);
   } catch (_) {
     return notes;
   }
