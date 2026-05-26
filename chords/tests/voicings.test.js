@@ -125,7 +125,7 @@ alteredExtensionChordTypes.forEach((suffix) => {
 
 sixthChordTypes.forEach((suffix) => {
   const { third, seventh } = expectedUpperIntervals[suffix];
-  test(`shell r37 keeps root/3 for ${suffix}`, () => {
+  test(`shell r37 uses root/3/6 for ${suffix}`, () => {
     expectShellR37(suffix, third, seventh);
   });
 });
@@ -228,9 +228,9 @@ seventhChordTypes.forEach((suffix) => {
 });
 
 sixthChordTypes.forEach((suffix) => {
-  const { third } = expectedUpperIntervals[suffix];
-  test(`shell 3-7 rootless defaults for ${suffix}`, () => {
-    expect37(suffix, third);
+  const { third, seventh } = expectedUpperIntervals[suffix];
+  test(`shell 3-7 rootless uses 3-6 for ${suffix}`, () => {
+    expect37(suffix, third, seventh);
   });
 });
 

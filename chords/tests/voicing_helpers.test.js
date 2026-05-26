@@ -214,13 +214,13 @@ test("computeShellVoicing respects sus chords in r3or7 mode", () => {
   );
 });
 
-test("computeShellVoicing 37 mode preserves third when seventh absent", () => {
+test("computeShellVoicing 37 mode uses third and sixth for pure sixth chords", () => {
   const base = generateNotesFromChordName("C6");
   const result = computeShellVoicing(base, "C6", "37");
   assertSequenceEqual(
     normalizeNotes(result.notes),
-    [4],
-    "37 mode should fall back to the third alone when no seventh present",
+    [4, 9],
+    "37 mode should use the sixth as the upper shell tone",
   );
 });
 

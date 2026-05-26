@@ -1029,6 +1029,9 @@ function computeShellVoicing(notes, chordInternalName, mode) {
     if (thirdCandidate !== undefined && seventhCandidate !== undefined) {
       return { notes: [thirdCandidate, seventhCandidate], alternates: null };
     }
+    if (thirdCandidate !== undefined && sixthCandidate !== undefined) {
+      return { notes: [thirdCandidate, sixthCandidate], alternates: null };
+    }
     if (thirdCandidate !== undefined) {
       return { notes: [thirdCandidate], alternates: null };
     }
