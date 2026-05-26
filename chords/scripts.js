@@ -2438,7 +2438,8 @@ function getHighlightDelayMs() {
   return clamped * 1000;
 }
 
-function highlightCorrectKeys() {
+function highlightCorrectKeys(options = {}) {
+  const immediate = !!options.immediate;
   clearTimeout(highlightTimer);
 
   // Clear previous highlights
@@ -2464,7 +2465,7 @@ function highlightCorrectKeys() {
   };
 
   const delay = getHighlightDelayMs();
-  if (delay <= 0) {
+  if (immediate || delay <= 0) {
     applyHighlight();
     highlightTimer = null;
     return;
@@ -2473,9 +2474,13 @@ function highlightCorrectKeys() {
   highlightTimer = setTimeout(applyHighlight, delay);
 }
 
-function refreshSyncedSongKeyboardFeedback() {
+function isKeyboardAnswerShowing() {
+  return documentAvailable && !!document.querySelector(".key.highlight");
+}
+
+function refreshSyncedSongKeyboardFeedback(options = {}) {
   clearSongAnswerTimer();
-  highlightCorrectKeys();
+  highlightCorrectKeys({ immediate: !!options.immediateHighlight });
 
   if (
     !(
@@ -2504,6 +2509,14 @@ function refreshSyncedSongKeyboardFeedback() {
     }
     playAnswerNoteSet(notesToPlay, 500);
   }, 200);
+}
+
+function refreshKeyboardAnswerFeedback(options = {}) {
+  if (modeIsSongs() && isSongMetronomeSyncActive()) {
+    refreshSyncedSongKeyboardFeedback(options);
+    return;
+  }
+  highlightCorrectKeys({ immediate: !!options.immediateHighlight });
 }
 
 function onMIDISuccess(midiAccessResult) {
@@ -3562,6 +3575,7 @@ if (documentAvailable) {
       } catch (_) {}
 
       if (!currentChordInternalName) return;
+      const wasShowingKeyboardAnswer = isKeyboardAnswerShowing();
       const base = generateNotesFromChordName(currentChordInternalName);
       // If switching to any non-default voicing and current chord lacks a 4th tone, skip it
       try {
@@ -3579,6 +3593,9 @@ if (documentAvailable) {
         }
       } catch (_) {}
       currentChordNotes = applySelectedVoicing(base);
+      refreshKeyboardAnswerFeedback({
+        immediateHighlight: wasShowingKeyboardAnswer,
+      });
       updateDisplay();
     });
   });

@@ -155,3 +155,62 @@ test("Random flow resumes from the last practiced key after reload", async ({
   await expect(page.locator("#selectFlowStart")).toHaveValue(advancedKey);
   await expect(page.locator("#txtCurrentKey")).toHaveText(advancedKey);
 });
+
+test("Changing voicing mode updates chord answer and visible keyboard hints", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.evaluate(() => {
+    keys = ["C"];
+    keyIndex = 0;
+    currentChordName = "C7";
+    currentChordInternalName = "C7";
+    currentChordNotes = voicingUtils.applyVoicingMode("C7", "default").notes;
+    activeKeys = [];
+    isIncorrect = false;
+    awaitingKeyRelease = false;
+    document
+      .querySelector("#txtChord")
+      .classList.remove("correct", "incorrect");
+    updateDisplay();
+  });
+
+  const highlightedNotes = () =>
+    page.evaluate(() =>
+      Array.from(document.querySelectorAll(".key.highlight"))
+        .map((key) => Number(key.getAttribute("data-note")))
+        .sort((a, b) => a - b),
+    );
+
+  await page.check("#chkDisplayHighlightKeys");
+  await page.fill("#inputDisplayHighlightDelay", "0");
+  await page.evaluate(() => highlightCorrectKeys());
+  await expect.poll(highlightedNotes).toEqual([48, 52, 55, 58]);
+
+  await page.evaluate(() => {
+    document.querySelector("#inputDisplayHighlightDelay").value = "3";
+  });
+  await page.click("label[for='tabOptionsVoicings']");
+  await page.check("#radVoicingRoot");
+
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        [
+          ...new Set(currentChordNotes.map(voicingUtils.normalizePitchClass)),
+        ].sort((a, b) => a - b),
+      ),
+    )
+    .toEqual([0]);
+  await expect.poll(highlightedNotes, { timeout: 500 }).toEqual([48]);
+
+  const acceptedRootOnly = await page.evaluate(() => {
+    handleKeyPressed(48);
+    checkChord();
+    return document.querySelector("#txtChord").classList.contains("correct");
+  });
+  expect(acceptedRootOnly).toBe(true);
+});
