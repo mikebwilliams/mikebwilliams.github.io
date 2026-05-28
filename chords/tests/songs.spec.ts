@@ -597,6 +597,69 @@ test("Songs tab can sync measure timing to the metronome", async ({ page }) => {
   await page.click("#btnMetronomeToggle");
 });
 
+test("Songs tab sync gives a fresh count-in when advancing to another song", async ({
+  page,
+}) => {
+  test.setTimeout(9000);
+  const firstSongUrl =
+    "irealbook://Alpha Count=Doe Jane=Medium Swing=C=n=[*AT44C7 Z";
+  const secondSongUrl =
+    "irealbook://Beta Count=Doe Jane=Medium Swing=F=n=[*AT44F7 Z";
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.click("label[for='tabModeSongs']");
+  await page.fill("#inputSongsUrl", firstSongUrl);
+  await page.click("#btnSongsImport");
+  await page.fill("#inputSongsUrl", secondSongUrl);
+  await page.click("#btnSongsImport");
+
+  await page.selectOption("#selectSong", { label: "Alpha Count - Jane Doe" });
+  await page.selectOption("#selectSongFinishAction", "nextSong");
+  await page.fill("#inputSongRepeatCount", "1");
+
+  await page.click("#panelMetronome > summary");
+  await page.fill("#inputMetronomeTempoNumber", "240");
+  await page.locator("#inputMetronomeTempoNumber").blur();
+  await page.fill("#inputMetronomeCountInMeasures", "1");
+  await page.locator("#inputMetronomeCountInMeasures").blur();
+  await page.check("#chkMetronomeSyncSongs");
+
+  const firstChord = page.locator("#txtProgression .songMeasureChord").nth(0);
+
+  await page.click("#btnMetronomeToggle");
+  await expect(firstChord).toHaveClass(/songMeasureChord--current/, {
+    timeout: 2500,
+  });
+
+  await page.evaluate(() => {
+    [48, 52, 55, 58].forEach((note) => handleKeyPressed(note));
+    checkChord();
+    [48, 52, 55, 58].forEach((note) => handleKeyReleased(note));
+    checkChord();
+  });
+
+  await expect(page.locator("#selectSong")).toHaveValue(
+    /beta-count--jane-doe/,
+    {
+      timeout: 2500,
+    },
+  );
+  await expect(page.locator("#txtMetronomeMeasure")).toHaveText("In 1 / 1");
+
+  const nextSongFirstChord = page
+    .locator("#txtProgression .songMeasureChord")
+    .nth(0);
+  await expect(nextSongFirstChord).not.toHaveClass(/songMeasureChord--current/);
+  await expect(nextSongFirstChord).toHaveClass(/songMeasureChord--current/, {
+    timeout: 2500,
+  });
+
+  await page.click("#btnMetronomeToggle");
+});
+
 test("Songs tab sync updates keyboard hints and answer-note output for the active chord", async ({
   page,
 }) => {

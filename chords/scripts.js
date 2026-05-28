@@ -2029,6 +2029,7 @@ function completeSongPass(skip = false) {
   let shouldFinishSong = !!skip;
   let shouldAdvanceSongKeyOnRepeat = false;
   let shouldResetIncorrect = true;
+  let selectedSongChanged = false;
 
   if (skip) {
     currentSongCompletedPasses = 0;
@@ -2050,10 +2051,9 @@ function completeSongPass(skip = false) {
   if (shouldFinishSong) {
     const previousSongId = currentSongId;
     const nextSongId = chooseSongAfterFinish();
+    selectedSongChanged = !!nextSongId && nextSongId !== previousSongId;
     const shouldAdvanceSongKeyOnChange =
-      nextSongId && nextSongId !== previousSongId
-        ? shouldAdvanceSongKey("advanceKeyOnSongChange")
-        : false;
+      selectedSongChanged && shouldAdvanceSongKey("advanceKeyOnSongChange");
     if (shouldAdvanceSongKeyOnChange) {
       nextKey();
     }
@@ -2066,7 +2066,21 @@ function completeSongPass(skip = false) {
     });
     applySelectedSong(nextSongId);
   }
-  return { shouldResetIncorrect };
+  return { shouldResetIncorrect, selectedSongChanged };
+}
+
+function prepareSongChangeCountInFromCurrentBeat() {
+  songMetronomeState.currentMeasureIndex = 0;
+  songMetronomeState.currentChordIndexInMeasure = 0;
+  songMetronomeState.hasStarted = false;
+  songMetronomeState.transportMeasureOffset = metronomeState.currentMeasure - 1;
+  songMetronomeState.countInMeasuresTotal =
+    getMetronomeSettingsFromDom().countInMeasures;
+  songMetronomeState.countInMeasuresCompleted =
+    songMetronomeState.countInMeasuresTotal > 0 ? 1 : 0;
+  loadCurrentProgressionChord();
+  updateDisplay();
+  updateMetronomeReadout();
 }
 
 function startSongMeasureFromMetronome() {
@@ -2091,11 +2105,19 @@ function advanceSongMeasureFromMetronome() {
     songMetronomeState.currentMeasureIndex >=
     songMetronomeState.timeline.length - 1
   ) {
-    const { shouldResetIncorrect } = completeSongPass(false);
+    const { shouldResetIncorrect, selectedSongChanged } =
+      completeSongPass(false);
     if (shouldResetIncorrect) {
       isIncorrect = false;
     }
     generateProgression();
+    if (
+      selectedSongChanged &&
+      getMetronomeSettingsFromDom().countInMeasures > 0
+    ) {
+      prepareSongChangeCountInFromCurrentBeat();
+      return;
+    }
     songMetronomeState.currentMeasureIndex = 0;
     songMetronomeState.currentChordIndexInMeasure = 0;
     songMetronomeState.hasStarted = false;
