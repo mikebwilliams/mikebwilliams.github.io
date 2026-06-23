@@ -1788,6 +1788,7 @@ function handleKeyPressed(midiKey) {
   const keyElement = document.querySelector(`.key[data-note="${midiKey}"]`);
 
   activeKeys.push(midiKey);
+  logVoicingDebug("key pressed", { midiKey });
 
   if (getSortedAnswerNotes().includes(normalizePitchClass(midiKey))) {
     if (keyElement) keyElement.classList.add("correct");
@@ -1809,6 +1810,7 @@ function handleKeyReleased(midiKey) {
   if (idx !== -1) {
     activeKeys.splice(idx, 1);
   }
+  logVoicingDebug("key released", { midiKey, removed: idx !== -1 });
 
   if (keyElement) keyElement.classList.remove("correct", "incorrect");
 }
@@ -1966,6 +1968,48 @@ function clearChordFeedbackState() {
     dom.chordDisplay.classList.remove("correct");
     dom.chordDisplay.classList.remove("incorrect");
   }
+}
+
+function isVoicingDebugEnabled() {
+  try {
+    return (
+      typeof localStorage !== "undefined" &&
+      localStorage.getItem("chordsDebugVoicing") === "1"
+    );
+  } catch (_) {
+    return false;
+  }
+}
+
+function formatDebugNotes(notes) {
+  if (!Array.isArray(notes)) return [];
+  return notes.map((note) => ({
+    midi: note,
+    pitchClass:
+      typeof normalizePitchClass === "function"
+        ? normalizePitchClass(note)
+        : note,
+  }));
+}
+
+function logVoicingDebug(label, details = {}) {
+  if (!isVoicingDebugEnabled()) return;
+  console.log(`[voicing-debug] ${label}`, {
+    key: Array.isArray(keys) ? keys[keyIndex] : undefined,
+    keyIndex,
+    currentIndex,
+    currentChordName,
+    currentChordInternalName,
+    voicingMode:
+      typeof getVoicingMode === "function" ? getVoicingMode() : undefined,
+    upperMode: typeof getUpperMode === "function" ? getUpperMode() : undefined,
+    upper1Mode:
+      typeof getUpper1Mode === "function" ? getUpper1Mode() : undefined,
+    awaitingKeyRelease,
+    activeKeys: formatDebugNotes(activeKeys),
+    currentChordNotes: formatDebugNotes(currentChordNotes),
+    ...details,
+  });
 }
 
 function advanceSongWithinCurrentMeasure() {
@@ -2319,8 +2363,10 @@ function handleSuccessfulChordMatch() {
 }
 
 function checkChord() {
+  logVoicingDebug("checkChord start");
   if (awaitingKeyRelease) {
     if (activeKeys.length > 0) {
+      logVoicingDebug("checkChord awaiting release: active keys remain");
       return;
     }
 
@@ -2373,6 +2419,10 @@ function checkChord() {
         upper1Mode === "typeB" ||
         upper1Mode === "either"
       ) {
+        logVoicingDebug("checking upper1 voicing", {
+          mode: upper1Mode,
+          intervalVariants: ensureIntervalVariants(),
+        });
         const outcome = enforceTypedVoicing(
           activeKeys,
           upper1Mode,
@@ -2390,6 +2440,10 @@ function checkChord() {
         upperMode === "typeB" ||
         upperMode === "either"
       ) {
+        logVoicingDebug("checking upper voicing", {
+          mode: upperMode,
+          intervalVariants: ensureIntervalVariants(),
+        });
         const outcome = enforceTypedVoicing(
           activeKeys,
           upperMode,
@@ -3524,6 +3578,12 @@ function enforceTypedVoicing(activeNotes, mode, requiredLength, intervals) {
     const { orderA, orderB } = buildVoicingOrders(intervalSet, requiredLength);
     return checkTypedVoicing(activeNotes, requiredLength, orderA, orderB, mode);
   });
+  logVoicingDebug("typed voicing result", {
+    mode,
+    requiredLength,
+    intervalVariants: variants,
+    matched: matchesVariant,
+  });
   if (!matchesVariant) {
     return "waiting";
   }
@@ -3532,10 +3592,31 @@ function enforceTypedVoicing(activeNotes, mode, requiredLength, intervals) {
 }
 
 function checkTypedVoicing(activeNotes, requiredLength, orderA, orderB, mode) {
-  if (activeNotes.length !== requiredLength) return false;
+  if (activeNotes.length !== requiredLength) {
+    logVoicingDebug("typed voicing length mismatch", {
+      mode,
+      requiredLength,
+      rawActiveNotes: formatDebugNotes(activeNotes),
+      orderA,
+      orderB,
+    });
+    return false;
+  }
   const sorted = activeNotes.map(Number).sort((a, b) => a - b);
   const matchesA = matchesVoicingOrderSorted(sorted, orderA);
   const matchesB = matchesVoicingOrderSorted(sorted, orderB);
+  logVoicingDebug("typed voicing order check", {
+    mode,
+    requiredLength,
+    rawActiveNotes: formatDebugNotes(activeNotes),
+    uniqueSortedNotes: formatDebugNotes(sorted),
+    orderA,
+    orderB,
+    orderAPitchClasses: orderA.map(normalizePitchClass),
+    orderBPitchClasses: orderB.map(normalizePitchClass),
+    matchesA,
+    matchesB,
+  });
 
   if (mode === "typeA") return matchesA;
   if (mode === "typeB") return matchesB;
