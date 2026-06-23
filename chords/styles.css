@@ -237,7 +237,6 @@ main.page {
   color: var(--text-dim);
   font-size: 0.8em;
   letter-spacing: 0.09em;
-  text-transform: uppercase;
 }
 
 #txtProgression {
@@ -245,7 +244,6 @@ main.page {
   margin-top: -0.6rem;
   font-size: clamp(0.85rem, 0.7rem + 0.8vw, 1.1rem);
   letter-spacing: 0.38em;
-  text-transform: uppercase;
   color: var(--text-dim);
   overflow-x: auto;
 }
