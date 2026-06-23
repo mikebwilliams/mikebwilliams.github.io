@@ -1677,12 +1677,12 @@ function resolveProgressionEntry(entry, options = {}) {
   if (typeof entry !== "string") return null;
 
   if (isIntervalChord(entry)) {
-    let [name, notes] = getIntervalChordNotesAndName(
+    let [name, notes, resolvedInternalName] = getIntervalChordNotesAndName(
       keys[keyIndex],
       entry,
       wrap,
     );
-    const internalName = currentChordInternalName;
+    const internalName = resolvedInternalName || currentChordInternalName;
     if (shouldApplyVoicing) {
       notes = applySelectedVoicing(notes, internalName);
     }
@@ -1787,6 +1787,10 @@ function handleKeyPressed(midiKey) {
 
   const keyElement = document.querySelector(`.key[data-note="${midiKey}"]`);
 
+  if (activeKeys.includes(midiKey)) {
+    logVoicingDebug("key press ignored: already active", { midiKey });
+    return;
+  }
   activeKeys.push(midiKey);
   logVoicingDebug("key pressed", { midiKey });
 
@@ -3266,12 +3270,12 @@ function getIntervalChordNotesAndName(key, degree, wrap = true) {
     ext += "#11";
   }
 
-  // Track internal chord for voicing/validation
-  currentChordInternalName = degreeChordRoot + chordQuality + chord7th + ext;
+  const internalName = degreeChordRoot + chordQuality + chord7th + ext;
 
   return [
     generateChordName(degreeChordRoot, chordQuality + chord7th + ext),
-    generateNotesFromChordName(currentChordInternalName),
+    generateNotesFromChordName(internalName),
+    internalName,
   ];
 }
 
@@ -3592,17 +3596,18 @@ function enforceTypedVoicing(activeNotes, mode, requiredLength, intervals) {
 }
 
 function checkTypedVoicing(activeNotes, requiredLength, orderA, orderB, mode) {
-  if (activeNotes.length !== requiredLength) {
+  const sorted = [...new Set(activeNotes.map(Number))].sort((a, b) => a - b);
+  if (sorted.length !== requiredLength) {
     logVoicingDebug("typed voicing length mismatch", {
       mode,
       requiredLength,
       rawActiveNotes: formatDebugNotes(activeNotes),
+      uniqueSortedNotes: formatDebugNotes(sorted),
       orderA,
       orderB,
     });
     return false;
   }
-  const sorted = activeNotes.map(Number).sort((a, b) => a - b);
   const matchesA = matchesVoicingOrderSorted(sorted, orderA);
   const matchesB = matchesVoicingOrderSorted(sorted, orderB);
   logVoicingDebug("typed voicing order check", {
