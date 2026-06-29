@@ -2,6 +2,58 @@ import { test, expect } from "@playwright/test";
 
 const TEST_URL = process.env.PLAYWRIGHT_TEST_URL || "http://localhost:8001/";
 
+async function installMidiStateChangeMock(page, inputId, inputName) {
+  await page.addInitScript(
+    ({ inputId, inputName }) => {
+      function createInput(id: string, name: string) {
+        return {
+          id,
+          name,
+          state: "connected",
+          onmidimessage: null,
+        } as any;
+      }
+
+      const input = createInput(inputId, inputName);
+      const inputs = new Map([[inputId, input]]);
+      const access = {
+        inputs,
+        outputs: new Map(),
+        onstatechange: null,
+      } as any;
+
+      (window as any).__midiStateChangeTest = {
+        addInput(id: string, name: string) {
+          const newInput = createInput(id, name);
+          inputs.set(id, newInput);
+          if (typeof access.onstatechange === "function") {
+            access.onstatechange({ port: newInput });
+          }
+        },
+        emitStateChange(state: string, id = inputId) {
+          const targetInput = inputs.get(id);
+          targetInput.state = state;
+          if (typeof access.onstatechange === "function") {
+            access.onstatechange({ port: targetInput });
+          }
+        },
+        hasInputListener(id = inputId) {
+          const targetInput = inputs.get(id);
+          return typeof targetInput.onmidimessage === "function";
+        },
+      };
+
+      Object.defineProperty(navigator, "requestMIDIAccess", {
+        configurable: true,
+        value() {
+          return Promise.resolve(access);
+        },
+      });
+    },
+    { inputId, inputName },
+  );
+}
+
 test("MIDI tab can manually refresh the device list", async ({ page }) => {
   await page.addInitScript(() => {
     function createMidiAccess(stage: number) {
@@ -62,4 +114,104 @@ test("MIDI tab can manually refresh the device list", async ({ page }) => {
   await expect(page.locator("#tableMidiInputs")).not.toContainText(
     "Initial Piano",
   );
+});
+
+test("MIDI reconnects a previously enabled input when it reappears", async ({
+  page,
+}) => {
+  await installMidiStateChangeMock(page, "keyboard-1", "Reconnect Piano");
+
+  await page.goto(TEST_URL);
+  await page.click("label[for='tabOptionsMidi']");
+
+  const inputCheckbox = page.locator("input[data-midi-in='keyboard-1']");
+  await expect(inputCheckbox).toBeChecked();
+  expect(
+    await page.evaluate(() =>
+      (window as any).__midiStateChangeTest.hasInputListener(),
+    ),
+  ).toBe(true);
+
+  await page.evaluate(() =>
+    (window as any).__midiStateChangeTest.emitStateChange("disconnected"),
+  );
+
+  await expect(page.locator("#txtMidiStatus")).toHaveText(
+    "No MIDI inputs detected. Please connect a MIDI device.",
+  );
+  await expect(page.locator("#tableMidiInputs")).not.toContainText(
+    "Reconnect Piano",
+  );
+  expect(
+    await page.evaluate(() =>
+      (window as any).__midiStateChangeTest.hasInputListener(),
+    ),
+  ).toBe(false);
+
+  await page.evaluate(() =>
+    (window as any).__midiStateChangeTest.emitStateChange("connected"),
+  );
+
+  await expect(page.locator("#txtMidiStatus")).toHaveText("MIDI connected.");
+  await expect(inputCheckbox).toBeChecked();
+  expect(
+    await page.evaluate(() =>
+      (window as any).__midiStateChangeTest.hasInputListener(),
+    ),
+  ).toBe(true);
+});
+
+test("MIDI reconnect preserves disabled input choices", async ({ page }) => {
+  await installMidiStateChangeMock(page, "keyboard-2", "Disabled Piano");
+
+  await page.goto(TEST_URL);
+  await page.click("label[for='tabOptionsMidi']");
+
+  const inputCheckbox = page.locator("input[data-midi-in='keyboard-2']");
+  await expect(inputCheckbox).toBeChecked();
+  await inputCheckbox.uncheck();
+  expect(
+    await page.evaluate(() =>
+      (window as any).__midiStateChangeTest.hasInputListener(),
+    ),
+  ).toBe(false);
+
+  await page.evaluate(() =>
+    (window as any).__midiStateChangeTest.emitStateChange("disconnected"),
+  );
+  await page.evaluate(() =>
+    (window as any).__midiStateChangeTest.emitStateChange("connected"),
+  );
+
+  await expect(inputCheckbox).not.toBeChecked();
+  expect(
+    await page.evaluate(() =>
+      (window as any).__midiStateChangeTest.hasInputListener(),
+    ),
+  ).toBe(false);
+});
+
+test("MIDI auto-connects new inputs that were not disabled", async ({
+  page,
+}) => {
+  await installMidiStateChangeMock(page, "keyboard-1", "First Piano");
+
+  await page.goto(TEST_URL);
+  await page.click("label[for='tabOptionsMidi']");
+
+  await expect(page.locator("input[data-midi-in='keyboard-1']")).toBeChecked();
+
+  await page.evaluate(() =>
+    (window as any).__midiStateChangeTest.addInput("keyboard-2", "Late Piano"),
+  );
+
+  const newInputCheckbox = page.locator("input[data-midi-in='keyboard-2']");
+  await expect(page.locator("#txtMidiStatus")).toHaveText("MIDI connected.");
+  await expect(page.locator("#tableMidiInputs")).toContainText("Late Piano");
+  await expect(newInputCheckbox).toBeChecked();
+  expect(
+    await page.evaluate(() =>
+      (window as any).__midiStateChangeTest.hasInputListener("keyboard-2"),
+    ),
+  ).toBe(true);
 });

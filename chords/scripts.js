@@ -1,6 +1,8 @@
 let midiAccess = null;
 let selectedMidiInputIds = new Set();
 let selectedMidiOutputIds = new Set();
+let disabledMidiInputIds = new Set();
+let midiOutputDefaultsInitialized = false;
 let songAnswerTimer = null;
 
 // This string is the name of the chord, with possible alternative spellings
@@ -2243,7 +2245,7 @@ function handleMidiMessage(midiMessage) {
 function sendMidiNote(note, velocity, time) {
   // Send a MIDI message to the first available MIDI output
   if (!midiAccess) return;
-  const outputs = Array.from(midiAccess.outputs.values());
+  const outputs = getAvailableMidiOutputs();
   const selected = outputs.filter((o) => selectedMidiOutputIds.has(o.id));
   const targets = selected.length ? selected : outputs.slice(0, 1);
   targets.forEach((out) => {
@@ -2601,17 +2603,32 @@ function refreshKeyboardAnswerFeedback(options = {}) {
 
 function onMIDISuccess(midiAccessResult) {
   midiAccess = midiAccessResult;
+  midiAccess.onstatechange = handleMidiStateChange;
+
+  refreshMidiDeviceState();
+}
+
+function handleMidiStateChange() {
+  refreshMidiDeviceState();
+}
+
+function refreshMidiDeviceState() {
+  if (!midiAccess) return;
+
+  const inputs = getAvailableMidiInputs();
+  const outputs = getAvailableMidiOutputs();
+
+  initializeDefaultMidiSelections(inputs, outputs);
 
   // If there are no inputs, notify the user.
-  if (!midiAccess.inputs.size) {
+  if (!inputs.length) {
     dom.midiStatusText.textContent =
       "No MIDI inputs detected. Please connect a MIDI device.";
-    return;
+  } else {
+    dom.midiStatusText.textContent = "MIDI connected.";
   }
 
-  dom.midiStatusText.textContent = "MIDI connected.";
-
-  renderMidiDeviceTables();
+  renderMidiDeviceTables(inputs, outputs);
   refreshMidiListeners();
 }
 
@@ -2699,23 +2716,51 @@ function refreshMIDIDevices() {
   requestMIDIDeviceAccess();
 }
 
-function renderMidiDeviceTables() {
+function getMidiPortName(port) {
+  return port && typeof port.name === "string" ? port.name : "";
+}
+
+function midiPortIsConnected(port) {
+  return !port || port.state !== "disconnected";
+}
+
+function midiInputIsIgnored(input) {
+  const name = getMidiPortName(input);
+  return name.includes("Output connection") || name.includes("Midi Through");
+}
+
+function getAvailableMidiInputs() {
+  if (!midiAccess) return [];
+  return Array.from(midiAccess.inputs.values()).filter(
+    (input) => midiPortIsConnected(input) && !midiInputIsIgnored(input),
+  );
+}
+
+function getAvailableMidiOutputs() {
+  if (!midiAccess) return [];
+  return Array.from(midiAccess.outputs.values()).filter(midiPortIsConnected);
+}
+
+function initializeDefaultMidiSelections(inputs, outputs) {
+  inputs.forEach((input) => {
+    if (!disabledMidiInputIds.has(input.id)) {
+      selectedMidiInputIds.add(input.id);
+    }
+  });
+  if (!midiOutputDefaultsInitialized && outputs[0]) {
+    selectedMidiOutputIds.add(outputs[0].id);
+    midiOutputDefaultsInitialized = true;
+  }
+}
+
+function renderMidiDeviceTables(
+  inputs = getAvailableMidiInputs(),
+  outputs = getAvailableMidiOutputs(),
+) {
   if (!midiAccess) return;
   const inputsTable = dom.midiInputs;
   const outputsTable = dom.midiOutputs;
   if (!inputsTable || !outputsTable) return;
-
-  const inputs = Array.from(midiAccess.inputs.values()).filter(
-    (i) =>
-      !i.name.includes("Output connection") && !i.name.includes("Midi Through"),
-  );
-  const outputs = Array.from(midiAccess.outputs.values());
-
-  // Initialize defaults if none selected yet
-  if (selectedMidiInputIds.size === 0)
-    inputs.forEach((i) => selectedMidiInputIds.add(i.id));
-  if (selectedMidiOutputIds.size === 0 && outputs[0])
-    selectedMidiOutputIds.add(outputs[0].id);
 
   // Render inputs table
   let iHtml = "<thead><tr><th>Inputs</th><th>Use</th></tr></thead><tbody>";
@@ -2741,8 +2786,13 @@ function renderMidiDeviceTables() {
     .forEach((cb) => {
       cb.addEventListener("change", (e) => {
         const id = e.target.getAttribute("data-midi-in");
-        if (e.target.checked) selectedMidiInputIds.add(id);
-        else selectedMidiInputIds.delete(id);
+        if (e.target.checked) {
+          disabledMidiInputIds.delete(id);
+          selectedMidiInputIds.add(id);
+        } else {
+          disabledMidiInputIds.add(id);
+          selectedMidiInputIds.delete(id);
+        }
         refreshMidiListeners();
       });
     });
@@ -2764,10 +2814,7 @@ function refreshMidiListeners() {
   const inputs = Array.from(midiAccess.inputs.values());
   inputs.forEach((input) => {
     // Skip loopback-ish inputs
-    if (
-      input.name.includes("Output connection") ||
-      input.name.includes("Midi Through")
-    ) {
+    if (!midiPortIsConnected(input) || midiInputIsIgnored(input)) {
       input.onmidimessage = null;
       return;
     }
