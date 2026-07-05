@@ -1,30 +1,47 @@
+@font-face {
+  font-family: "RealbookRegular";
+  src: url("fonts/realbook-webfont.eot");
+  src:
+    url("fonts/realbook-webfont.eot?#iefix") format("embedded-opentype"),
+    url("fonts/realbook-webfont.woff") format("woff"),
+    url("fonts/realbook-webfont.ttf") format("truetype"),
+    url("fonts/realbook-webfont.svg#RealbookRegular") format("svg");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --bg-900: #0f111d;
-  --bg-800: #171a29;
-  --bg-700: #1f2335;
-  --surface-900: #1b1f31;
-  --surface-800: #23273b;
-  --surface-700: #2c3148;
-  --surface-soft: rgba(255, 255, 255, 0.04);
-  --surface-soft-strong: rgba(255, 255, 255, 0.08);
-  --border-soft: rgba(129, 140, 180, 0.25);
-  --border-strong: rgba(129, 140, 180, 0.4);
-  --text-primary: #f4f5ff;
-  --text-muted: #b5bdd4;
-  --text-dim: #8b92ac;
-  --accent: #8ca9ff;
-  --accent-strong: #6f8eff;
-  --accent-soft: rgba(140, 169, 255, 0.22);
-  --success: #45d5a4;
-  --danger: #ff6f7d;
-  --warning: #ffd95a;
-  --shadow-soft: 0 26px 60px rgba(3, 7, 25, 0.48);
-  --shadow-tight: 0 18px 40px rgba(6, 10, 28, 0.42);
-  --radius-lg: 20px;
-  --radius-md: 14px;
-  --radius-sm: 9px;
+  --bg-900: #d7c8a7;
+  --bg-800: #e5d8b9;
+  --bg-700: #f0e6cf;
+  --surface-900: #f7efd9;
+  --surface-800: #efe3c8;
+  --surface-700: #e4d4af;
+  --surface-soft: rgba(44, 35, 22, 0.055);
+  --surface-soft-strong: rgba(44, 35, 22, 0.11);
+  --border-soft: rgba(45, 34, 20, 0.22);
+  --border-strong: rgba(45, 34, 20, 0.42);
+  --text-primary: #211b12;
+  --text-muted: #5f5342;
+  --text-dim: #7c705d;
+  --accent: #2b6683;
+  --accent-strong: #153f55;
+  --accent-soft: rgba(43, 102, 131, 0.18);
+  --success: #3f6a38;
+  --danger: #9c3429;
+  --warning: #a86f1c;
+  --shadow-soft: 0 18px 44px rgba(73, 52, 24, 0.2);
+  --shadow-tight: 3px 5px 0 rgba(45, 34, 20, 0.18);
+  --radius-lg: 8px;
+  --radius-md: 6px;
+  --radius-sm: 4px;
   --transition: 160ms ease;
-  --font-base: "Noto Sans", Calibri, Arial, sans-serif;
+  --font-base:
+    "New Century Schoolbook", "C059", "Century Schoolbook", Georgia, serif;
+  --font-hand:
+    "RealbookRegular", "MuseJazz Text", "MuseJazz", "Comic Neue",
+    "Comic Sans MS", "Segoe Print", "Bradley Hand", cursive;
 }
 
 *,
@@ -36,14 +53,51 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(
-    145% 100% at 50% 0%,
-    var(--bg-800),
-    var(--bg-900)
-  );
+  position: relative;
+  background-color: var(--bg-900);
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.16) 0,
+      rgba(255, 255, 255, 0.16) 1px,
+      transparent 1px,
+      transparent 7px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(47, 37, 22, 0.045) 0,
+      rgba(47, 37, 22, 0.045) 1px,
+      transparent 1px,
+      transparent 11px
+    ),
+    linear-gradient(180deg, var(--bg-700), var(--bg-900));
   color: var(--text-primary);
   font-family: var(--font-base);
   line-height: 1.6;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(
+      102deg,
+      transparent 0,
+      transparent 18px,
+      rgba(78, 58, 30, 0.04) 18px,
+      rgba(78, 58, 30, 0.04) 19px
+    ),
+    repeating-linear-gradient(
+      14deg,
+      transparent 0,
+      transparent 27px,
+      rgba(255, 255, 255, 0.09) 27px,
+      rgba(255, 255, 255, 0.09) 28px
+    );
+  opacity: 0.75;
 }
 
 a {
@@ -61,6 +115,8 @@ a:visited {
 }
 
 main.page {
+  position: relative;
+  z-index: 1;
   width: min(100%, 1100px);
   margin: 0 auto;
   padding: 56px 24px 96px;
@@ -77,12 +133,17 @@ main.page {
 }
 
 .surfaceCard {
-  background: linear-gradient(
-    160deg,
-    rgba(255, 255, 255, 0.025),
-    rgba(8, 12, 30, 0.65)
-  );
-  border: 1px solid var(--border-soft);
+  background-color: var(--surface-900);
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0)),
+    repeating-linear-gradient(
+      176deg,
+      transparent 0,
+      transparent 21px,
+      rgba(64, 48, 27, 0.035) 21px,
+      rgba(64, 48, 27, 0.035) 22px
+    );
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
   padding: 32px 36px;
@@ -131,12 +192,12 @@ main.page {
   align-items: stretch;
   gap: 32px;
   padding: 48px 36px 52px;
-  background: linear-gradient(
-    135deg,
-    rgba(140, 169, 255, 0.28),
-    rgba(14, 18, 38, 0.92)
-  );
-  border-color: rgba(140, 169, 255, 0.36);
+  background-color: var(--surface-900);
+  border-color: var(--border-strong);
+  box-shadow:
+    var(--shadow-soft),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.22),
+    inset 0 -5px 0 rgba(154, 108, 41, 0.08);
 }
 
 .challengeActiveArea {
@@ -157,7 +218,7 @@ main.page {
 }
 
 .challengePiano::-webkit-scrollbar-thumb {
-  background: var(--surface-soft-strong);
+  background: var(--border-strong);
   border-radius: 999px;
 }
 
@@ -187,7 +248,7 @@ main.page {
   padding: 4px 10px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-soft);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 252, 240, 0.72);
   color: var(--text-primary);
 }
 
@@ -197,13 +258,9 @@ main.page {
 
 .challengeCollapsibleBody {
   padding: 22px 24px 26px;
-  background: linear-gradient(
-    165deg,
-    rgba(39, 44, 66, 0.95),
-    rgba(23, 26, 42, 0.95)
-  );
-  border-top: 1px solid rgba(129, 140, 180, 0.18);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  background: rgba(255, 249, 232, 0.58);
+  border-top: 1px solid var(--border-soft);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
   border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 
@@ -214,8 +271,10 @@ main.page {
   justify-content: center;
   gap: 0.45rem;
   font-size: clamp(2.1rem, 1.35rem + 2vw, 3.2rem);
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-family: var(--font-hand);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.05;
 }
 
 #panelHeader span {
@@ -225,25 +284,26 @@ main.page {
 
 #txtCurrentKey {
   color: var(--accent);
-  font-weight: 700;
+  font-weight: 400;
 }
 
 #txtChord {
-  font-weight: 700;
+  font-weight: 400;
   color: var(--text-primary);
 }
 
 #txtCadence {
-  color: var(--text-dim);
+  color: var(--danger);
   font-size: 0.8em;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.04em;
 }
 
 #txtProgression {
   text-align: center;
   margin-top: -0.6rem;
+  font-family: var(--font-hand);
   font-size: clamp(0.85rem, 0.7rem + 0.8vw, 1.1rem);
-  letter-spacing: 0.38em;
+  letter-spacing: 0.16em;
   color: var(--text-dim);
   overflow-x: auto;
 }
@@ -256,7 +316,7 @@ main.page {
   width: min(100%, 920px);
   margin: 0 auto;
   border-collapse: separate;
-  border-spacing: 6px;
+  border-spacing: 4px;
   table-layout: fixed;
   letter-spacing: normal;
   text-transform: none;
@@ -265,9 +325,17 @@ main.page {
 .songMeasure {
   width: 25%;
   padding: 4px;
-  border: 1px solid rgba(129, 140, 180, 0.2);
-  border-radius: var(--radius-sm);
-  background: rgba(9, 13, 28, 0.34);
+  border: 1px solid rgba(45, 34, 20, 0.16);
+  border-radius: 2px;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      transparent 0,
+      transparent 19px,
+      rgba(45, 34, 20, 0.055) 19px,
+      rgba(45, 34, 20, 0.055) 20px
+    ),
+    rgba(255, 251, 238, 0.28);
   vertical-align: top;
   position: relative;
   overflow: hidden;
@@ -313,9 +381,9 @@ main.page {
 .songMeasureSection {
   padding-left: 2px;
   font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: var(--text-muted);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: var(--danger);
   text-transform: uppercase;
 }
 
@@ -337,9 +405,9 @@ main.page {
   justify-content: center;
   align-items: center;
   gap: 4px;
-  color: var(--text-muted);
+  color: var(--text-primary);
   font-size: 0.98rem;
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1.05;
 }
 
@@ -350,8 +418,8 @@ main.page {
 .songMeasureTimeSignatureDivider {
   width: 16px;
   height: 2px;
-  border-radius: 999px;
-  background: rgba(220, 228, 255, 0.82);
+  border-radius: 2px;
+  background: rgba(33, 27, 18, 0.72);
 }
 
 .songMeasureBar {
@@ -365,8 +433,8 @@ main.page {
 
 .songMeasureBarLine {
   width: 2px;
-  border-radius: 999px;
-  background: rgba(220, 228, 255, 0.75);
+  border-radius: 2px;
+  background: rgba(33, 27, 18, 0.78);
   min-height: 100%;
 }
 
@@ -376,7 +444,7 @@ main.page {
 
 .songMeasureBarLine--thick {
   width: 4px;
-  background: rgba(244, 245, 255, 0.92);
+  background: rgba(33, 27, 18, 0.92);
 }
 
 .songMeasureBarDots {
@@ -390,7 +458,7 @@ main.page {
   width: 4px;
   height: 4px;
   border-radius: 999px;
-  background: rgba(244, 245, 255, 0.92);
+  background: rgba(33, 27, 18, 0.92);
 }
 
 .songMeasureChords {
@@ -411,11 +479,10 @@ main.page {
   align-items: center;
   margin: 0;
   padding: 0;
-  font-family:
-    "Aptos Narrow", "Arial Narrow", "Liberation Sans Narrow", var(--font-base);
-  font-size: 2em;
+  font-family: var(--font-hand);
+  font-size: 2.06em;
   font-weight: 400;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.01em;
   line-height: 0.96;
   color: var(--text-primary);
 }
@@ -428,22 +495,25 @@ main.page {
 }
 
 .songMeasureChord--current {
-  color: #0077ff;
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.14em;
 }
 
 .songMeasureChord--complete {
-  color: green;
+  color: var(--success);
 }
 
 .songMeasureChord--missed {
-  color: #d65353;
+  color: var(--danger);
 }
 
 .songMeasureComments {
   margin-top: auto;
   font-size: 0.62em;
   letter-spacing: 0.1em;
-  color: var(--text-dim);
+  color: var(--text-muted);
   text-align: center;
 }
 
@@ -484,12 +554,8 @@ main.page {
   flex-wrap: nowrap;
   align-items: stretch;
   border-radius: var(--radius-md);
-  background: linear-gradient(
-    140deg,
-    rgba(0, 0, 0, 0.6),
-    rgba(255, 255, 255, 0.12)
-  );
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #1c1812;
+  border: 1px solid rgba(33, 27, 18, 0.58);
   box-shadow: var(--shadow-tight);
   overflow: hidden;
   box-sizing: border-box;
@@ -497,7 +563,7 @@ main.page {
 
 .key {
   height: 100%;
-  border: 1px solid rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(33, 27, 18, 0.72);
   box-sizing: border-box;
   transition:
     transform var(--transition),
@@ -509,8 +575,8 @@ main.page {
   flex: 0 0 calc(100% / 15);
   max-width: calc(100% / 15);
   position: relative;
-  background-color: #fdfdfd;
-  background: linear-gradient(180deg, #fdfdfd, #d9d9d9 90%);
+  background-color: #fffaf0;
+  background: linear-gradient(180deg, #fffdf7, #e9dfca 90%);
 }
 
 .key.white:last-of-type {
@@ -518,8 +584,8 @@ main.page {
 }
 
 .black {
-  background-color: #050507;
-  background-image: linear-gradient(180deg, #26262a, #050507 88%);
+  background-color: #17130e;
+  background-image: linear-gradient(180deg, #343026, #17130e 88%);
   width: calc(40 / 1050 * 100%);
   height: calc(155 / 240 * 100%);
   position: absolute;
@@ -570,42 +636,44 @@ main.page {
 
 .key.highlight {
   background: var(--warning);
-  box-shadow: 0 0 18px rgba(255, 217, 90, 0.55);
+  box-shadow: inset 0 -5px 0 rgba(33, 27, 18, 0.18);
 }
 
 .key.incorrect {
   background: var(--danger);
-  box-shadow: 0 0 22px rgba(255, 111, 125, 0.6);
+  box-shadow: inset 0 -5px 0 rgba(33, 27, 18, 0.18);
 }
 
 .key.correct {
   background: var(--success);
-  box-shadow: 0 0 22px rgba(69, 213, 164, 0.55);
+  box-shadow: inset 0 -5px 0 rgba(33, 27, 18, 0.18);
 }
 
 button {
-  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-  color: var(--text-primary);
-  border: none;
+  background: var(--text-primary);
+  color: var(--surface-900);
+  border: 1px solid var(--text-primary);
   padding: 0.65rem 1.4rem;
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   font-size: 0.95rem;
-  font-weight: 600;
+  font-family: var(--font-base);
+  font-weight: 700;
   cursor: pointer;
   transition:
     transform var(--transition),
     box-shadow var(--transition),
     filter var(--transition);
-  box-shadow: 0 14px 28px rgba(140, 169, 255, 0.28);
+  box-shadow: 2px 3px 0 rgba(33, 27, 18, 0.24);
 }
 
 button:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.05);
+  transform: translate(-1px, -1px);
+  filter: none;
 }
 
 button:active {
   transform: translateY(1px) scale(0.99);
+  box-shadow: 1px 1px 0 rgba(33, 27, 18, 0.24);
 }
 
 button:focus-visible {
@@ -625,9 +693,9 @@ details.challengeCollapsible {
   padding: 0;
   overflow: hidden;
   border-radius: var(--radius-md);
-  border: 1px solid rgba(129, 140, 180, 0.32);
-  background: linear-gradient(165deg, var(--surface-900), var(--surface-800));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-strong);
+  background: rgba(247, 239, 217, 0.86);
+  box-shadow: 2px 3px 0 rgba(45, 34, 20, 0.1);
 }
 
 details.challengeCollapsible > summary {
@@ -643,7 +711,7 @@ details.challengeCollapsible > summary {
   justify-content: flex-start;
   flex-wrap: wrap;
   gap: 12px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(228, 212, 175, 0.46);
   border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 
@@ -666,7 +734,7 @@ details.challengeCollapsible[open] > summary::after {
 }
 
 details.challengeCollapsible[open] > summary {
-  border-bottom: 1px solid rgba(129, 140, 180, 0.26);
+  border-bottom: 1px solid var(--border-soft);
 }
 
 details.challengeCollapsible:not([open]) > summary {
@@ -678,6 +746,10 @@ details.challengeCollapsible > summary .collapsibleTitle {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  font-family: var(--font-hand);
+  font-size: 1.18rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
 }
 
 details.challengeCollapsible > summary .summaryActions {
@@ -698,10 +770,10 @@ details.challengeCollapsible > summary .summaryActions {
 
 .metronomePanelMain,
 .metronomeControls {
-  background: linear-gradient(165deg, var(--surface-800), var(--surface-700));
+  background: rgba(255, 249, 232, 0.58);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-soft);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
 }
 
 .metronomePanelMain {
@@ -723,9 +795,9 @@ details.challengeCollapsible > summary .summaryActions {
 
 .metronomeStatCard {
   padding: 14px 15px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(129, 140, 180, 0.18);
+  border-radius: var(--radius-md);
+  background: rgba(247, 239, 217, 0.82);
+  border: 1px solid var(--border-soft);
 }
 
 .metronomeStatLabel {
@@ -738,7 +810,9 @@ details.challengeCollapsible > summary .summaryActions {
 }
 
 .metronomeStatValue {
+  font-family: var(--font-hand);
   font-size: clamp(1.25rem, 1rem + 1.2vw, 1.85rem);
+  font-weight: 400;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
@@ -756,13 +830,9 @@ details.challengeCollapsible > summary .summaryActions {
 
 .metronomePulse {
   min-height: 72px;
-  border-radius: 18px;
-  border: 1px solid rgba(129, 140, 180, 0.18);
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.1),
-    rgba(255, 255, 255, 0.04)
-  );
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-soft);
+  background: rgba(255, 252, 240, 0.62);
   display: grid;
   place-items: center;
   position: relative;
@@ -778,63 +848,48 @@ details.challengeCollapsible > summary .summaryActions {
   position: absolute;
   inset: auto 12px 12px;
   height: 6px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  background: rgba(33, 27, 18, 0.08);
 }
 
 .metronomePulse span {
   position: relative;
   z-index: 1;
   font-size: 1.15rem;
-  font-weight: 700;
+  font-family: var(--font-hand);
+  font-weight: 400;
 }
 
 .metronomePulse.is-active {
   transform: translateY(-4px);
-  box-shadow: 0 12px 22px rgba(6, 10, 28, 0.3);
+  box-shadow: 2px 4px 0 rgba(33, 27, 18, 0.18);
 }
 
 .metronomePulse--normal.is-active {
-  border-color: rgba(140, 169, 255, 0.48);
-  background: linear-gradient(
-    180deg,
-    rgba(140, 169, 255, 0.42),
-    rgba(140, 169, 255, 0.14)
-  );
+  border-color: rgba(43, 102, 131, 0.46);
+  background: rgba(43, 102, 131, 0.22);
 }
 
 .metronomePulse--measure.is-active {
-  border-color: rgba(69, 213, 164, 0.48);
-  background: linear-gradient(
-    180deg,
-    rgba(69, 213, 164, 0.36),
-    rgba(69, 213, 164, 0.12)
-  );
+  border-color: rgba(63, 106, 56, 0.48);
+  background: rgba(63, 106, 56, 0.2);
 }
 
 .metronomePulse--x.is-active {
-  border-color: rgba(255, 111, 125, 0.54);
-  background: linear-gradient(
-    180deg,
-    rgba(255, 111, 125, 0.38),
-    rgba(255, 111, 125, 0.13)
-  );
+  border-color: rgba(156, 52, 41, 0.52);
+  background: rgba(156, 52, 41, 0.2);
 }
 
 .metronomePulse--y.is-active {
-  border-color: rgba(255, 217, 90, 0.62);
-  background: linear-gradient(
-    180deg,
-    rgba(255, 217, 90, 0.42),
-    rgba(255, 217, 90, 0.12)
-  );
+  border-color: rgba(168, 111, 28, 0.58);
+  background: rgba(168, 111, 28, 0.22);
 }
 
 .metronomeStatus {
   margin: 16px 0 0;
   padding: 14px 16px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-md);
+  background: rgba(44, 35, 22, 0.055);
   color: var(--text-muted);
   line-height: 1.45;
 }
@@ -867,7 +922,7 @@ details.challengeCollapsible > summary .summaryActions {
   padding: 10px 12px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-soft);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 252, 240, 0.72);
   color: var(--text-primary);
   font: inherit;
 }
@@ -876,12 +931,8 @@ details.challengeCollapsible > summary .summaryActions {
   width: 100%;
   appearance: none;
   height: 10px;
-  border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    rgba(140, 169, 255, 0.18),
-    rgba(69, 213, 164, 0.24)
-  );
+  border-radius: 2px;
+  background: rgba(33, 27, 18, 0.16);
   outline: none;
 }
 
@@ -890,20 +941,20 @@ details.challengeCollapsible > summary .summaryActions {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--text-primary);
+  background: var(--surface-900);
   cursor: pointer;
   border: 3px solid var(--accent);
-  box-shadow: 0 6px 16px rgba(6, 10, 28, 0.28);
+  box-shadow: 1px 2px 0 rgba(33, 27, 18, 0.22);
 }
 
 .metronomeField input[type="range"]::-moz-range-thumb {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--text-primary);
+  background: var(--surface-900);
   cursor: pointer;
   border: 3px solid var(--accent);
-  box-shadow: 0 6px 16px rgba(6, 10, 28, 0.28);
+  box-shadow: 1px 2px 0 rgba(33, 27, 18, 0.22);
 }
 
 .metronomeTempoRow {
@@ -989,30 +1040,27 @@ details.challengeCollapsible > summary .summaryActions {
 }
 
 .statCard {
-  background: linear-gradient(165deg, var(--surface-800), var(--surface-700));
+  background: rgba(255, 249, 232, 0.62);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-soft);
   padding: 18px 20px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
 }
 
 .statCard.goalMet {
-  background: linear-gradient(
-    165deg,
-    rgba(22, 78, 53, 0.92),
-    rgba(18, 61, 43, 0.88)
-  );
-  border-color: rgba(69, 213, 164, 0.55);
+  background: rgba(63, 106, 56, 0.16);
+  border-color: rgba(63, 106, 56, 0.5);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 10px 28px rgba(69, 213, 164, 0.25);
-  color: #ebfff6;
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    2px 3px 0 rgba(63, 106, 56, 0.18);
+  color: var(--text-primary);
 }
 
 .statCard h4 {
   margin: 0 0 12px;
   font-size: 1.05rem;
-  font-weight: 600;
+  font-family: var(--font-hand);
+  font-weight: 400;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1020,7 +1068,7 @@ details.challengeCollapsible > summary .summaryActions {
 
 .statCard.goalMet h4,
 .statCard.goalMet .statLabelCell {
-  color: #d6f7ea;
+  color: var(--success);
 }
 
 .statTable {
@@ -1078,7 +1126,7 @@ details.challengeCollapsible > summary .summaryActions {
 
 .statTotalRow th,
 .statTotalRow td {
-  border-top: 1px solid rgba(129, 140, 180, 0.26);
+  border-top: 1px solid var(--border-soft);
   padding-top: 10px;
 }
 
@@ -1093,7 +1141,7 @@ details.challengeCollapsible > summary .summaryActions {
   padding: 4px 6px;
   text-align: right;
   border-radius: var(--radius-sm);
-  background: rgba(0, 0, 0, 0.18);
+  background: rgba(255, 252, 240, 0.74);
   color: inherit;
   border: 1px solid var(--border-soft);
   font-variant-numeric: tabular-nums;
@@ -1108,8 +1156,8 @@ details.challengeCollapsible > summary .summaryActions {
 }
 
 .statCard.goalMet .statGoalInput {
-  background: rgba(0, 0, 0, 0.22);
-  color: #f3fff9;
+  background: rgba(255, 252, 240, 0.82);
+  color: var(--text-primary);
 }
 
 .statGoalInput::-webkit-outer-spin-button,
@@ -1133,8 +1181,9 @@ details.challengeCollapsible > summary .summaryActions {
 .sectionTitle {
   margin: 0 0 18px;
   font-size: 1.6rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-family: var(--font-hand);
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 .tabs {
@@ -1164,7 +1213,7 @@ details.challengeCollapsible > summary .summaryActions {
     border var(--transition),
     transform var(--transition),
     box-shadow var(--transition);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.02em;
 }
 
@@ -1174,16 +1223,16 @@ details.challengeCollapsible > summary .summaryActions {
 }
 
 .tabs input[type="radio"]:checked + label {
-  color: var(--text-primary);
-  background: linear-gradient(140deg, var(--accent), var(--accent-strong));
-  border-color: transparent;
-  box-shadow: 0 14px 32px rgba(140, 169, 255, 0.32);
-  transform: translateY(-1px);
+  color: var(--surface-900);
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  box-shadow: 2px 3px 0 rgba(33, 27, 18, 0.18);
+  transform: translate(-1px, -1px);
 }
 
 .tabContent {
   display: none;
-  background: linear-gradient(165deg, var(--surface-900), var(--surface-800));
+  background: rgba(255, 249, 232, 0.54);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
   padding: 22px 24px;
@@ -1202,6 +1251,12 @@ details.challengeCollapsible > summary .summaryActions {
 .optionsSection .tabContent,
 .modeSection .tabContent {
   margin-bottom: 0;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--border-soft);
+  margin: 16px 0;
 }
 
 label {
@@ -1310,14 +1365,14 @@ label {
   justify-content: space-between;
   gap: 12px;
   padding: 14px 16px;
-  background: var(--surface-700);
+  background: rgba(255, 249, 232, 0.62);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-sm);
 }
 
 .workoutEntry.active {
   border-color: var(--accent);
-  box-shadow: 0 0 0 1px rgba(140, 169, 255, 0.38);
+  box-shadow: 2px 3px 0 rgba(43, 102, 131, 0.18);
 }
 
 .workoutEntryInfo {
@@ -1371,13 +1426,16 @@ input[type="radio"] {
 
 select,
 input[type="number"],
-input[type="text"] {
-  background: var(--surface-900);
+input[type="text"],
+textarea,
+pre {
+  background: rgba(255, 252, 240, 0.82);
   color: var(--text-primary);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-sm);
   padding: 0.45rem 0.65rem;
   font-size: 0.95rem;
+  font-family: inherit;
   min-width: 4.25rem;
   transition:
     border var(--transition),
@@ -1386,7 +1444,8 @@ input[type="text"] {
 
 select:focus,
 input[type="number"]:focus,
-input[type="text"]:focus {
+input[type="text"]:focus,
+textarea:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
@@ -1418,7 +1477,7 @@ input[type="text"]:focus {
 .optionsSection td,
 .modeSection th,
 .modeSection td {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--border-soft);
   padding: 10px 8px;
   text-align: left;
   vertical-align: middle;
@@ -1585,7 +1644,7 @@ input[type="text"]:focus {
   width: 100%;
   margin: 0;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-soft);
   padding: 10px 6px;
   cursor: pointer;
   transition:
@@ -1599,7 +1658,7 @@ input[type="text"]:focus {
 .intervalKey:hover {
   transform: translateY(-2px);
   border-color: var(--accent);
-  box-shadow: 0 10px 22px rgba(140, 169, 255, 0.2);
+  box-shadow: 2px 3px 0 rgba(43, 102, 131, 0.18);
 }
 
 .intervalKey input {
@@ -1612,25 +1671,17 @@ input[type="text"]:focus {
 }
 
 .intervalKey--white {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.14),
-    rgba(255, 255, 255, 0.04)
-  );
+  background: linear-gradient(180deg, #fffdf7, #eadfc8 90%);
   color: var(--text-primary);
   justify-content: flex-end;
   padding-bottom: 16px;
 }
 
 .intervalKey--black {
-  background: linear-gradient(
-    180deg,
-    rgba(26, 30, 52, 0.92),
-    rgba(5, 7, 18, 0.92)
-  );
-  color: var(--text-primary);
+  background: linear-gradient(180deg, #343026, #17130e 88%);
+  color: var(--surface-900);
   justify-content: center;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .intervalRow--upper .intervalKey:nth-child(1) {
@@ -1702,10 +1753,10 @@ input[type="text"]:focus {
 
 #panelSpacedRepListContainer {
   margin-top: 16px;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 249, 232, 0.58);
   border-radius: var(--radius-md);
   padding: 16px 18px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-soft);
 }
 
 #panelSpacedRepListContainer h4 {
