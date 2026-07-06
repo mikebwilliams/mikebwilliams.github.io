@@ -71,6 +71,50 @@ test("Progression custom and random fields only enable for their modes", async (
   await expect(page.locator("#inputProgressionRandomCount")).toBeDisabled();
 });
 
+test("Mouse input clears selected keys and advances after a correct chord", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.selectOption("#selectFlow", "random");
+  await page.selectOption("#selectFlowStart", "C");
+  await page.click("label[for='tabModeProgressions']");
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => ({
+        key: keys[keyIndex],
+        chord: currentChordInternalName,
+        index: currentIndex,
+        notes: currentChordNotes.map((note) => note + 48),
+      })),
+    )
+    .toEqual({ key: "C", chord: "C", index: 0, notes: [48, 52, 55] });
+
+  for (const note of [48, 52, 55]) {
+    await page.click(`.key[data-note="${note}"]`);
+  }
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => ({
+        index: currentIndex,
+        chord: currentChordInternalName,
+        activeKeys: activeKeys.slice(),
+        markedKeys: document.querySelectorAll(".key.correct, .key.incorrect")
+          .length,
+      })),
+    )
+    .toEqual({
+      index: 1,
+      chord: "F",
+      activeKeys: [],
+      markedKeys: 0,
+    });
+});
+
 test("Progression Type B accepts the Ab ii7 upper voicing", async ({
   page,
 }) => {

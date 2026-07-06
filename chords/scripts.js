@@ -1835,7 +1835,14 @@ function handleKeyClick(key) {
     handleKeyPressed(midiKey);
   }
 
-  checkChord();
+  checkChord({ advanceOnMatch: true });
+}
+
+function clearActiveKeys() {
+  activeKeys.slice().forEach((midiKey) => {
+    handleKeyReleased(midiKey);
+  });
+  activeKeys = [];
 }
 
 function handleKeyPressed(midiKey) {
@@ -2385,8 +2392,9 @@ function shouldAllowLegatoChordOverlap() {
   return modeIsSongs();
 }
 
-function handleSuccessfulChordMatch() {
-  const waitForRelease = !modeIsSongs();
+function handleSuccessfulChordMatch(options = {}) {
+  const advanceOnMatch = !!options.advanceOnMatch;
+  const waitForRelease = !modeIsSongs() && !advanceOnMatch;
   awaitingKeyRelease = waitForRelease;
   dom.chordDisplay.classList.remove("incorrect");
   dom.chordDisplay.classList.add("correct");
@@ -2406,6 +2414,10 @@ function handleSuccessfulChordMatch() {
   clearTimeout(highlightTimer);
   highlightCorrectKeys();
 
+  if (advanceOnMatch) {
+    clearActiveKeys();
+  }
+
   if (waitForRelease) {
     updateDisplay();
     return;
@@ -2415,7 +2427,7 @@ function handleSuccessfulChordMatch() {
   clearChordFeedbackState();
   if (typeof advanceAction === "function") {
     advanceAction();
-  } else if (modeIsSongs() && !isSongMetronomeSyncActive()) {
+  } else if (!(modeIsSongs() && isSongMetronomeSyncActive())) {
     nextChord();
   } else {
     loadCurrentProgressionChord();
@@ -2423,7 +2435,7 @@ function handleSuccessfulChordMatch() {
   }
 }
 
-function checkChord() {
+function checkChord(options = {}) {
   logVoicingDebug("checkChord start");
   if (awaitingKeyRelease) {
     if (activeKeys.length > 0) {
@@ -2451,7 +2463,7 @@ function checkChord() {
   ].sort((a, b) => a - b);
   const allowLegatoOverlap = shouldAllowLegatoChordOverlap();
   const markChordCorrect = () => {
-    handleSuccessfulChordMatch();
+    handleSuccessfulChordMatch(options);
   };
 
   if (modeIsChords() || modeIsProgressions() || modeIsJazz() || modeIsSongs()) {
@@ -2489,6 +2501,7 @@ function checkChord() {
           upper1Mode,
           3,
           ensureIntervalVariants(),
+          options,
         );
         if (outcome === "waiting" || outcome === "handled") return;
       }
@@ -2510,6 +2523,7 @@ function checkChord() {
           upperMode,
           4,
           ensureIntervalVariants(),
+          options,
         );
         if (outcome === "waiting" || outcome === "handled") return;
       }
@@ -3672,11 +3686,17 @@ function applyShellVoicing(
   }
 }
 
-function handleTypedVoicingSuccess() {
-  handleSuccessfulChordMatch();
+function handleTypedVoicingSuccess(options = {}) {
+  handleSuccessfulChordMatch(options);
 }
 
-function enforceTypedVoicing(activeNotes, mode, requiredLength, intervals) {
+function enforceTypedVoicing(
+  activeNotes,
+  mode,
+  requiredLength,
+  intervals,
+  options = {},
+) {
   if (mode !== "typeA" && mode !== "typeB" && mode !== "either") return "none";
   const variants = Array.isArray(intervals) ? intervals : [intervals];
   const matchesVariant = variants.some((intervalSet) => {
@@ -3693,7 +3713,7 @@ function enforceTypedVoicing(activeNotes, mode, requiredLength, intervals) {
   if (!matchesVariant) {
     return "waiting";
   }
-  handleTypedVoicingSuccess();
+  handleTypedVoicingSuccess(options);
   return "handled";
 }
 
