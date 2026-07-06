@@ -21,6 +21,56 @@ test("Progression display preserves roman numeral capitalization", async ({
   await expect(progression).toHaveCSS("text-transform", "none");
 });
 
+test("Progression custom and random fields only enable for their modes", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.click("label[for='tabModeProgressions']");
+
+  await expect(page.locator("#selectProgression")).toHaveValue("I-IV-V");
+  await expect(page.locator("#inputProgressionCustom")).toBeDisabled();
+  await expect(page.locator("#inputProgressionCustom")).toHaveCSS(
+    "opacity",
+    "0.58",
+  );
+  await expect(page.locator("#inputProgressionRandomCount")).toBeDisabled();
+  await expect(page.locator("#inputProgressionRandomCount")).toHaveCSS(
+    "opacity",
+    "0.58",
+  );
+
+  await page.selectOption("#selectProgression", "custom");
+  await expect(page.locator("#inputProgressionCustom")).toBeEnabled();
+  await expect(page.locator("#inputProgressionCustom")).toHaveCSS(
+    "opacity",
+    "1",
+  );
+  await expect(page.locator("#inputProgressionRandomCount")).toBeDisabled();
+  await expect(page.locator("#inputProgressionRandomCount")).toHaveCSS(
+    "opacity",
+    "0.58",
+  );
+
+  await page.selectOption("#selectProgression", "random");
+  await expect(page.locator("#inputProgressionCustom")).toBeDisabled();
+  await expect(page.locator("#inputProgressionCustom")).toHaveCSS(
+    "opacity",
+    "0.58",
+  );
+  await expect(page.locator("#inputProgressionRandomCount")).toBeEnabled();
+  await expect(page.locator("#inputProgressionRandomCount")).toHaveCSS(
+    "opacity",
+    "1",
+  );
+
+  await page.selectOption("#selectProgression", "ii-V-I");
+  await expect(page.locator("#inputProgressionCustom")).toBeDisabled();
+  await expect(page.locator("#inputProgressionRandomCount")).toBeDisabled();
+});
+
 test("Progression Type B accepts the Ab ii7 upper voicing", async ({
   page,
 }) => {

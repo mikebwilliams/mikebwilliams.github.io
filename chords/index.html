@@ -128,6 +128,9 @@
           <details class="challengeCollapsible" id="panelMetronome">
             <summary>
               <span class="collapsibleTitle">Metronome</span>
+              <span class="collapsibleStatus" id="txtMetronomeSummary"
+                >4/4 at 120 BPM</span
+              >
               <div class="summaryActions">
                 <button id="btnMetronomeToggle" type="button">Start</button>
                 <button id="btnMetronomeReset" type="button">
@@ -271,7 +274,7 @@
                   <div class="metronomeField">
                     <div class="metronomeFieldHeader">
                       <label for="inputMetronomeCountInMeasures"
-                        >Song Count-In Measures</label
+                        >Count-In Measures</label
                       >
                       <span class="metronomeHint"
                         >Used when Song sync is on</span
@@ -333,9 +336,16 @@
             </div>
           </details>
 
-          <details class="challengeCollapsible statsPanel" open>
+          <details
+            class="challengeCollapsible statsPanel"
+            id="panelDailyStats"
+            open
+          >
             <summary>
               <span class="collapsibleTitle">Daily Stats</span>
+              <span class="collapsibleStatus" id="txtDailyStatsSummary"
+                >Chords: 0 / 0</span
+              >
               <div class="summaryActions">
                 <button id="btnStatsReset" type="button">
                   Reset Daily Stats
@@ -1334,6 +1344,7 @@
               type="text"
               id="inputProgressionCustom"
               value="I-II-iii-IV-V-vi-viio-I"
+              disabled
             />
           </label>
           <br />
@@ -1345,6 +1356,7 @@
               min="1"
               max="10"
               value="5"
+              disabled
             />
           </label>
 

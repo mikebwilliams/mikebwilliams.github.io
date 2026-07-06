@@ -324,13 +324,37 @@ function applyModeVisibility(selectedTab) {
 function modeChange() {
   applyModeVisibility(getSelectedMode());
   resetFlow();
+  const updateStatsSummary =
+    typeof uiGlobals.updateDailyStatsSummary === "function"
+      ? uiGlobals.updateDailyStatsSummary
+      : typeof uiRoot.updateDailyStatsSummary === "function"
+        ? uiRoot.updateDailyStatsSummary
+        : null;
+  if (updateStatsSummary) {
+    updateStatsSummary();
+  }
+}
+
+function syncProgressionParameterControls() {
+  if (!dom.progressionSelect) return;
+  if (dom.customProgressionInput) {
+    dom.customProgressionInput.disabled =
+      dom.progressionSelect.value !== "custom";
+  }
+  if (dom.randomProgressionCount) {
+    dom.randomProgressionCount.disabled =
+      dom.progressionSelect.value !== "random";
+  }
 }
 
 // Attach the handlers
 dom.skipButton.addEventListener("click", () => nextProgression());
 dom.playAnswerButton.addEventListener("click", () => playAnswerNotes());
 
-dom.progressionSelect.addEventListener("change", () => nextProgression());
+dom.progressionSelect.addEventListener("change", () => {
+  syncProgressionParameterControls();
+  nextProgression();
+});
 
 function setSongsStatus(message) {
   if (!dom.songStatus) return;
@@ -808,6 +832,7 @@ function handleSettingsLoad() {
     alert("Preset could not be loaded.");
     return;
   }
+  syncProgressionParameterControls();
   refreshSettingsPresetOptions();
   dom.settingsPresetSelect.value = name;
 }
@@ -846,6 +871,7 @@ function handleSettingsReset() {
   if (!uiSettingsStore) return;
   if (!confirm("Reset all settings to their default values?")) return;
   uiSettingsStore.resetToDefaults();
+  syncProgressionParameterControls();
   refreshSettingsPresetOptions();
   dom.settingsPresetSelect.value = "";
   dom.settingsPresetName.value = "";
@@ -1447,6 +1473,7 @@ function applyWorkoutEntry(index) {
     alert(`Preset "${presetName}" could not be loaded.`);
     return;
   }
+  syncProgressionParameterControls();
   const presets = getPresetSnapshots();
   const presetSnapshot = presets[presetName] || null;
   let category = resolveEntryCategory(entry, presetSnapshot);
@@ -1595,6 +1622,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (uiSettingsStore && typeof uiSettingsStore.syncFromDom === "function") {
     uiSettingsStore.syncFromDom();
   }
+  syncProgressionParameterControls();
   initMIDI();
   if (dom.midiRefreshButton) {
     dom.midiRefreshButton.addEventListener("click", () => {

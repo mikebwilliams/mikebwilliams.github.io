@@ -280,6 +280,23 @@ const songMetronomeState = {
 
 let pendingSuccessAdvanceAction = null;
 
+const summaryStatModeCategoryMap = {
+  tabChords: "chords",
+  tabProgressions: "progressions",
+  tabSongs: "progressions",
+  tabDegrees: "degrees",
+  tabScales: "scales",
+  tabJazz: "bricks",
+};
+
+const summaryStatCategoryLabels = {
+  chords: "Chords",
+  progressions: "Progressions",
+  degrees: "Degrees",
+  scales: "Scales",
+  bricks: "Bricks",
+};
+
 const statCategoryConfig = {
   chords: {
     correctElement: () => dom.cntChordsCorrect,
@@ -361,6 +378,24 @@ function parseGoalValue(input) {
   return parsed;
 }
 
+function getSelectedStatCategory() {
+  const selectedMode =
+    typeof getSelectedMode === "function" ? getSelectedMode() : "tabChords";
+  return summaryStatModeCategoryMap[selectedMode] || "chords";
+}
+
+function updateDailyStatsSummary() {
+  if (!dom.dailyStatsSummary) return;
+  const category = getSelectedStatCategory();
+  const resolve = statCategoryConfig[category];
+  if (!resolve) return;
+  const correctValue = parseCountFromElement(resolve.correctElement());
+  const incorrectValue = parseCountFromElement(resolve.incorrectElement());
+  const totalValue = correctValue + incorrectValue;
+  const label = summaryStatCategoryLabels[category] || "Stats";
+  dom.dailyStatsSummary.textContent = `${label}: ${correctValue} / ${totalValue}`;
+}
+
 function updateStatTotal(category) {
   const resolve = statCategoryConfig[category];
   if (!resolve || typeof resolve.totalElement !== "function") return;
@@ -399,11 +434,13 @@ function updateAllStatGoalStatuses() {
 
 function updateAllStatTotals() {
   Object.keys(statCategoryConfig).forEach(updateStatTotal);
+  updateDailyStatsSummary();
 }
 
 sharedGlobals.updateStatGoalStatus = updateStatGoalStatus;
 sharedGlobals.updateStatGoalStatuses = updateAllStatGoalStatuses;
 sharedGlobals.updateStatTotals = updateAllStatTotals;
+sharedGlobals.updateDailyStatsSummary = updateDailyStatsSummary;
 sharedGlobals.statGoalsChanged = updateAllStatGoalStatuses;
 
 if (runtimeRoot && !runtimeRoot.statGoalsChanged) {
@@ -411,6 +448,9 @@ if (runtimeRoot && !runtimeRoot.statGoalsChanged) {
 }
 if (runtimeRoot && !runtimeRoot.updateStatTotals) {
   runtimeRoot.updateStatTotals = updateAllStatTotals;
+}
+if (runtimeRoot && !runtimeRoot.updateDailyStatsSummary) {
+  runtimeRoot.updateDailyStatsSummary = updateDailyStatsSummary;
 }
 
 updateAllStatGoalStatuses();
@@ -747,6 +787,19 @@ function renderMetronomePulseGrid() {
   }
 }
 
+function getMetronomeSummaryTimeSignature() {
+  if (isSongMetronomeSyncActive()) {
+    const measure = getSongMetronomeMeasure();
+    if (measure && measure.timeSignature) return measure.timeSignature;
+  }
+  return `${metronomeState.beatsPerMeasure}/4`;
+}
+
+function updateMetronomeSummary() {
+  if (!dom.metronomeSummary) return;
+  dom.metronomeSummary.textContent = `${getMetronomeSummaryTimeSignature()} at ${metronomeState.tempo} BPM`;
+}
+
 function updateMetronomeStatus() {
   if (!dom.metronomeStatus) return;
   if (isSongMetronomeSyncActive()) {
@@ -862,6 +915,7 @@ function updateMetronomeReadout() {
     }
   }
   updateMetronomeControlAvailability();
+  updateMetronomeSummary();
   updateMetronomeStatus();
 }
 
@@ -1843,6 +1897,7 @@ function updateResultCounters({
     bumpDailyStat(category, { wasIncorrect, skipCorrect });
     updateStatTotal(category);
     updateStatGoalStatus(category);
+    updateDailyStatsSummary();
   }
 }
 

@@ -1168,8 +1168,20 @@ details.challengeCollapsible > summary .collapsibleTitle {
   letter-spacing: 0.02em;
 }
 
-details.challengeCollapsible > summary .summaryActions {
+details.challengeCollapsible > summary .collapsibleStatus {
   order: 3;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+details.challengeCollapsible[open] > summary .collapsibleStatus {
+  display: none;
+}
+
+details.challengeCollapsible > summary .summaryActions {
+  order: 4;
   display: inline-flex;
   gap: 12px;
   margin-left: auto;
@@ -1400,6 +1412,7 @@ details.challengeCollapsible > summary .summaryActions {
   grid-template-columns: auto 1fr;
   gap: 10px;
   align-items: start;
+  text-align: left;
   font-size: 0.94rem;
   line-height: 1.4;
 }
@@ -1856,6 +1869,18 @@ pre {
   transition:
     border var(--transition),
     box-shadow var(--transition);
+}
+
+select:disabled,
+input[type="number"]:disabled,
+input[type="text"]:disabled,
+textarea:disabled {
+  color: var(--text-muted);
+  background: var(--input-bg-soft);
+  border-color: var(--border-soft);
+  cursor: not-allowed;
+  opacity: 0.58;
+  box-shadow: none;
 }
 
 select:focus,

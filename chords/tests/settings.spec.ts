@@ -124,6 +124,46 @@ test("Metronome panel persists its open state and settings", async ({
   await expect(page.locator(".metronomePulse")).toHaveCount(7);
 });
 
+test("Collapsed metronome and stats summaries reflect current state", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  const metronomeSummary = page.locator("#txtMetronomeSummary");
+  const statsSummary = page.locator("#txtDailyStatsSummary");
+
+  await expect(metronomeSummary).toBeVisible();
+  await expect(metronomeSummary).toHaveText("4/4 at 120 BPM");
+  await expect(statsSummary).toBeHidden();
+
+  await page.click("#panelDailyStats > summary");
+  await expect(statsSummary).toBeVisible();
+  await expect(statsSummary).toHaveText("Chords: 0 / 0");
+
+  await page.click("#panelMetronome > summary");
+  await expect(metronomeSummary).toBeHidden();
+  await page.fill("#inputMetronomeTempoNumber", "144");
+  await page.locator("#inputMetronomeTempoNumber").blur();
+  await page.fill("#inputMetronomeBeatsPerMeasure", "7");
+  await page.locator("#inputMetronomeBeatsPerMeasure").blur();
+  await page.click("#panelMetronome > summary");
+
+  await expect(metronomeSummary).toBeVisible();
+  await expect(metronomeSummary).toHaveText("7/4 at 144 BPM");
+
+  await page.evaluate(() => {
+    document.querySelector("#txtProgressionsCorrect").textContent = "2";
+    document.querySelector("#txtProgressionsIncorrect").textContent = "1";
+    updateStatTotals();
+    updateDailyStatsSummary();
+  });
+  await page.click("label[for='tabModeProgressions']");
+
+  await expect(statsSummary).toHaveText("Progressions: 2 / 3");
+});
+
 test("Random flow resumes from the last practiced key after reload", async ({
   page,
 }) => {
