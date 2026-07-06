@@ -39,9 +39,283 @@
   --transition: 160ms ease;
   --font-base:
     "New Century Schoolbook", "C059", "Century Schoolbook", Georgia, serif;
+  --font-classical:
+    "Henle", "Henle Verlag", "New Century Schoolbook", "C059",
+    "Century Schoolbook", Georgia, serif;
   --font-hand:
     "RealbookRegular", "MuseJazz Text", "MuseJazz", "Comic Neue",
     "Comic Sans MS", "Segoe Print", "Bradley Hand", cursive;
+  --display-font-weight: 400;
+  --chart-font-weight: 400;
+  --paper-line-light: rgba(255, 255, 255, 0.16);
+  --paper-line-dark: rgba(47, 37, 22, 0.045);
+  --paper-fiber-dark: rgba(78, 58, 30, 0.04);
+  --paper-fiber-light: rgba(255, 255, 255, 0.09);
+  --surface-sheen: rgba(255, 255, 255, 0.34);
+  --surface-stripe: rgba(64, 48, 27, 0.035);
+  --hero-inset: rgba(255, 255, 255, 0.22);
+  --hero-foot: rgba(154, 108, 41, 0.08);
+  --panel-bg: rgba(255, 249, 232, 0.58);
+  --panel-inset: rgba(255, 255, 255, 0.42);
+  --input-bg: rgba(255, 252, 240, 0.82);
+  --input-bg-soft: rgba(255, 252, 240, 0.72);
+  --input-bg-strong: rgba(255, 252, 240, 0.74);
+  --measure-border: rgba(45, 34, 20, 0.16);
+  --measure-line: rgba(45, 34, 20, 0.055);
+  --measure-bg: rgba(255, 251, 238, 0.28);
+  --bar-line: rgba(33, 27, 18, 0.78);
+  --bar-line-soft: rgba(33, 27, 18, 0.72);
+  --bar-line-strong: rgba(33, 27, 18, 0.92);
+  --piano-bg: #1c1812;
+  --piano-border: rgba(33, 27, 18, 0.58);
+  --key-border: rgba(33, 27, 18, 0.72);
+  --white-key-top: #fffdf7;
+  --white-key-bottom: #e9dfca;
+  --black-key-top: #343026;
+  --black-key-bottom: #17130e;
+  --black-key-text: var(--surface-900);
+  --black-key-glint: rgba(255, 255, 255, 0.12);
+  --key-shadow: rgba(33, 27, 18, 0.18);
+  --button-bg: var(--text-primary);
+  --button-text: var(--surface-900);
+  --button-shadow: rgba(33, 27, 18, 0.24);
+  --button-active-shadow: rgba(33, 27, 18, 0.24);
+  --card-bg: rgba(247, 239, 217, 0.86);
+  --card-shadow: rgba(45, 34, 20, 0.1);
+  --summary-bg: rgba(228, 212, 175, 0.46);
+  --inner-card-bg: rgba(247, 239, 217, 0.82);
+  --pulse-bg: rgba(255, 252, 240, 0.62);
+  --pulse-rest-bg: rgba(33, 27, 18, 0.08);
+  --active-shadow: rgba(33, 27, 18, 0.18);
+  --normal-active-border: rgba(43, 102, 131, 0.46);
+  --normal-active-bg: rgba(43, 102, 131, 0.22);
+  --measure-active-border: rgba(63, 106, 56, 0.48);
+  --measure-active-bg: rgba(63, 106, 56, 0.2);
+  --x-active-border: rgba(156, 52, 41, 0.52);
+  --x-active-bg: rgba(156, 52, 41, 0.2);
+  --y-active-border: rgba(168, 111, 28, 0.58);
+  --y-active-bg: rgba(168, 111, 28, 0.22);
+  --range-bg: rgba(33, 27, 18, 0.16);
+  --thumb-shadow: rgba(33, 27, 18, 0.22);
+  --goal-bg: rgba(63, 106, 56, 0.16);
+  --goal-border: rgba(63, 106, 56, 0.5);
+  --goal-shadow: rgba(63, 106, 56, 0.18);
+  --tab-shadow: rgba(33, 27, 18, 0.18);
+  --hover-shadow: rgba(43, 102, 131, 0.18);
+}
+
+html[data-theme="darkBook"] {
+  --bg-900: #17120c;
+  --bg-800: #211910;
+  --bg-700: #312313;
+  --surface-900: #2b2116;
+  --surface-800: #241b12;
+  --surface-700: #3a2b1b;
+  --surface-soft: rgba(247, 224, 176, 0.07);
+  --surface-soft-strong: rgba(247, 224, 176, 0.13);
+  --border-soft: rgba(238, 214, 163, 0.24);
+  --border-strong: rgba(238, 214, 163, 0.46);
+  --text-primary: #f7edcf;
+  --text-muted: #c9b98f;
+  --text-dim: #9c8b66;
+  --accent: #82b7cf;
+  --accent-strong: #b9d8e4;
+  --accent-soft: rgba(130, 183, 207, 0.22);
+  --success: #8eaf73;
+  --danger: #e08370;
+  --warning: #d5a04a;
+  --shadow-soft: 0 18px 44px rgba(0, 0, 0, 0.38);
+  --shadow-tight: 3px 5px 0 rgba(0, 0, 0, 0.32);
+  --paper-line-light: rgba(255, 238, 197, 0.045);
+  --paper-line-dark: rgba(0, 0, 0, 0.16);
+  --paper-fiber-dark: rgba(0, 0, 0, 0.16);
+  --paper-fiber-light: rgba(255, 238, 197, 0.04);
+  --surface-sheen: rgba(255, 238, 197, 0.08);
+  --surface-stripe: rgba(255, 238, 197, 0.04);
+  --hero-inset: rgba(255, 238, 197, 0.08);
+  --hero-foot: rgba(0, 0, 0, 0.12);
+  --panel-bg: rgba(35, 27, 18, 0.72);
+  --panel-inset: rgba(255, 238, 197, 0.08);
+  --input-bg: rgba(24, 18, 12, 0.82);
+  --input-bg-soft: rgba(24, 18, 12, 0.7);
+  --input-bg-strong: rgba(24, 18, 12, 0.86);
+  --measure-border: rgba(238, 214, 163, 0.18);
+  --measure-line: rgba(238, 214, 163, 0.045);
+  --measure-bg: rgba(247, 224, 176, 0.04);
+  --bar-line: rgba(247, 237, 207, 0.72);
+  --bar-line-soft: rgba(247, 237, 207, 0.58);
+  --bar-line-strong: rgba(247, 237, 207, 0.9);
+  --button-bg: #f7edcf;
+  --button-text: #17120c;
+  --button-shadow: rgba(0, 0, 0, 0.34);
+  --button-active-shadow: rgba(0, 0, 0, 0.3);
+  --card-bg: rgba(43, 33, 22, 0.9);
+  --card-shadow: rgba(0, 0, 0, 0.22);
+  --summary-bg: rgba(71, 53, 33, 0.62);
+  --inner-card-bg: rgba(28, 22, 15, 0.72);
+  --pulse-bg: rgba(24, 18, 12, 0.66);
+  --pulse-rest-bg: rgba(247, 237, 207, 0.08);
+  --active-shadow: rgba(0, 0, 0, 0.3);
+  --range-bg: rgba(247, 237, 207, 0.16);
+  --thumb-shadow: rgba(0, 0, 0, 0.34);
+  --tab-shadow: rgba(0, 0, 0, 0.26);
+  --hover-shadow: rgba(130, 183, 207, 0.22);
+  --black-key-text: #f7edcf;
+  --black-key-glint: rgba(255, 238, 197, 0.1);
+}
+
+html[data-theme="classical"] {
+  --bg-900: #050505;
+  --bg-800: #111111;
+  --bg-700: #f6f3ea;
+  --surface-900: #fffdf6;
+  --surface-800: #ebe6d9;
+  --surface-700: #c9c1b0;
+  --surface-soft: rgba(5, 5, 5, 0.055);
+  --surface-soft-strong: rgba(5, 5, 5, 0.12);
+  --border-soft: rgba(5, 5, 5, 0.22);
+  --border-strong: rgba(5, 5, 5, 0.5);
+  --text-primary: #080808;
+  --text-muted: #45413a;
+  --text-dim: #766f62;
+  --accent: #b78c35;
+  --accent-strong: #080808;
+  --accent-soft: rgba(183, 140, 53, 0.24);
+  --success: #2f6e4d;
+  --danger: #8d2924;
+  --warning: #a9791f;
+  --shadow-soft: 0 18px 46px rgba(0, 0, 0, 0.3);
+  --shadow-tight: 3px 5px 0 rgba(0, 0, 0, 0.28);
+  --radius-lg: 4px;
+  --radius-md: 3px;
+  --radius-sm: 2px;
+  --font-base: var(--font-classical);
+  --font-hand: var(--font-classical);
+  --display-font-weight: 700;
+  --chart-font-weight: 700;
+  --paper-line-light: rgba(255, 255, 255, 0.22);
+  --paper-line-dark: rgba(5, 5, 5, 0.04);
+  --paper-fiber-dark: rgba(5, 5, 5, 0.035);
+  --paper-fiber-light: rgba(255, 255, 255, 0.14);
+  --surface-sheen: rgba(255, 255, 255, 0.62);
+  --surface-stripe: rgba(5, 5, 5, 0.03);
+  --hero-inset: rgba(255, 255, 255, 0.72);
+  --hero-foot: rgba(183, 140, 53, 0.18);
+  --panel-bg: rgba(255, 253, 246, 0.72);
+  --panel-inset: rgba(255, 255, 255, 0.78);
+  --input-bg: rgba(255, 255, 250, 0.94);
+  --input-bg-soft: rgba(255, 255, 250, 0.86);
+  --input-bg-strong: rgba(255, 255, 250, 0.96);
+  --measure-border: rgba(5, 5, 5, 0.18);
+  --measure-line: rgba(5, 5, 5, 0.045);
+  --measure-bg: rgba(255, 255, 255, 0.34);
+  --bar-line: rgba(8, 8, 8, 0.84);
+  --bar-line-soft: rgba(8, 8, 8, 0.74);
+  --bar-line-strong: rgba(8, 8, 8, 0.94);
+  --piano-bg: #050505;
+  --piano-border: rgba(5, 5, 5, 0.7);
+  --key-border: rgba(5, 5, 5, 0.72);
+  --white-key-top: #fffdf8;
+  --white-key-bottom: #e4ddcf;
+  --black-key-top: #242424;
+  --black-key-bottom: #050505;
+  --button-bg: var(--accent-strong);
+  --button-text: #fffaf0;
+  --button-shadow: rgba(0, 0, 0, 0.28);
+  --button-active-shadow: rgba(0, 0, 0, 0.22);
+  --card-bg: rgba(255, 253, 246, 0.94);
+  --card-shadow: rgba(0, 0, 0, 0.14);
+  --summary-bg: rgba(5, 5, 5, 0.08);
+  --inner-card-bg: rgba(255, 250, 240, 0.9);
+  --pulse-bg: rgba(255, 255, 250, 0.74);
+  --pulse-rest-bg: rgba(5, 5, 5, 0.08);
+  --active-shadow: rgba(0, 0, 0, 0.24);
+  --range-bg: rgba(5, 5, 5, 0.18);
+  --thumb-shadow: rgba(0, 0, 0, 0.26);
+  --goal-bg: rgba(47, 110, 77, 0.13);
+  --goal-border: rgba(47, 110, 77, 0.44);
+  --goal-shadow: rgba(47, 110, 77, 0.18);
+  --tab-shadow: rgba(0, 0, 0, 0.25);
+  --hover-shadow: rgba(183, 140, 53, 0.24);
+  --black-key-text: #fffaf0;
+  --black-key-glint: rgba(255, 255, 255, 0.18);
+}
+
+html[data-theme="darkClassical"] {
+  --bg-900: #030303;
+  --bg-800: #090909;
+  --bg-700: #202020;
+  --surface-900: #0c0c0c;
+  --surface-800: #161616;
+  --surface-700: #2a2a2a;
+  --surface-soft: rgba(255, 250, 240, 0.06);
+  --surface-soft-strong: rgba(255, 250, 240, 0.13);
+  --border-soft: rgba(255, 250, 240, 0.2);
+  --border-strong: rgba(255, 250, 240, 0.44);
+  --text-primary: #fffaf0;
+  --text-muted: #d2cabc;
+  --text-dim: #9e9587;
+  --accent: #d1ab5c;
+  --accent-strong: #fffaf0;
+  --accent-soft: rgba(209, 171, 92, 0.24);
+  --success: #9bc58d;
+  --danger: #e38379;
+  --warning: #d1ab5c;
+  --shadow-soft: 0 18px 48px rgba(0, 0, 0, 0.5);
+  --shadow-tight: 3px 5px 0 rgba(0, 0, 0, 0.34);
+  --radius-lg: 4px;
+  --radius-md: 3px;
+  --radius-sm: 2px;
+  --font-base: var(--font-classical);
+  --font-hand: var(--font-classical);
+  --display-font-weight: 700;
+  --chart-font-weight: 700;
+  --paper-line-light: rgba(255, 250, 240, 0.04);
+  --paper-line-dark: rgba(0, 0, 0, 0.2);
+  --paper-fiber-dark: rgba(0, 0, 0, 0.2);
+  --paper-fiber-light: rgba(255, 250, 240, 0.045);
+  --surface-sheen: rgba(255, 250, 240, 0.08);
+  --surface-stripe: rgba(255, 250, 240, 0.035);
+  --hero-inset: rgba(255, 250, 240, 0.08);
+  --hero-foot: rgba(209, 171, 92, 0.16);
+  --panel-bg: rgba(17, 17, 17, 0.78);
+  --panel-inset: rgba(255, 250, 240, 0.08);
+  --input-bg: rgba(5, 5, 5, 0.84);
+  --input-bg-soft: rgba(5, 5, 5, 0.76);
+  --input-bg-strong: rgba(5, 5, 5, 0.9);
+  --measure-border: rgba(255, 250, 240, 0.17);
+  --measure-line: rgba(255, 250, 240, 0.045);
+  --measure-bg: rgba(255, 250, 240, 0.035);
+  --bar-line: rgba(255, 250, 240, 0.78);
+  --bar-line-soft: rgba(255, 250, 240, 0.62);
+  --bar-line-strong: rgba(255, 250, 240, 0.94);
+  --piano-bg: #030303;
+  --piano-border: rgba(255, 250, 240, 0.22);
+  --key-border: rgba(5, 5, 5, 0.8);
+  --white-key-top: #fffdf8;
+  --white-key-bottom: #ded6c7;
+  --black-key-top: #202020;
+  --black-key-bottom: #030303;
+  --button-bg: #fffaf0;
+  --button-text: #050505;
+  --button-shadow: rgba(0, 0, 0, 0.34);
+  --button-active-shadow: rgba(0, 0, 0, 0.3);
+  --card-bg: rgba(12, 12, 12, 0.94);
+  --card-shadow: rgba(0, 0, 0, 0.3);
+  --summary-bg: rgba(255, 250, 240, 0.08);
+  --inner-card-bg: rgba(5, 5, 5, 0.68);
+  --pulse-bg: rgba(5, 5, 5, 0.7);
+  --pulse-rest-bg: rgba(255, 250, 240, 0.08);
+  --active-shadow: rgba(0, 0, 0, 0.3);
+  --range-bg: rgba(255, 250, 240, 0.16);
+  --thumb-shadow: rgba(0, 0, 0, 0.34);
+  --goal-bg: rgba(155, 197, 141, 0.16);
+  --goal-border: rgba(155, 197, 141, 0.45);
+  --goal-shadow: rgba(155, 197, 141, 0.18);
+  --tab-shadow: rgba(0, 0, 0, 0.26);
+  --hover-shadow: rgba(209, 171, 92, 0.24);
+  --black-key-text: #fffaf0;
+  --black-key-glint: rgba(255, 250, 240, 0.12);
 }
 
 *,
@@ -58,15 +332,15 @@ body {
   background-image:
     repeating-linear-gradient(
       0deg,
-      rgba(255, 255, 255, 0.16) 0,
-      rgba(255, 255, 255, 0.16) 1px,
+      var(--paper-line-light) 0,
+      var(--paper-line-light) 1px,
       transparent 1px,
       transparent 7px
     ),
     repeating-linear-gradient(
       90deg,
-      rgba(47, 37, 22, 0.045) 0,
-      rgba(47, 37, 22, 0.045) 1px,
+      var(--paper-line-dark) 0,
+      var(--paper-line-dark) 1px,
       transparent 1px,
       transparent 11px
     ),
@@ -87,17 +361,43 @@ body::before {
       102deg,
       transparent 0,
       transparent 18px,
-      rgba(78, 58, 30, 0.04) 18px,
-      rgba(78, 58, 30, 0.04) 19px
+      var(--paper-fiber-dark) 18px,
+      var(--paper-fiber-dark) 19px
     ),
     repeating-linear-gradient(
       14deg,
       transparent 0,
       transparent 27px,
-      rgba(255, 255, 255, 0.09) 27px,
-      rgba(255, 255, 255, 0.09) 28px
+      var(--paper-fiber-light) 27px,
+      var(--paper-fiber-light) 28px
     );
   opacity: 0.75;
+}
+
+html[data-theme="classical"] body {
+  background-image:
+    radial-gradient(
+      circle at 50% -24%,
+      rgba(255, 255, 255, 0.56),
+      transparent 34%
+    ),
+    linear-gradient(180deg, #f8f5ec 0%, #eee8da 42%, #050505 100%);
+}
+
+html[data-theme="darkClassical"] body {
+  background-image:
+    radial-gradient(
+      circle at 50% -18%,
+      rgba(255, 255, 255, 0.16),
+      transparent 36%
+    ),
+    linear-gradient(180deg, #242424 0%, #090909 54%, #030303 100%);
+}
+
+html[data-theme="classical"] body::before,
+html[data-theme="darkClassical"] body::before {
+  background-image: none;
+  opacity: 0;
 }
 
 a {
@@ -135,18 +435,32 @@ main.page {
 .surfaceCard {
   background-color: var(--surface-900);
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0)),
+    linear-gradient(var(--surface-sheen), transparent),
     repeating-linear-gradient(
       176deg,
       transparent 0,
       transparent 21px,
-      rgba(64, 48, 27, 0.035) 21px,
-      rgba(64, 48, 27, 0.035) 22px
+      var(--surface-stripe) 21px,
+      var(--surface-stripe) 22px
     );
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
   padding: 32px 36px;
+}
+
+html[data-theme="classical"] .surfaceCard {
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.72),
+    rgba(255, 255, 255, 0.08)
+  );
+}
+
+html[data-theme="darkClassical"] .surfaceCard {
+  background-image:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.1), transparent 32%),
+    linear-gradient(180deg, rgba(255, 250, 240, 0.05), transparent);
 }
 
 @media (max-width: 640px) {
@@ -157,7 +471,7 @@ main.page {
 
   .heroCard {
     gap: 24px;
-    padding: 32px 20px 38px;
+    padding: 56px 20px 38px;
   }
 
   .challengeCollapsibleBody {
@@ -186,18 +500,96 @@ main.page {
 }
 
 .heroCard {
+  position: relative;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 32px;
-  padding: 48px 36px 52px;
+  padding: 60px 36px 52px;
   background-color: var(--surface-900);
   border-color: var(--border-strong);
   box-shadow:
     var(--shadow-soft),
-    inset 0 0 0 2px rgba(255, 255, 255, 0.22),
-    inset 0 -5px 0 rgba(154, 108, 41, 0.08);
+    inset 0 0 0 2px var(--hero-inset),
+    inset 0 -5px 0 var(--hero-foot);
+}
+
+.themePicker {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 3;
+  text-align: left;
+}
+
+.themePicker > summary {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  list-style: none;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--button-bg);
+  color: var(--button-text);
+  box-shadow: 2px 3px 0 var(--button-shadow);
+  transition:
+    transform var(--transition),
+    box-shadow var(--transition),
+    filter var(--transition);
+}
+
+.themePicker > summary::marker,
+.themePicker > summary::-webkit-details-marker {
+  display: none;
+}
+
+.themePicker > summary:hover {
+  transform: translate(-1px, -1px);
+}
+
+.themePicker > summary:focus-visible {
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 2px;
+}
+
+.themePickerMenu {
+  position: absolute;
+  top: 44px;
+  right: 0;
+  min-width: 180px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-soft);
+}
+
+.themePickerMenu legend {
+  padding: 0 4px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.themePickerMenu label {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 9px;
+  margin: 5px 0;
+  padding: 4px 2px;
+  white-space: nowrap;
+}
+
+.themePickerMenu input {
+  flex: 0 0 auto;
 }
 
 .challengeActiveArea {
@@ -248,7 +640,7 @@ main.page {
   padding: 4px 10px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-soft);
-  background: rgba(255, 252, 240, 0.72);
+  background: var(--input-bg-soft);
   color: var(--text-primary);
 }
 
@@ -258,9 +650,9 @@ main.page {
 
 .challengeCollapsibleBody {
   padding: 22px 24px 26px;
-  background: rgba(255, 249, 232, 0.58);
+  background: var(--panel-bg);
   border-top: 1px solid var(--border-soft);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
+  box-shadow: inset 0 1px 0 var(--panel-inset);
   border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 
@@ -272,7 +664,7 @@ main.page {
   gap: 0.45rem;
   font-size: clamp(2.1rem, 1.35rem + 2vw, 3.2rem);
   font-family: var(--font-hand);
-  font-weight: 400;
+  font-weight: var(--display-font-weight);
   letter-spacing: 0;
   line-height: 1.05;
 }
@@ -284,11 +676,11 @@ main.page {
 
 #txtCurrentKey {
   color: var(--accent);
-  font-weight: 400;
+  font-weight: var(--display-font-weight);
 }
 
 #txtChord {
-  font-weight: 400;
+  font-weight: var(--display-font-weight);
   color: var(--text-primary);
 }
 
@@ -325,20 +717,36 @@ main.page {
 .songMeasure {
   width: 25%;
   padding: 4px;
-  border: 1px solid rgba(45, 34, 20, 0.16);
+  border: 1px solid var(--measure-border);
   border-radius: 2px;
   background:
     repeating-linear-gradient(
       180deg,
       transparent 0,
       transparent 19px,
-      rgba(45, 34, 20, 0.055) 19px,
-      rgba(45, 34, 20, 0.055) 20px
+      var(--measure-line) 19px,
+      var(--measure-line) 20px
     ),
-    rgba(255, 251, 238, 0.28);
+    var(--measure-bg);
   vertical-align: top;
   position: relative;
   overflow: hidden;
+}
+
+html[data-theme="classical"] .songMeasure {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.42),
+    rgba(255, 255, 255, 0.18)
+  );
+}
+
+html[data-theme="darkClassical"] .songMeasure {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 250, 240, 0.045),
+    rgba(255, 250, 240, 0.018)
+  );
 }
 
 .songMeasureFrame {
@@ -381,7 +789,7 @@ main.page {
 .songMeasureSection {
   padding-left: 2px;
   font-size: 0.72rem;
-  font-weight: 400;
+  font-weight: var(--chart-font-weight);
   letter-spacing: 0.08em;
   color: var(--danger);
   text-transform: uppercase;
@@ -407,7 +815,7 @@ main.page {
   gap: 4px;
   color: var(--text-primary);
   font-size: 0.98rem;
-  font-weight: 400;
+  font-weight: var(--chart-font-weight);
   line-height: 1.05;
 }
 
@@ -419,7 +827,7 @@ main.page {
   width: 16px;
   height: 2px;
   border-radius: 2px;
-  background: rgba(33, 27, 18, 0.72);
+  background: var(--bar-line-soft);
 }
 
 .songMeasureBar {
@@ -434,7 +842,7 @@ main.page {
 .songMeasureBarLine {
   width: 2px;
   border-radius: 2px;
-  background: rgba(33, 27, 18, 0.78);
+  background: var(--bar-line);
   min-height: 100%;
 }
 
@@ -444,7 +852,7 @@ main.page {
 
 .songMeasureBarLine--thick {
   width: 4px;
-  background: rgba(33, 27, 18, 0.92);
+  background: var(--bar-line-strong);
 }
 
 .songMeasureBarDots {
@@ -458,7 +866,7 @@ main.page {
   width: 4px;
   height: 4px;
   border-radius: 999px;
-  background: rgba(33, 27, 18, 0.92);
+  background: var(--bar-line-strong);
 }
 
 .songMeasureChords {
@@ -481,7 +889,7 @@ main.page {
   padding: 0;
   font-family: var(--font-hand);
   font-size: 2.06em;
-  font-weight: 400;
+  font-weight: var(--chart-font-weight);
   letter-spacing: 0.01em;
   line-height: 0.96;
   color: var(--text-primary);
@@ -554,8 +962,8 @@ main.page {
   flex-wrap: nowrap;
   align-items: stretch;
   border-radius: var(--radius-md);
-  background: #1c1812;
-  border: 1px solid rgba(33, 27, 18, 0.58);
+  background: var(--piano-bg);
+  border: 1px solid var(--piano-border);
   box-shadow: var(--shadow-tight);
   overflow: hidden;
   box-sizing: border-box;
@@ -563,7 +971,7 @@ main.page {
 
 .key {
   height: 100%;
-  border: 1px solid rgba(33, 27, 18, 0.72);
+  border: 1px solid var(--key-border);
   box-sizing: border-box;
   transition:
     transform var(--transition),
@@ -575,8 +983,12 @@ main.page {
   flex: 0 0 calc(100% / 15);
   max-width: calc(100% / 15);
   position: relative;
-  background-color: #fffaf0;
-  background: linear-gradient(180deg, #fffdf7, #e9dfca 90%);
+  background-color: var(--white-key-top);
+  background: linear-gradient(
+    180deg,
+    var(--white-key-top),
+    var(--white-key-bottom) 90%
+  );
 }
 
 .key.white:last-of-type {
@@ -584,8 +996,12 @@ main.page {
 }
 
 .black {
-  background-color: #17130e;
-  background-image: linear-gradient(180deg, #343026, #17130e 88%);
+  background-color: var(--black-key-bottom);
+  background-image: linear-gradient(
+    180deg,
+    var(--black-key-top),
+    var(--black-key-bottom) 88%
+  );
   width: calc(40 / 1050 * 100%);
   height: calc(155 / 240 * 100%);
   position: absolute;
@@ -636,23 +1052,23 @@ main.page {
 
 .key.highlight {
   background: var(--warning);
-  box-shadow: inset 0 -5px 0 rgba(33, 27, 18, 0.18);
+  box-shadow: inset 0 -5px 0 var(--key-shadow);
 }
 
 .key.incorrect {
   background: var(--danger);
-  box-shadow: inset 0 -5px 0 rgba(33, 27, 18, 0.18);
+  box-shadow: inset 0 -5px 0 var(--key-shadow);
 }
 
 .key.correct {
   background: var(--success);
-  box-shadow: inset 0 -5px 0 rgba(33, 27, 18, 0.18);
+  box-shadow: inset 0 -5px 0 var(--key-shadow);
 }
 
 button {
-  background: var(--text-primary);
-  color: var(--surface-900);
-  border: 1px solid var(--text-primary);
+  background: var(--button-bg);
+  color: var(--button-text);
+  border: 1px solid var(--button-bg);
   padding: 0.65rem 1.4rem;
   border-radius: var(--radius-sm);
   font-size: 0.95rem;
@@ -663,7 +1079,7 @@ button {
     transform var(--transition),
     box-shadow var(--transition),
     filter var(--transition);
-  box-shadow: 2px 3px 0 rgba(33, 27, 18, 0.24);
+  box-shadow: 2px 3px 0 var(--button-shadow);
 }
 
 button:hover {
@@ -673,7 +1089,7 @@ button:hover {
 
 button:active {
   transform: translateY(1px) scale(0.99);
-  box-shadow: 1px 1px 0 rgba(33, 27, 18, 0.24);
+  box-shadow: 1px 1px 0 var(--button-active-shadow);
 }
 
 button:focus-visible {
@@ -694,8 +1110,8 @@ details.challengeCollapsible {
   overflow: hidden;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-strong);
-  background: rgba(247, 239, 217, 0.86);
-  box-shadow: 2px 3px 0 rgba(45, 34, 20, 0.1);
+  background: var(--card-bg);
+  box-shadow: 2px 3px 0 var(--card-shadow);
 }
 
 details.challengeCollapsible > summary {
@@ -711,7 +1127,7 @@ details.challengeCollapsible > summary {
   justify-content: flex-start;
   flex-wrap: wrap;
   gap: 12px;
-  background: rgba(228, 212, 175, 0.46);
+  background: var(--summary-bg);
   border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 
@@ -748,7 +1164,7 @@ details.challengeCollapsible > summary .collapsibleTitle {
   gap: 0.5rem;
   font-family: var(--font-hand);
   font-size: 1.18rem;
-  font-weight: 400;
+  font-weight: var(--display-font-weight);
   letter-spacing: 0.02em;
 }
 
@@ -770,10 +1186,10 @@ details.challengeCollapsible > summary .summaryActions {
 
 .metronomePanelMain,
 .metronomeControls {
-  background: rgba(255, 249, 232, 0.58);
+  background: var(--panel-bg);
   border-radius: var(--radius-md);
   border: 1px solid var(--border-soft);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
+  box-shadow: inset 0 1px 0 var(--panel-inset);
 }
 
 .metronomePanelMain {
@@ -796,7 +1212,7 @@ details.challengeCollapsible > summary .summaryActions {
 .metronomeStatCard {
   padding: 14px 15px;
   border-radius: var(--radius-md);
-  background: rgba(247, 239, 217, 0.82);
+  background: var(--inner-card-bg);
   border: 1px solid var(--border-soft);
 }
 
@@ -812,7 +1228,7 @@ details.challengeCollapsible > summary .summaryActions {
 .metronomeStatValue {
   font-family: var(--font-hand);
   font-size: clamp(1.25rem, 1rem + 1.2vw, 1.85rem);
-  font-weight: 400;
+  font-weight: var(--display-font-weight);
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
@@ -832,7 +1248,7 @@ details.challengeCollapsible > summary .summaryActions {
   min-height: 72px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-soft);
-  background: rgba(255, 252, 240, 0.62);
+  background: var(--pulse-bg);
   display: grid;
   place-items: center;
   position: relative;
@@ -849,7 +1265,7 @@ details.challengeCollapsible > summary .summaryActions {
   inset: auto 12px 12px;
   height: 6px;
   border-radius: 2px;
-  background: rgba(33, 27, 18, 0.08);
+  background: var(--pulse-rest-bg);
 }
 
 .metronomePulse span {
@@ -857,39 +1273,39 @@ details.challengeCollapsible > summary .summaryActions {
   z-index: 1;
   font-size: 1.15rem;
   font-family: var(--font-hand);
-  font-weight: 400;
+  font-weight: var(--display-font-weight);
 }
 
 .metronomePulse.is-active {
   transform: translateY(-4px);
-  box-shadow: 2px 4px 0 rgba(33, 27, 18, 0.18);
+  box-shadow: 2px 4px 0 var(--active-shadow);
 }
 
 .metronomePulse--normal.is-active {
-  border-color: rgba(43, 102, 131, 0.46);
-  background: rgba(43, 102, 131, 0.22);
+  border-color: var(--normal-active-border);
+  background: var(--normal-active-bg);
 }
 
 .metronomePulse--measure.is-active {
-  border-color: rgba(63, 106, 56, 0.48);
-  background: rgba(63, 106, 56, 0.2);
+  border-color: var(--measure-active-border);
+  background: var(--measure-active-bg);
 }
 
 .metronomePulse--x.is-active {
-  border-color: rgba(156, 52, 41, 0.52);
-  background: rgba(156, 52, 41, 0.2);
+  border-color: var(--x-active-border);
+  background: var(--x-active-bg);
 }
 
 .metronomePulse--y.is-active {
-  border-color: rgba(168, 111, 28, 0.58);
-  background: rgba(168, 111, 28, 0.22);
+  border-color: var(--y-active-border);
+  background: var(--y-active-bg);
 }
 
 .metronomeStatus {
   margin: 16px 0 0;
   padding: 14px 16px;
   border-radius: var(--radius-md);
-  background: rgba(44, 35, 22, 0.055);
+  background: var(--surface-soft);
   color: var(--text-muted);
   line-height: 1.45;
 }
@@ -922,7 +1338,7 @@ details.challengeCollapsible > summary .summaryActions {
   padding: 10px 12px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-soft);
-  background: rgba(255, 252, 240, 0.72);
+  background: var(--input-bg-soft);
   color: var(--text-primary);
   font: inherit;
 }
@@ -932,7 +1348,7 @@ details.challengeCollapsible > summary .summaryActions {
   appearance: none;
   height: 10px;
   border-radius: 2px;
-  background: rgba(33, 27, 18, 0.16);
+  background: var(--range-bg);
   outline: none;
 }
 
@@ -944,7 +1360,7 @@ details.challengeCollapsible > summary .summaryActions {
   background: var(--surface-900);
   cursor: pointer;
   border: 3px solid var(--accent);
-  box-shadow: 1px 2px 0 rgba(33, 27, 18, 0.22);
+  box-shadow: 1px 2px 0 var(--thumb-shadow);
 }
 
 .metronomeField input[type="range"]::-moz-range-thumb {
@@ -954,7 +1370,7 @@ details.challengeCollapsible > summary .summaryActions {
   background: var(--surface-900);
   cursor: pointer;
   border: 3px solid var(--accent);
-  box-shadow: 1px 2px 0 rgba(33, 27, 18, 0.22);
+  box-shadow: 1px 2px 0 var(--thumb-shadow);
 }
 
 .metronomeTempoRow {
@@ -1040,19 +1456,19 @@ details.challengeCollapsible > summary .summaryActions {
 }
 
 .statCard {
-  background: rgba(255, 249, 232, 0.62);
+  background: var(--panel-bg);
   border-radius: var(--radius-md);
   border: 1px solid var(--border-soft);
   padding: 18px 20px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
+  box-shadow: inset 0 1px 0 var(--panel-inset);
 }
 
 .statCard.goalMet {
-  background: rgba(63, 106, 56, 0.16);
-  border-color: rgba(63, 106, 56, 0.5);
+  background: var(--goal-bg);
+  border-color: var(--goal-border);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.42),
-    2px 3px 0 rgba(63, 106, 56, 0.18);
+    inset 0 1px 0 var(--panel-inset),
+    2px 3px 0 var(--goal-shadow);
   color: var(--text-primary);
 }
 
@@ -1060,7 +1476,7 @@ details.challengeCollapsible > summary .summaryActions {
   margin: 0 0 12px;
   font-size: 1.05rem;
   font-family: var(--font-hand);
-  font-weight: 400;
+  font-weight: var(--display-font-weight);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1141,7 +1557,7 @@ details.challengeCollapsible > summary .summaryActions {
   padding: 4px 6px;
   text-align: right;
   border-radius: var(--radius-sm);
-  background: rgba(255, 252, 240, 0.74);
+  background: var(--input-bg-strong);
   color: inherit;
   border: 1px solid var(--border-soft);
   font-variant-numeric: tabular-nums;
@@ -1156,7 +1572,7 @@ details.challengeCollapsible > summary .summaryActions {
 }
 
 .statCard.goalMet .statGoalInput {
-  background: rgba(255, 252, 240, 0.82);
+  background: var(--input-bg);
   color: var(--text-primary);
 }
 
@@ -1182,7 +1598,7 @@ details.challengeCollapsible > summary .summaryActions {
   margin: 0 0 18px;
   font-size: 1.6rem;
   font-family: var(--font-hand);
-  font-weight: 400;
+  font-weight: var(--display-font-weight);
   letter-spacing: 0;
 }
 
@@ -1223,16 +1639,16 @@ details.challengeCollapsible > summary .summaryActions {
 }
 
 .tabs input[type="radio"]:checked + label {
-  color: var(--surface-900);
+  color: var(--button-text);
   background: var(--accent-strong);
   border-color: var(--accent-strong);
-  box-shadow: 2px 3px 0 rgba(33, 27, 18, 0.18);
+  box-shadow: 2px 3px 0 var(--tab-shadow);
   transform: translate(-1px, -1px);
 }
 
 .tabContent {
   display: none;
-  background: rgba(255, 249, 232, 0.54);
+  background: var(--panel-bg);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
   padding: 22px 24px;
@@ -1365,14 +1781,14 @@ label {
   justify-content: space-between;
   gap: 12px;
   padding: 14px 16px;
-  background: rgba(255, 249, 232, 0.62);
+  background: var(--panel-bg);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-sm);
 }
 
 .workoutEntry.active {
   border-color: var(--accent);
-  box-shadow: 2px 3px 0 rgba(43, 102, 131, 0.18);
+  box-shadow: 2px 3px 0 var(--hover-shadow);
 }
 
 .workoutEntryInfo {
@@ -1429,7 +1845,7 @@ input[type="number"],
 input[type="text"],
 textarea,
 pre {
-  background: rgba(255, 252, 240, 0.82);
+  background: var(--input-bg);
   color: var(--text-primary);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-sm);
@@ -1658,7 +2074,7 @@ textarea:focus {
 .intervalKey:hover {
   transform: translateY(-2px);
   border-color: var(--accent);
-  box-shadow: 2px 3px 0 rgba(43, 102, 131, 0.18);
+  box-shadow: 2px 3px 0 var(--hover-shadow);
 }
 
 .intervalKey input {
@@ -1671,17 +2087,25 @@ textarea:focus {
 }
 
 .intervalKey--white {
-  background: linear-gradient(180deg, #fffdf7, #eadfc8 90%);
+  background: linear-gradient(
+    180deg,
+    var(--white-key-top),
+    var(--white-key-bottom) 90%
+  );
   color: var(--text-primary);
   justify-content: flex-end;
   padding-bottom: 16px;
 }
 
 .intervalKey--black {
-  background: linear-gradient(180deg, #343026, #17130e 88%);
-  color: var(--surface-900);
+  background: linear-gradient(
+    180deg,
+    var(--black-key-top),
+    var(--black-key-bottom) 88%
+  );
+  color: var(--black-key-text);
   justify-content: center;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 var(--black-key-glint);
 }
 
 .intervalRow--upper .intervalKey:nth-child(1) {
@@ -1753,7 +2177,7 @@ textarea:focus {
 
 #panelSpacedRepListContainer {
   margin-top: 16px;
-  background: rgba(255, 249, 232, 0.58);
+  background: var(--panel-bg);
   border-radius: var(--radius-md);
   padding: 16px 18px;
   border: 1px solid var(--border-soft);

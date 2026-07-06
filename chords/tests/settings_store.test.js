@@ -47,6 +47,12 @@ function toggleAlternatingCheckboxes(collection) {
   });
 }
 
+function setRadioGroupValue(collection, value) {
+  Object.values(collection).forEach((radio) => {
+    radio.checked = radio.value === value;
+  });
+}
+
 test("settings store saves and loads presets round-trip", () => {
   settingsStore.resetToDefaults({ apply: false, save: false });
   storageMock.clear();
@@ -55,6 +61,7 @@ test("settings store saves and loads presets round-trip", () => {
   dom.flowStartSelect.value = "F#";
   dom.keyboardDetails.open = false;
   dom.metronomeDetails.open = true;
+  setRadioGroupValue(dom.themeRadios, "darkClassical");
   dom.metronomeTempoInput.value = "144";
   dom.metronomeTempoNumberInput.value = "144";
   dom.metronomeBeatsInput.value = "7";
@@ -97,12 +104,18 @@ test("settings store saves and loads presets round-trip", () => {
     "tabJazz",
     "snapshot should capture current mode",
   );
+  assert.strictEqual(
+    settingsStore.getCurrentSnapshot().display.theme,
+    "darkClassical",
+    "snapshot should capture current theme",
+  );
   settingsStore.savePreset("Spec");
 
   dom.flowSelect.value = "descendingWholeSteps";
   dom.flowStartSelect.value = "C";
   dom.keyboardDetails.open = true;
   dom.metronomeDetails.open = false;
+  setRadioGroupValue(dom.themeRadios, "lightBook");
   dom.metronomeTempoInput.value = "90";
   dom.metronomeTempoNumberInput.value = "90";
   dom.metronomeBeatsInput.value = "4";
@@ -142,6 +155,11 @@ test("settings store saves and loads presets round-trip", () => {
   assert.strictEqual(dom.flowStartSelect.value, "F#");
   assert.strictEqual(dom.keyboardDetails.open, false);
   assert.strictEqual(dom.metronomeDetails.open, true);
+  assert.strictEqual(
+    dom.themeRadios.darkClassical.checked,
+    true,
+    "theme should restore from preset",
+  );
   assert.strictEqual(dom.metronomeTempoInput.value, "144");
   assert.strictEqual(dom.metronomeTempoNumberInput.value, "144");
   assert.strictEqual(dom.metronomeBeatsInput.value, "7");

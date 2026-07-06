@@ -92,6 +92,12 @@ if (!appGlobals.root) {
 }
 const hasDocument = typeof document !== "undefined";
 appGlobals.hasDocument = hasDocument;
+const DEFAULT_THEME = "lightBook";
+const themeIds = ["lightBook", "darkBook", "classical", "darkClassical"];
+
+function sanitizeTheme(theme) {
+  return themeIds.includes(theme) ? theme : DEFAULT_THEME;
+}
 
 function createClassListStub() {
   return {
@@ -444,6 +450,12 @@ const radioGroups = {
     { id: "tabModeDegrees", value: "tabDegrees" },
     { id: "tabModeJazz", value: "tabJazz" },
   ]),
+  theme: createRadioGroup("theme", [
+    { id: "radThemeLightBook", value: "lightBook", defaultChecked: true },
+    { id: "radThemeDarkBook", value: "darkBook" },
+    { id: "radThemeClassical", value: "classical" },
+    { id: "radThemeDarkClassical", value: "darkClassical" },
+  ]),
   voicingMode: createRadioGroup("voicingMode", [
     { id: "radVoicingDefault", value: "default", defaultChecked: true },
     { id: "radVoicingRoot", value: "normal:root" },
@@ -614,6 +626,8 @@ const domElements = {
   statGoals: statGoalInputs,
   statCards: statCardElements,
   statTotals: statTotalElements,
+  themePicker: requireElement("panelThemePicker"),
+  themeRadios: radioGroups.theme,
   optionsPanels,
   modeSections,
   jazzBrickButtons,
@@ -3859,6 +3873,20 @@ function setRadioValue(name, targetValue) {
   domElements.radioSelections = selections;
 }
 
+function applyThemeSelection(theme) {
+  const selectedTheme = sanitizeTheme(theme);
+  setRadioValue("theme", selectedTheme);
+  if (hasDocument && document.documentElement) {
+    document.documentElement.dataset.theme = selectedTheme;
+  }
+  return selectedTheme;
+}
+
+appGlobals.applyThemeSelection = applyThemeSelection;
+if (appGlobals.root) {
+  appGlobals.root.applyThemeSelection = applyThemeSelection;
+}
+
 function captureJazzCadenceState() {
   const state = {};
   jazzCadences.forEach((cadence) => {
@@ -4070,6 +4098,7 @@ function captureSimpleSettings() {
       startKey: domElements.flowStartSelect.value || "C",
     },
     display: {
+      theme: sanitizeTheme(getRadioValue("theme", DEFAULT_THEME)),
       showKeyboard: domElements.keyboardDetails
         ? !!domElements.keyboardDetails.open
         : true,
@@ -4170,6 +4199,7 @@ function applySimpleSettings(settings) {
   }
   if (settings.display) {
     const display = settings.display;
+    applyThemeSelection(display.theme);
     if (domElements.keyboardDetails) {
       if (Object.prototype.hasOwnProperty.call(display, "showKeyboard")) {
         domElements.keyboardDetails.open = !!display.showKeyboard;
@@ -4432,6 +4462,21 @@ function settingsStoreFactory() {
       });
       Object.values(domElements.jazzBrickButtons || {}).forEach((el) => {
         this.watchElement(el, "click");
+      });
+
+      Object.values(domElements.themeRadios || {}).forEach((radio) => {
+        if (!radio || !radio.addEventListener) return;
+        if (this.attachedElements.has(radio)) return;
+        radio.addEventListener("change", () => {
+          if (radio.checked) {
+            applyThemeSelection(radio.value);
+            if (domElements.themePicker) {
+              domElements.themePicker.open = false;
+            }
+          }
+          this.syncFromDom();
+        });
+        this.attachedElements.add(radio);
       });
 
       const voicingRadios = hasDocument

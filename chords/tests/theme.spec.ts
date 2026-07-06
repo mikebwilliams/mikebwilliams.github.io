@@ -15,6 +15,7 @@ test("Real Book theme uses paper colors and handwritten chart typography", async
   const theme = await page.evaluate(() => {
     const styles = getComputedStyle(document.documentElement);
     return {
+      selected: document.documentElement.dataset.theme,
       bg: styles.getPropertyValue("--bg-900").trim(),
       ink: styles.getPropertyValue("--text-primary").trim(),
       accent: styles.getPropertyValue("--accent").trim(),
@@ -22,11 +23,14 @@ test("Real Book theme uses paper colors and handwritten chart typography", async
     };
   });
 
+  expect(theme.selected).toBe("lightBook");
   expect(theme.bg).toBe("#d7c8a7");
   expect(theme.ink).toBe("#211b12");
   expect(theme.accent).toBe("#2b6683");
   expect(theme.hand).toContain('"RealbookRegular"');
   expect(theme.hand).toContain('"Comic Neue"');
+  await expect(page.locator("#radThemeLightBook")).toBeChecked();
+  await expect(page.locator("#panelThemePicker summary")).toBeVisible();
 
   await expect
     .poll(() =>
@@ -66,4 +70,101 @@ test("Real Book theme uses paper colors and handwritten chart typography", async
     "border-radius",
     "2px",
   );
+});
+
+test("theme picker switches and persists alternate book themes", async ({
+  page,
+}) => {
+  const themes = [
+    {
+      label: "DarkBook",
+      value: "darkBook",
+      bg: "#17120c",
+      ink: "#f7edcf",
+      accent: "#82b7cf",
+      font: "RealbookRegular",
+      weight: "400",
+      smooth: false,
+    },
+    {
+      label: "Classical",
+      value: "classical",
+      bg: "#050505",
+      ink: "#080808",
+      accent: "#b78c35",
+      font: "Henle",
+      weight: "700",
+      smooth: true,
+    },
+    {
+      label: "Dark Classical",
+      value: "darkClassical",
+      bg: "#030303",
+      ink: "#fffaf0",
+      accent: "#d1ab5c",
+      font: "Henle",
+      weight: "700",
+      smooth: true,
+    },
+  ];
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  for (const expected of themes) {
+    await page.locator("#panelThemePicker summary").click();
+    await page.getByLabel(expected.label, { exact: true }).check();
+
+    await expect(page.locator("html")).toHaveAttribute(
+      "data-theme",
+      expected.value,
+    );
+    await expect(page.locator("#panelThemePicker")).not.toHaveAttribute(
+      "open",
+      "",
+    );
+
+    const applied = await page.evaluate(() => {
+      const rootStyles = getComputedStyle(document.documentElement);
+      const headerStyles = getComputedStyle(
+        document.querySelector("#panelHeader")!,
+      );
+      const bodyStyles = getComputedStyle(document.body);
+      const bodyOverlayStyles = getComputedStyle(document.body, "::before");
+      const surfaceStyles = getComputedStyle(
+        document.querySelector(".surfaceCard")!,
+      );
+      return {
+        bg: rootStyles.getPropertyValue("--bg-900").trim(),
+        ink: rootStyles.getPropertyValue("--text-primary").trim(),
+        accent: rootStyles.getPropertyValue("--accent").trim(),
+        headerFont: headerStyles.fontFamily,
+        headerWeight: headerStyles.fontWeight,
+        bodyBackgroundImage: bodyStyles.backgroundImage,
+        bodyOverlayOpacity: bodyOverlayStyles.opacity,
+        surfaceBackgroundImage: surfaceStyles.backgroundImage,
+      };
+    });
+
+    expect(applied.bg).toBe(expected.bg);
+    expect(applied.ink).toBe(expected.ink);
+    expect(applied.accent).toBe(expected.accent);
+    expect(applied.headerFont).toContain(expected.font);
+    expect(applied.headerWeight).toBe(expected.weight);
+    if (expected.smooth) {
+      expect(applied.bodyOverlayOpacity).toBe("0");
+      expect(applied.bodyBackgroundImage).not.toContain("repeating");
+      expect(applied.surfaceBackgroundImage).not.toContain("repeating");
+    }
+
+    await page.reload();
+    await expect(page.locator("html")).toHaveAttribute(
+      "data-theme",
+      expected.value,
+    );
+    await expect(
+      page.locator(`input[name='theme'][value='${expected.value}']`),
+    ).toBeChecked();
+  }
 });

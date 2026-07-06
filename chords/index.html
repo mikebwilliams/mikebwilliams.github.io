@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="lightBook">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,6 +9,51 @@
   <body>
     <main class="page">
       <section class="surfaceCard heroCard">
+        <details class="themePicker" id="panelThemePicker">
+          <summary aria-label="Select theme" title="Select theme">
+            <span aria-hidden="true">◐</span>
+          </summary>
+          <fieldset class="themePickerMenu">
+            <legend>Theme</legend>
+            <label>
+              <input
+                type="radio"
+                id="radThemeLightBook"
+                name="theme"
+                value="lightBook"
+                checked
+              />
+              LightBook
+            </label>
+            <label>
+              <input
+                type="radio"
+                id="radThemeDarkBook"
+                name="theme"
+                value="darkBook"
+              />
+              DarkBook
+            </label>
+            <label>
+              <input
+                type="radio"
+                id="radThemeClassical"
+                name="theme"
+                value="classical"
+              />
+              Classical
+            </label>
+            <label>
+              <input
+                type="radio"
+                id="radThemeDarkClassical"
+                name="theme"
+                value="darkClassical"
+              />
+              Dark Classical
+            </label>
+          </fieldset>
+        </details>
         <h2 id="panelHeader">
           <span id="txtCurrentKey"></span><span id="txtChord">Chord</span
           ><span id="txtCadence"></span>
