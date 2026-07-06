@@ -392,8 +392,20 @@ function updateDailyStatsSummary() {
   const correctValue = parseCountFromElement(resolve.correctElement());
   const incorrectValue = parseCountFromElement(resolve.incorrectElement());
   const totalValue = correctValue + incorrectValue;
+  const correctGoal = parseGoalValue(resolve.correctGoalInput());
+  const totalGoal = parseGoalValue(resolve.totalGoalInput());
   const label = summaryStatCategoryLabels[category] || "Stats";
-  dom.dailyStatsSummary.textContent = `${label}: ${correctValue} / ${totalValue}`;
+  const goalSegments = [];
+  if (correctGoal > 0) {
+    goalSegments.push(`${correctGoal} correct`);
+  }
+  if (totalGoal > 0) {
+    goalSegments.push(`${totalGoal} total`);
+  }
+  const goalText = goalSegments.length
+    ? `, Goal${goalSegments.length > 1 ? "s" : ""}: ${goalSegments.join(" / ")}`
+    : "";
+  dom.dailyStatsSummary.textContent = `${label}: ${correctValue} / ${totalValue}${goalText}`;
 }
 
 function updateStatTotal(category) {
@@ -409,8 +421,12 @@ function updateStatTotal(category) {
 function updateStatGoalStatus(category) {
   const resolve = statCategoryConfig[category];
   if (!resolve) return;
+  const shouldUpdateSummary = category === getSelectedStatCategory();
   const card = resolve.cardElement();
   if (!card || !card.classList || typeof card.classList.add !== "function") {
+    if (shouldUpdateSummary) {
+      updateDailyStatsSummary();
+    }
     return;
   }
   const correctGoal = parseGoalValue(resolve.correctGoalInput());
@@ -424,6 +440,9 @@ function updateStatGoalStatus(category) {
     card.classList.add("goalMet");
   } else {
     card.classList.remove("goalMet");
+  }
+  if (shouldUpdateSummary) {
+    updateDailyStatsSummary();
   }
 }
 

@@ -65,6 +65,33 @@ function syncSettingsStore() {
   }
 }
 
+function getCurrentThemeSelection() {
+  const checkedTheme = Object.values(dom.themeRadios || {}).find(
+    (radio) => radio && radio.checked,
+  );
+  if (checkedTheme && checkedTheme.value) return checkedTheme.value;
+  if (
+    typeof document !== "undefined" &&
+    document.documentElement &&
+    document.documentElement.dataset.theme
+  ) {
+    return document.documentElement.dataset.theme;
+  }
+  return "lightBook";
+}
+
+function restoreThemeSelection(theme) {
+  if (!theme) return;
+  Object.values(dom.themeRadios || {}).forEach((radio) => {
+    if (radio && "checked" in radio) {
+      radio.checked = radio.value === theme;
+    }
+  });
+  if (typeof document !== "undefined" && document.documentElement) {
+    document.documentElement.dataset.theme = theme;
+  }
+}
+
 function getChordGroupIds(group) {
   return chordTypeGroups[group] || [];
 }
@@ -1468,11 +1495,13 @@ function applyWorkoutEntry(index) {
   if (!entry) return;
   const presetName = entry.preset;
   if (!presetName) return;
+  const currentTheme = getCurrentThemeSelection();
   const loaded = uiSettingsStore.loadPreset(presetName);
   if (!loaded) {
     alert(`Preset "${presetName}" could not be loaded.`);
     return;
   }
+  restoreThemeSelection(currentTheme);
   syncProgressionParameterControls();
   const presets = getPresetSnapshots();
   const presetSnapshot = presets[presetName] || null;

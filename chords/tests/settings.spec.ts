@@ -164,6 +164,41 @@ test("Collapsed metronome and stats summaries reflect current state", async ({
   await expect(statsSummary).toHaveText("Progressions: 2 / 3");
 });
 
+test("Collapsed daily stats summary reflects loaded workout goals", async ({
+  page,
+}) => {
+  const presetName = `Goal Preset ${Date.now()}`;
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  const statsSummary = page.locator("#txtDailyStatsSummary");
+  await page.click("#panelDailyStats > summary");
+  await expect(statsSummary).toBeVisible();
+  await expect(statsSummary).toHaveText("Chords: 0 / 0");
+
+  await page.click("label[for='tabOptionsPresets']");
+  await page.fill("#inputSettingsPresetName", presetName);
+  await page.click("#btnSettingsSave");
+
+  await page.click("label[for='tabOptionsWorkouts']");
+  await page.fill("#inputWorkoutName", "Goal Summary Workout");
+  await page.selectOption("#selectWorkoutPreset", presetName);
+  await page.fill("#inputWorkoutGoalCorrect", "3");
+  await page.fill("#inputWorkoutGoalTotal", "5");
+  await page.click("#btnWorkoutAddEntry");
+  await page
+    .locator(".workoutEntry")
+    .filter({ hasText: presetName })
+    .getByRole("button", { name: "Load" })
+    .click();
+
+  await expect(statsSummary).toHaveText(
+    "Chords: 0 / 0, Goals: 3 correct / 5 total",
+  );
+});
+
 test("Random flow resumes from the last practiced key after reload", async ({
   page,
 }) => {

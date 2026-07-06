@@ -168,3 +168,34 @@ test("theme picker switches and persists alternate book themes", async ({
     ).toBeChecked();
   }
 });
+
+test("loading a workout entry preserves the current theme", async ({
+  page,
+}) => {
+  const presetName = `Light Preset ${Date.now()}`;
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.click("label[for='tabOptionsPresets']");
+  await page.fill("#inputSettingsPresetName", presetName);
+  await page.click("#btnSettingsSave");
+
+  await page.locator("#panelThemePicker summary").click();
+  await page.getByLabel("DarkBook", { exact: true }).check();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "darkBook");
+
+  await page.click("label[for='tabOptionsWorkouts']");
+  await page.fill("#inputWorkoutName", "Theme Safe Workout");
+  await page.selectOption("#selectWorkoutPreset", presetName);
+  await page.click("#btnWorkoutAddEntry");
+  await page
+    .locator(".workoutEntry")
+    .filter({ hasText: presetName })
+    .getByRole("button", { name: "Load" })
+    .click();
+
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "darkBook");
+  await expect(page.locator("#radThemeDarkBook")).toBeChecked();
+});
