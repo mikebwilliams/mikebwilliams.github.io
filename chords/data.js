@@ -489,6 +489,7 @@ const degreeCheckboxes = hasDocument
 const statCategoryKeys = [
   "chords",
   "progressions",
+  "songs",
   "degrees",
   "scales",
   "bricks",
@@ -502,6 +503,10 @@ const statGoalInputIds = {
   progressions: {
     correct: "inputProgressionsGoalCorrect",
     total: "inputProgressionsGoalTotal",
+  },
+  songs: {
+    correct: "inputSongsGoalCorrect",
+    total: "inputSongsGoalTotal",
   },
   degrees: {
     correct: "inputDegreesGoalCorrect",
@@ -520,6 +525,7 @@ const statGoalInputIds = {
 const statCardIds = {
   chords: "statCardChords",
   progressions: "statCardProgressions",
+  songs: "statCardSongs",
   degrees: "statCardDegrees",
   scales: "statCardScales",
   bricks: "statCardBricks",
@@ -528,6 +534,7 @@ const statCardIds = {
 const statTotalIds = {
   chords: "txtChordsTotal",
   progressions: "txtProgressionsTotal",
+  songs: "txtSongsTotal",
   degrees: "txtDegreesTotal",
   scales: "txtScalesTotal",
   bricks: "txtBricksTotal",
@@ -604,16 +611,19 @@ const domElements = {
   chordDisplay: requireElement("txtChord"),
   cntChordsCorrect: requireElement("txtChordsCorrect"),
   cntProgsCorrect: requireElement("txtProgressionsCorrect"),
+  cntSongsCorrect: requireElement("txtSongsCorrect"),
   cntScalesCorrect: requireElement("txtScalesCorrect"),
   cntDegreesCorrect: requireElement("txtDegreesCorrect"),
   cntBricksCorrect: requireElement("txtBricksCorrect"),
   cntChordsIncorrect: requireElement("txtChordsIncorrect"),
   cntProgsIncorrect: requireElement("txtProgressionsIncorrect"),
+  cntSongsIncorrect: requireElement("txtSongsIncorrect"),
   cntScalesIncorrect: requireElement("txtScalesIncorrect"),
   cntDegreesIncorrect: requireElement("txtDegreesIncorrect"),
   cntBricksIncorrect: requireElement("txtBricksIncorrect"),
   cntChordsTotal: statTotalElements.chords,
   cntProgsTotal: statTotalElements.progressions,
+  cntSongsTotal: statTotalElements.songs,
   cntScalesTotal: statTotalElements.scales,
   cntDegreesTotal: statTotalElements.degrees,
   cntBricksTotal: statTotalElements.bricks,

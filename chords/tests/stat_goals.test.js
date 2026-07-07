@@ -59,6 +59,7 @@ function setCounts(category, { correct, incorrect }) {
   const correctSpans = {
     chords: dom.cntChordsCorrect,
     progressions: dom.cntProgsCorrect,
+    songs: dom.cntSongsCorrect,
     degrees: dom.cntDegreesCorrect,
     scales: dom.cntScalesCorrect,
     bricks: dom.cntBricksCorrect,
@@ -66,6 +67,7 @@ function setCounts(category, { correct, incorrect }) {
   const incorrectSpans = {
     chords: dom.cntChordsIncorrect,
     progressions: dom.cntProgsIncorrect,
+    songs: dom.cntSongsIncorrect,
     degrees: dom.cntDegreesIncorrect,
     scales: dom.cntScalesIncorrect,
     bricks: dom.cntBricksIncorrect,
@@ -73,6 +75,7 @@ function setCounts(category, { correct, incorrect }) {
   const totalSpans = {
     chords: dom.cntChordsTotal,
     progressions: dom.cntProgsTotal,
+    songs: dom.cntSongsTotal,
     degrees: dom.cntDegreesTotal,
     scales: dom.cntScalesTotal,
     bricks: dom.cntBricksTotal,
@@ -175,6 +178,28 @@ test("total-only goals respect total attempts", () => {
     card.classList.contains("goalMet"),
     true,
     "card should complete when total attempts match goal",
+  );
+});
+
+test("song goals use the Songs stat card", () => {
+  const card = dom.statCards.songs;
+  attachTrackingClassList(card);
+  setGoals("songs", { correct: 2, total: 3 });
+  setCounts("songs", { correct: 2, incorrect: 0 });
+
+  triggerGoalUpdate();
+  assert.strictEqual(
+    card.classList.contains("goalMet"),
+    false,
+    "song card should wait for total goal",
+  );
+
+  setCounts("songs", { correct: 2, incorrect: 1 });
+  triggerGoalUpdate();
+  assert.strictEqual(
+    card.classList.contains("goalMet"),
+    true,
+    "song card should complete when song goals are reached",
   );
 });
 

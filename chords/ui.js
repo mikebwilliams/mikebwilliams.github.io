@@ -25,7 +25,7 @@ const uiSongsStore =
 const modeStatCategoryMap = {
   tabChords: "chords",
   tabProgressions: "progressions",
-  tabSongs: "progressions",
+  tabSongs: "songs",
   tabDegrees: "degrees",
   tabScales: "scales",
   tabJazz: "bricks",
@@ -34,6 +34,7 @@ const modeStatCategoryMap = {
 const statCategoryLabels = {
   chords: "Chords",
   progressions: "Progressions",
+  songs: "Songs",
   degrees: "Degrees",
   scales: "Scales",
   bricks: "Bricks",
@@ -1756,16 +1757,19 @@ dom.resetStatsButton.addEventListener("click", () => {
   }
   dom.cntChordsCorrect.textContent = "0";
   dom.cntProgsCorrect.textContent = "0";
+  dom.cntSongsCorrect.textContent = "0";
   dom.cntScalesCorrect.textContent = "0";
   dom.cntDegreesCorrect.textContent = "0";
   dom.cntBricksCorrect.textContent = "0";
   dom.cntChordsIncorrect.textContent = "0";
   dom.cntProgsIncorrect.textContent = "0";
+  dom.cntSongsIncorrect.textContent = "0";
   dom.cntScalesIncorrect.textContent = "0";
   dom.cntDegreesIncorrect.textContent = "0";
   dom.cntBricksIncorrect.textContent = "0";
   dom.cntChordsTotal.textContent = "0";
   dom.cntProgsTotal.textContent = "0";
+  dom.cntSongsTotal.textContent = "0";
   dom.cntScalesTotal.textContent = "0";
   dom.cntDegreesTotal.textContent = "0";
   dom.cntBricksTotal.textContent = "0";

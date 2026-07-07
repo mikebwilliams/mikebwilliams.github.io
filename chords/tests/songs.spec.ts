@@ -481,6 +481,57 @@ test("Songs tab advances to the next favorite after the configured repeat count"
   await expect(page.locator("#txtCadence")).toContainText("Beta Study");
 });
 
+test("Songs stats count each completed song pass before repeat advancement", async ({
+  page,
+}) => {
+  const firstSongUrl =
+    "irealbook://Alpha Study=Doe Jane=Medium Swing=C=n=[*AT44C7 Z";
+  const secondSongUrl =
+    "irealbook://Beta Study=Doe Jane=Medium Swing=F=n=[*AT44F7 Z";
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.click("label[for='tabModeSongs']");
+  await page.fill("#inputSongsUrl", firstSongUrl);
+  await page.click("#btnSongsImport");
+  await page.fill("#inputSongsUrl", secondSongUrl);
+  await page.click("#btnSongsImport");
+
+  await page.selectOption("#selectSong", { label: "Alpha Study - Jane Doe" });
+  await page.selectOption("#selectSongFinishAction", "nextSong");
+  await page.fill("#inputSongRepeatCount", "2");
+
+  await expect(page.locator("#txtDailyStatsSummary")).toHaveText(
+    "Songs: 0 / 0",
+  );
+  await expect(page.locator("#txtSongsCorrect")).toHaveText("0");
+  await expect(page.locator("#txtSongsTotal")).toHaveText("0");
+
+  await page.evaluate(() => {
+    nextChord(false);
+  });
+
+  await expect(page.locator("#selectSong")).toHaveValue(
+    /alpha-study--jane-doe/,
+  );
+  await expect(page.locator("#txtSongsCorrect")).toHaveText("1");
+  await expect(page.locator("#txtSongsTotal")).toHaveText("1");
+  await expect(page.locator("#txtProgressionsCorrect")).toHaveText("0");
+
+  await page.evaluate(() => {
+    nextChord(false);
+  });
+
+  await expect(page.locator("#selectSong")).toHaveValue(/beta-study--jane-doe/);
+  await expect(page.locator("#txtSongsCorrect")).toHaveText("2");
+  await expect(page.locator("#txtSongsTotal")).toHaveText("2");
+  await expect(page.locator("#txtDailyStatsSummary")).toHaveText(
+    "Songs: 2 / 2",
+  );
+});
+
 test("Songs tab can advance key on repeat and on song change", async ({
   page,
 }) => {

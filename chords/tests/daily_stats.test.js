@@ -26,6 +26,10 @@ test("normalizeDailyStats carries forward provided values", () => {
     correct: 2,
     incorrect: 5,
   });
+  assert.deepStrictEqual(normalized.counts.songs, {
+    correct: 0,
+    incorrect: 0,
+  });
   assert.deepStrictEqual(normalized.counts.degrees, {
     correct: 0,
     incorrect: 0,

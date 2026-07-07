@@ -91,6 +91,8 @@ test("settings store saves and loads presets round-trip", () => {
   dom.statGoals.chords.total.value = "0";
   dom.statGoals.progressions.correct.value = "5";
   dom.statGoals.progressions.total.value = "0";
+  dom.statGoals.songs.correct.value = "4";
+  dom.statGoals.songs.total.value = "6";
   toggleAlternatingCheckboxes(dom.chordCheckboxes);
   toggleAlternatingCheckboxes(dom.keyCheckboxes);
   toggleAlternatingCheckboxes(dom.degreeCheckboxes);
@@ -145,6 +147,8 @@ test("settings store saves and loads presets round-trip", () => {
   dom.statGoals.chords.total.value = "0";
   dom.statGoals.progressions.correct.value = "0";
   dom.statGoals.progressions.total.value = "0";
+  dom.statGoals.songs.correct.value = "0";
+  dom.statGoals.songs.total.value = "0";
   Object.values(dom.modeRadios).forEach((radio) => {
     radio.checked = radio.value === "tabScales";
   });
@@ -187,6 +191,8 @@ test("settings store saves and loads presets round-trip", () => {
   assert.strictEqual(dom.statGoals.chords.total.value, "0");
   assert.strictEqual(dom.statGoals.progressions.correct.value, "5");
   assert.strictEqual(dom.statGoals.progressions.total.value, "0");
+  assert.strictEqual(dom.statGoals.songs.correct.value, "4");
+  assert.strictEqual(dom.statGoals.songs.total.value, "6");
   assert.strictEqual(
     dom.modeRadios.tabJazz.checked,
     true,

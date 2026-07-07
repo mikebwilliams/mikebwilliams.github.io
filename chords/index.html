@@ -480,6 +480,69 @@
                     </tfoot>
                   </table>
                 </div>
+                <div class="statCard" id="statCardSongs">
+                  <h4>Songs</h4>
+                  <table class="statTable">
+                    <tbody>
+                      <tr>
+                        <th scope="row" class="statLabelCell">
+                          <span aria-hidden="true">✔</span>
+                          <span class="visuallyHidden">Correct</span>
+                        </th>
+                        <td class="statCellCount">
+                          <span id="txtSongsCorrect">0</span>
+                        </td>
+                        <td class="statCellGoal">
+                          <input
+                            class="statGoalInput"
+                            type="number"
+                            id="inputSongsGoalCorrect"
+                            inputmode="numeric"
+                            min="0"
+                            max="999"
+                            value="0"
+                            aria-label="Songs correct goal"
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <th scope="row" class="statLabelCell">
+                          <span aria-hidden="true">✖</span>
+                          <span class="visuallyHidden">Incorrect</span>
+                        </th>
+                        <td class="statCellCount">
+                          <span id="txtSongsIncorrect">0</span>
+                        </td>
+                        <td
+                          class="statCellGoal statCellPlaceholder"
+                          aria-hidden="true"
+                        >
+                          —
+                        </td>
+                      </tr>
+                    </tbody>
+                    <tfoot>
+                      <tr class="statTotalRow">
+                        <th scope="row" class="statLabelCell">Total</th>
+                        <td class="statCellValue">
+                          <span id="txtSongsTotal">0</span>
+                        </td>
+                        <td class="statCellGoal">
+                          <input
+                            class="statGoalInput"
+                            type="number"
+                            id="inputSongsGoalTotal"
+                            inputmode="numeric"
+                            min="0"
+                            max="999"
+                            value="0"
+                            aria-label="Songs total goal"
+                          />
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
                 <div class="statCard" id="statCardDegrees">
                   <h4>Degrees</h4>
                   <table class="statTable">

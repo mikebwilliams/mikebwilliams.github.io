@@ -301,7 +301,7 @@ let pendingSuccessAdvanceAction = null;
 const summaryStatModeCategoryMap = {
   tabChords: "chords",
   tabProgressions: "progressions",
-  tabSongs: "progressions",
+  tabSongs: "songs",
   tabDegrees: "degrees",
   tabScales: "scales",
   tabJazz: "bricks",
@@ -310,6 +310,7 @@ const summaryStatModeCategoryMap = {
 const summaryStatCategoryLabels = {
   chords: "Chords",
   progressions: "Progressions",
+  songs: "Songs",
   degrees: "Degrees",
   scales: "Scales",
   bricks: "Bricks",
@@ -341,6 +342,16 @@ const statCategoryConfig = {
         ? dom.statGoals.progressions.total
         : null,
     cardElement: () => (dom.statCards ? dom.statCards.progressions : null),
+  },
+  songs: {
+    correctElement: () => dom.cntSongsCorrect,
+    incorrectElement: () => dom.cntSongsIncorrect,
+    totalElement: () => dom.cntSongsTotal,
+    correctGoalInput: () =>
+      dom.statGoals && dom.statGoals.songs ? dom.statGoals.songs.correct : null,
+    totalGoalInput: () =>
+      dom.statGoals && dom.statGoals.songs ? dom.statGoals.songs.total : null,
+    cardElement: () => (dom.statCards ? dom.statCards.songs : null),
   },
   degrees: {
     correctElement: () => dom.cntDegreesCorrect,
@@ -1992,6 +2003,16 @@ function recordSongChordCompletion() {
   });
 }
 
+function recordSongPassCompletion() {
+  if (!modeIsSongs()) return;
+  updateResultCounters({
+    wasIncorrect: isIncorrect,
+    correctElement: dom.cntSongsCorrect,
+    incorrectElement: dom.cntSongsIncorrect,
+    category: "songs",
+  });
+}
+
 function syncSelectedSongControls(songId) {
   if (
     logicSongsStore &&
@@ -2184,12 +2205,12 @@ function completeSongPass(skip = false) {
     currentSongCompletedPasses = 0;
   } else {
     currentSongCompletedPasses += 1;
+    recordSongPassCompletion();
     const songSettings = getSongPracticeSettings();
     if (currentSongCompletedPasses >= songSettings.repeatCount) {
       currentSongCompletedPasses = 0;
       shouldFinishSong = true;
     } else {
-      shouldResetIncorrect = false;
       shouldAdvanceSongKeyOnRepeat = shouldAdvanceSongKey("advanceKeyOnRepeat");
     }
   }
@@ -2206,13 +2227,6 @@ function completeSongPass(skip = false) {
     if (shouldAdvanceSongKeyOnChange) {
       nextKey();
     }
-    updateResultCounters({
-      wasIncorrect: isIncorrect,
-      skipCorrect: skip,
-      correctElement: dom.cntProgsCorrect,
-      incorrectElement: dom.cntProgsIncorrect,
-      category: "progressions",
-    });
     applySelectedSong(nextSongId);
   }
   return { shouldResetIncorrect, selectedSongChanged };
@@ -2321,17 +2335,15 @@ function recordDegreeCompletion() {
 
 function handleMidiMessage(midiMessage) {
   let pressedNotes = midiMessage.data;
+  let command = pressedNotes[0] & 0xf0;
   let velocity = pressedNotes[2];
   let keyEvent = false;
 
   // Check for MIDI message type to determine if the key is pressed or released.
-  if (pressedNotes[0] === 144 && velocity > 0) {
+  if (command === 0x90 && velocity > 0) {
     handleKeyPressed(pressedNotes[1]);
     keyEvent = true;
-  } else if (
-    pressedNotes[0] === 128 ||
-    (pressedNotes[0] === 144 && velocity === 0)
-  ) {
+  } else if (command === 0x80 || (command === 0x90 && velocity === 0)) {
     handleKeyReleased(pressedNotes[1]);
     keyEvent = true;
   }
