@@ -161,14 +161,14 @@ test("settings store saves and loads presets round-trip", () => {
   assert.strictEqual(loaded, true, "preset should load successfully");
   assert.strictEqual(dom.flowSelect.value, "ascendingHalfSteps");
   assert.strictEqual(dom.flowStartSelect.value, "F#");
-  assert.strictEqual(dom.keyboardDetails.open, false);
-  assert.strictEqual(dom.metronomeDetails.open, true);
-  assert.strictEqual(dom.dailyStatsDetails.open, true);
-  assert.strictEqual(dom.trainingSetupDetails.open, true);
+  assert.strictEqual(dom.keyboardDetails.open, true);
+  assert.strictEqual(dom.metronomeDetails.open, false);
+  assert.strictEqual(dom.dailyStatsDetails.open, false);
+  assert.strictEqual(dom.trainingSetupDetails.open, false);
   assert.strictEqual(
-    dom.themeRadios.darkClassical.checked,
+    dom.themeRadios.lightBook.checked,
     true,
-    "theme should restore from preset",
+    "theme should stay independent from preset application",
   );
   assert.strictEqual(dom.metronomeTempoInput.value, "144");
   assert.strictEqual(dom.metronomeTempoNumberInput.value, "144");
@@ -177,12 +177,14 @@ test("settings store saves and loads presets round-trip", () => {
   assert.strictEqual(dom.metronomeYMeasuresInput.value, "5");
   assert.strictEqual(dom.metronomeCountInMeasuresInput.value, "2");
   assert.strictEqual(dom.metronomeSyncSongs.checked, true);
-  assert.strictEqual(dom.highlightCorrectKeys.checked, true);
-  assert.strictEqual(dom.highlightDelay.value, "5");
-  assert.strictEqual(dom.randomizeSpellings.checked, false);
-  assert.strictEqual(dom.enableSpacedRepetition.checked, false);
-  assert.strictEqual(dom.spacedRepThreshold.value, "4");
-  assert.strictEqual(dom.sendMidiNotes.checked, true);
+  assert.strictEqual(dom.highlightCorrectKeys.checked, false);
+  assert.strictEqual(dom.highlightDelay.value, "3");
+  assert.strictEqual(dom.hideProgressionChordNames.checked, false);
+  assert.strictEqual(dom.hideProgressionChordNumerals.checked, true);
+  assert.strictEqual(dom.randomizeSpellings.checked, true);
+  assert.strictEqual(dom.enableSpacedRepetition.checked, true);
+  assert.strictEqual(dom.spacedRepThreshold.value, "2");
+  assert.strictEqual(dom.sendMidiNotes.checked, false);
   assert.strictEqual(dom.progressionSelect.value, "custom");
   assert.strictEqual(dom.customProgressionInput.value, "I-IV-V-I");
   assert.strictEqual(dom.randomProgressionCount.value, "8");
@@ -215,6 +217,37 @@ test("settings store JSON export reflects current snapshot", () => {
   const json = settingsStore.getCurrentJSON(true);
   const parsed = JSON.parse(json);
   assert.deepStrictEqual(parsed, snapshot, "JSON output should match snapshot");
+});
+
+test("settings store imports and exports preset JSON", () => {
+  storageMock.clear();
+  settingsStore.resetToDefaults({ apply: false, save: false });
+  dom.flowSelect.value = "circleOfFourths";
+  settingsStore.syncFromDom();
+  settingsStore.savePreset("Stored Preset");
+
+  const exported = JSON.parse(settingsStore.exportPresets(true));
+  assert(
+    exported.presets["Stored Preset"],
+    "export should include saved preset",
+  );
+
+  const importedCount = settingsStore.importPresets({
+    presets: {
+      "Imported Preset": {
+        ...settingsStore.getCurrentSnapshot(),
+        flow: { mode: "descendingWholeSteps", startKey: "F" },
+      },
+    },
+  });
+
+  assert.strictEqual(importedCount, 1, "one preset should import");
+  assert(
+    settingsStore.listPresets().includes("Imported Preset"),
+    "imported preset should be listed",
+  );
+  assert.strictEqual(settingsStore.loadPreset("Imported Preset"), true);
+  assert.strictEqual(dom.flowSelect.value, "descendingWholeSteps");
 });
 
 run();

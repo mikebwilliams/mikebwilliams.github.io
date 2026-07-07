@@ -1264,10 +1264,9 @@ details.challengeCollapsible > summary {
   font-weight: 600;
   font-size: 1.05rem;
   color: var(--text-primary);
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
-  justify-content: flex-start;
-  flex-wrap: wrap;
   gap: 12px;
   background: var(--summary-bg);
   border-radius: var(--radius-md) var(--radius-md) 0 0;
@@ -1304,6 +1303,7 @@ details.challengeCollapsible > summary .collapsibleTitle {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  flex: 0 0 auto;
   font-family: var(--font-hand);
   font-size: 1.18rem;
   font-weight: var(--display-font-weight);
@@ -1312,6 +1312,11 @@ details.challengeCollapsible > summary .collapsibleTitle {
 
 details.challengeCollapsible > summary .collapsibleStatus {
   order: 2;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--text-muted);
   font-size: 0.9rem;
   font-weight: 500;
@@ -1324,8 +1329,10 @@ details.challengeCollapsible > summary .collapsibleSteppers {
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  margin-left: auto;
-  flex-wrap: wrap;
+  flex: 0 0 auto;
+  justify-self: end;
+  margin-left: 0;
+  flex-wrap: nowrap;
 }
 
 .summaryStepper {
@@ -1358,7 +1365,9 @@ details.challengeCollapsible > summary .summaryActions {
   order: 4;
   display: inline-flex;
   gap: 12px;
-  margin-left: auto;
+  flex: 0 0 auto;
+  justify-self: end;
+  margin-left: 0;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
@@ -1944,6 +1953,13 @@ label {
 
 .compactButtonGroup button {
   padding: 0.48rem 0.78rem;
+}
+
+.settingsFileStatus {
+  min-height: 1.2em;
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
 }
 
 .midiStatusRow {

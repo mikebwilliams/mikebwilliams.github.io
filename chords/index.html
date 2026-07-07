@@ -833,34 +833,37 @@
 
               <div class="tabContent" id="panelOptionsPresets">
                 <div class="settingsRow settingsSelectRow">
-                  <label for="selectSettingsPreset">Presets:</label>
+                  <label for="selectSettingsPreset">Preset:</label>
                   <select id="selectSettingsPreset"></select>
                   <div class="compactButtonGroup">
-                    <button id="btnSettingsLoad" type="button">Load</button>
-                    <button id="btnSettingsOverwrite" type="button">
-                      Overwrite
-                    </button>
+                    <button id="btnSettingsNew" type="button">New</button>
+                    <button id="btnSettingsLoad" type="button">Apply</button>
+                    <button id="btnSettingsSave" type="button">Save</button>
                     <button id="btnSettingsDelete" type="button">Delete</button>
                   </div>
                 </div>
                 <div class="settingsRow">
-                  <label for="inputSettingsPresetName">Save As:</label>
+                  <label for="inputSettingsPresetName">Name:</label>
                   <input
                     type="text"
                     id="inputSettingsPresetName"
                     placeholder="Preset name"
                   />
-                  <button id="btnSettingsSave" type="button">New Preset</button>
                 </div>
                 <div class="settingsRow">
                   <button id="btnSettingsReset" type="button">
                     Reset to Defaults
                   </button>
-                  <button id="btnSettingsExport" type="button">
-                    Show JSON
-                  </button>
+                  <button id="btnSettingsDownload" type="button">Export</button>
+                  <button id="btnSettingsUpload" type="button">Import</button>
+                  <input
+                    class="visuallyHidden"
+                    id="inputSettingsUpload"
+                    type="file"
+                    accept=".presets"
+                  />
                 </div>
-                <pre id="panelSettingsDebug" class="settingsDebugOutput"></pre>
+                <p id="txtSettingsFileStatus" class="settingsFileStatus"></p>
               </div>
 
               <div class="tabContent" id="panelOptionsWorkouts">
@@ -917,6 +920,17 @@
                     Add Entry
                   </button>
                 </div>
+                <div class="settingsRow">
+                  <button id="btnWorkoutDownload" type="button">Export</button>
+                  <button id="btnWorkoutUpload" type="button">Import</button>
+                  <input
+                    class="visuallyHidden"
+                    id="inputWorkoutUpload"
+                    type="file"
+                    accept=".workouts"
+                  />
+                </div>
+                <p id="txtWorkoutFileStatus" class="settingsFileStatus"></p>
               </div>
             </div>
           </details>

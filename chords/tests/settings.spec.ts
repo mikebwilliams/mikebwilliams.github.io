@@ -147,7 +147,63 @@ test("Presets and workouts summary and arrows track current selections", async (
   await expect(panel).not.toHaveAttribute("open", "");
 });
 
-test("Overwrite button saves current settings to the selected preset", async ({
+test("Collapsed presets and workouts summary elides long names", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 700, height: 900 });
+  const longSummary =
+    "Preset: Long Preset with a very long descriptive practice configuration name · Workout: Long Workout with multiple descriptive stages and targets";
+
+  await page.goto(TEST_URL);
+  await page.evaluate((summaryText) => {
+    const panel = document.querySelector("#panelTrainingSetup");
+    const summary = document.querySelector("#txtTrainingSetupSummary");
+    if (panel instanceof HTMLDetailsElement) panel.open = false;
+    if (summary) summary.textContent = summaryText;
+  }, longSummary);
+  await expect(page.locator("#panelTrainingSetup")).not.toHaveAttribute(
+    "open",
+    "",
+  );
+  await expect(page.locator("#txtTrainingSetupSummary")).toHaveText(
+    longSummary,
+  );
+
+  const metrics = await page
+    .locator("#txtTrainingSetupSummary")
+    .evaluate((el) => {
+      const style = window.getComputedStyle(el);
+      const summary = el.closest("summary");
+      const steppers = summary?.querySelector(".collapsibleSteppers");
+      const statusRect = el.getBoundingClientRect();
+      const summaryRect = summary?.getBoundingClientRect();
+      const steppersRect = steppers?.getBoundingClientRect();
+      return {
+        clientWidth: el.clientWidth,
+        overflowX: style.overflowX,
+        scrollWidth: el.scrollWidth,
+        statusRight: statusRect.right,
+        steppersLeft: steppersRect?.left || 0,
+        steppersRight: steppersRect?.right || 0,
+        summaryRight: summaryRect?.right || 0,
+        textOverflow: style.textOverflow,
+        whiteSpace: style.whiteSpace,
+      };
+    });
+
+  expect(metrics.textOverflow).toBe("ellipsis");
+  expect(metrics.whiteSpace).toBe("nowrap");
+  expect(metrics.overflowX).toBe("hidden");
+  expect(metrics.scrollWidth).toBeGreaterThan(metrics.clientWidth);
+  expect(metrics.statusRight).toBeLessThanOrEqual(metrics.steppersLeft + 1);
+  expect(metrics.steppersRight).toBeLessThanOrEqual(metrics.summaryRight + 1);
+  await expect(page.locator("#btnSettingsPresetPrev")).toBeVisible();
+  await expect(page.locator("#btnSettingsPresetNext")).toBeVisible();
+  await expect(page.locator("#btnWorkoutPrev")).toBeVisible();
+  await expect(page.locator("#btnWorkoutNext")).toBeVisible();
+});
+
+test("Save updates the selected preset and Apply loads it", async ({
   page,
 }) => {
   const errors: string[] = [];
@@ -184,11 +240,15 @@ test("Overwrite button saves current settings to the selected preset", async ({
 
   await selectTab("tabOptionsPresets");
   await page.selectOption("#selectSettingsPreset", presetName);
-  page.once("dialog", (dialog) => dialog.accept());
-  await page.click("#btnSettingsOverwrite");
+  await page.click("#btnSettingsSave");
 
   await selectTab("tabOptionsKeys");
   await page.selectOption("#selectFlow", "random");
+
+  await page.locator("#panelThemePicker summary").click();
+  await page.getByLabel("DarkBook", { exact: true }).check();
+  await page.click("#panelKeyboard > summary");
+  await page.click("#panelDailyStats > summary");
 
   await selectTab("tabOptionsPresets");
   await page.selectOption("#selectSettingsPreset", presetName);
@@ -198,12 +258,119 @@ test("Overwrite button saves current settings to the selected preset", async ({
   await expect(page.locator("#selectFlow")).toHaveValue(
     "descendingMinorThirds",
   );
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "darkBook");
+  await expect(page.locator("#radThemeDarkBook")).toBeChecked();
+  await expect(page.locator("#panelKeyboard")).toHaveAttribute("open", "");
+  await expect(page.locator("#panelDailyStats")).toHaveAttribute("open", "");
+  await expect(page.locator("#panelTrainingSetup")).toHaveAttribute("open", "");
 
   if (errors.length) {
     console.error("=== JavaScript Errors Detected ===");
     for (const e of errors) console.error(e);
     throw new Error(`${errors.length} console error(s) found`);
   }
+});
+
+test("Starter presets and workouts are available after first load", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await openTrainingSetup(page);
+  await expect(page.locator("#txtTrainingSetupSummary")).toHaveText(
+    "Preset: None · Workout: None",
+  );
+
+  const presetOptionText =
+    (await page.locator("#selectSettingsPreset").textContent()) || "";
+  expect(presetOptionText).toContain("Major & Minor Chords");
+  expect(presetOptionText).toContain("I-IV-V Progressions");
+  expect(presetOptionText).toContain("Scale Degrees");
+  expect(presetOptionText).toContain("Major & Minor Scales");
+  expect(presetOptionText).toContain("Jazz ii-V-I");
+  expect(presetOptionText).not.toContain("Beginner:");
+
+  await page.click("label[for='tabOptionsWorkouts']");
+  const workoutOptionText =
+    (await page.locator("#selectWorkout").textContent()) || "";
+  expect(workoutOptionText).toContain("Beginner Jazz Start");
+  expect(workoutOptionText).toContain("Beginner Warmup");
+});
+
+test("Presets and workouts can import and export files", async ({ page }) => {
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await openTrainingSetup(page);
+
+  await expect(page.locator("#btnSettingsDownload")).toHaveText("Export");
+  await expect(page.locator("#btnSettingsUpload")).toHaveText("Import");
+
+  await page.setInputFiles("#inputSettingsUpload", {
+    name: "test.presets",
+    mimeType: "application/json",
+    buffer: Buffer.from(
+      JSON.stringify({
+        presets: {
+          "Imported Test Preset": await page.evaluate(() =>
+            (window as any).appGlobals.settingsStore.getCurrentSnapshot(),
+          ),
+        },
+      }),
+    ),
+  });
+  await expect(page.locator("#txtSettingsFileStatus")).toHaveText(
+    "Imported 1 preset.",
+  );
+  await expect(page.locator("#selectSettingsPreset")).toContainText(
+    "Imported Test Preset",
+  );
+
+  const presetDownload = page.waitForEvent("download");
+  await page.click("#btnSettingsDownload");
+  await expect(page.locator("#txtSettingsFileStatus")).toHaveText(
+    "Exported presets.",
+  );
+  expect((await presetDownload).suggestedFilename()).toBe("chord.presets");
+
+  await page.click("label[for='tabOptionsWorkouts']");
+  await expect(page.locator("#btnWorkoutDownload")).toHaveText("Export");
+  await expect(page.locator("#btnWorkoutUpload")).toHaveText("Import");
+
+  await page.setInputFiles("#inputWorkoutUpload", {
+    name: "test.workouts",
+    mimeType: "application/json",
+    buffer: Buffer.from(
+      JSON.stringify({
+        workouts: {
+          "Imported Test Workout": {
+            entries: [
+              {
+                preset: "Imported Test Preset",
+                goals: { correct: 2, total: 3 },
+                category: "chords",
+              },
+            ],
+          },
+        },
+      }),
+    ),
+  });
+  await expect(page.locator("#txtWorkoutFileStatus")).toHaveText(
+    "Imported 1 workout.",
+  );
+  await expect(page.locator("#selectWorkout")).toContainText(
+    "Imported Test Workout",
+  );
+
+  const workoutDownload = page.waitForEvent("download");
+  await page.click("#btnWorkoutDownload");
+  await expect(page.locator("#txtWorkoutFileStatus")).toHaveText(
+    "Exported workouts.",
+  );
+  expect((await workoutDownload).suggestedFilename()).toBe("chord.workouts");
 });
 
 test("Metronome panel persists its open state and settings", async ({
@@ -326,11 +493,67 @@ test("Collapsed daily stats summary reflects loaded workout goals", async ({
   await page
     .locator(".workoutEntry")
     .filter({ hasText: presetName })
-    .getByRole("button", { name: "Load" })
+    .getByRole("button", { name: "Apply" })
     .click();
 
   await expect(statsSummary).toHaveText(
     "Chords: 0 / 0, Goals: 3 correct / 5 total",
+  );
+});
+
+test("Workout entries apply embedded settings after preset deletion", async ({
+  page,
+}) => {
+  const presetName = `Embedded Preset ${Date.now()}`;
+  const workoutName = `Embedded Workout ${Date.now()}`;
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await openTrainingSetup(page);
+  await page.click("label[for='tabOptionsKeys']");
+  await page.selectOption("#selectFlow", "descendingMinorThirds");
+
+  await page.click("label[for='tabOptionsPresets']");
+  await page.fill("#inputSettingsPresetName", presetName);
+  await page.click("#btnSettingsSave");
+
+  await page.click("label[for='tabOptionsWorkouts']");
+  await page.fill("#inputWorkoutName", workoutName);
+  await page.selectOption("#selectWorkoutPreset", presetName);
+  await page.click("#btnWorkoutAddEntry");
+  await page.click("#btnWorkoutSave");
+
+  await page.click("label[for='tabOptionsPresets']");
+  await page.selectOption("#selectSettingsPreset", presetName);
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.click("#btnSettingsDelete");
+  await expect(page.locator("#selectSettingsPreset")).not.toContainText(
+    presetName,
+  );
+
+  await page.reload();
+  await openTrainingSetup(page);
+  await page.click("label[for='tabOptionsWorkouts']");
+  await page.selectOption("#selectWorkout", workoutName);
+  await expect(
+    page.locator(".workoutEntry").filter({ hasText: presetName }),
+  ).not.toContainText("missing preset");
+
+  await page.click("label[for='tabOptionsKeys']");
+  await page.selectOption("#selectFlow", "random");
+
+  await page.click("label[for='tabOptionsWorkouts']");
+  await page
+    .locator(".workoutEntry")
+    .filter({ hasText: presetName })
+    .getByRole("button", { name: "Apply" })
+    .click();
+
+  await page.click("label[for='tabOptionsKeys']");
+  await expect(page.locator("#selectFlow")).toHaveValue(
+    "descendingMinorThirds",
   );
 });
 

@@ -227,7 +227,7 @@ test("loading a workout entry preserves the current theme", async ({
   await page
     .locator(".workoutEntry")
     .filter({ hasText: presetName })
-    .getByRole("button", { name: "Load" })
+    .getByRole("button", { name: "Apply" })
     .click();
 
   await expect(page.locator("html")).toHaveAttribute("data-theme", "darkBook");

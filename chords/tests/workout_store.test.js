@@ -40,6 +40,10 @@ test("workout store saves and loads sanitized entries", () => {
       preset: "All Chords",
       goals: { correct: 100, total: 120 },
       category: "chords",
+      settings: {
+        mode: "tabChords",
+        flow: { mode: "circleOfFourths", startKey: "C" },
+      },
     },
     { preset: " Evening Drill ", goal: "-3", total: "7", category: "invalid" },
   ]);
@@ -62,6 +66,10 @@ test("workout store saves and loads sanitized entries", () => {
         preset: "All Chords",
         goals: { correct: 100, total: 120 },
         category: "chords",
+        settings: {
+          mode: "tabChords",
+          flow: { mode: "circleOfFourths", startKey: "C" },
+        },
       },
       {
         preset: "Evening Drill",
@@ -120,6 +128,66 @@ test("workout store tracks last selection and clears when removed", () => {
     null,
     "selection should clear when workout removed",
   );
+});
+
+test("workout store imports and exports workout JSON", () => {
+  storageMock.clear();
+  workoutStore.replaceAll({});
+  workoutStore.saveWorkout("Stored", [
+    {
+      preset: "Stored Preset",
+      goals: { correct: 2, total: 3 },
+      category: "chords",
+      settings: {
+        mode: "tabScales",
+        flow: { mode: "ascendingWholeSteps", startKey: "D" },
+      },
+    },
+  ]);
+
+  const exported = JSON.parse(workoutStore.exportWorkouts(true));
+  assert(exported.workouts.Stored, "export should include saved workout");
+  assert.deepStrictEqual(
+    exported.workouts.Stored.entries[0].settings,
+    {
+      mode: "tabScales",
+      flow: { mode: "ascendingWholeSteps", startKey: "D" },
+    },
+    "export should include embedded preset settings",
+  );
+
+  const importedCount = workoutStore.importWorkouts({
+    workouts: {
+      Imported: {
+        entries: [
+          {
+            preset: "Imported Preset",
+            goal: 5,
+            category: "progressions",
+            settings: {
+              mode: "tabProgressions",
+              flow: { mode: "descendingWholeSteps", startKey: "F" },
+            },
+          },
+        ],
+      },
+    },
+  });
+
+  assert.strictEqual(importedCount, 1, "one workout should import");
+  const imported = workoutStore.getWorkout("Imported");
+  assert(imported, "imported workout should load");
+  assert.deepStrictEqual(imported.entries, [
+    {
+      preset: "Imported Preset",
+      goals: { correct: 5, total: 0 },
+      category: "progressions",
+      settings: {
+        mode: "tabProgressions",
+        flow: { mode: "descendingWholeSteps", startKey: "F" },
+      },
+    },
+  ]);
 });
 
 let passed = 0;

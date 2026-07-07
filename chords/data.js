@@ -663,13 +663,15 @@ const domElements = {
   settingsPresetPrevButton: requireElement("btnSettingsPresetPrev"),
   settingsPresetNextButton: requireElement("btnSettingsPresetNext"),
   settingsPresetName: requireElement("inputSettingsPresetName"),
+  settingsNewButton: requireElement("btnSettingsNew"),
   settingsSaveButton: requireElement("btnSettingsSave"),
   settingsLoadButton: requireElement("btnSettingsLoad"),
-  settingsOverwriteButton: requireElement("btnSettingsOverwrite"),
   settingsDeleteButton: requireElement("btnSettingsDelete"),
   settingsResetButton: requireElement("btnSettingsReset"),
-  settingsExportButton: requireElement("btnSettingsExport"),
-  settingsDebugPanel: requireElement("panelSettingsDebug"),
+  settingsDownloadButton: requireElement("btnSettingsDownload"),
+  settingsUploadButton: requireElement("btnSettingsUpload"),
+  settingsUploadInput: requireElement("inputSettingsUpload"),
+  settingsFileStatus: requireElement("txtSettingsFileStatus"),
   trainingSetupSummary: requireElement("txtTrainingSetupSummary"),
   workoutPanel: requireElement("panelOptionsWorkouts"),
   workoutSelect: requireElement("selectWorkout"),
@@ -679,6 +681,10 @@ const domElements = {
   workoutNewButton: requireElement("btnWorkoutNew"),
   workoutSaveButton: requireElement("btnWorkoutSave"),
   workoutDeleteButton: requireElement("btnWorkoutDelete"),
+  workoutDownloadButton: requireElement("btnWorkoutDownload"),
+  workoutUploadButton: requireElement("btnWorkoutUpload"),
+  workoutUploadInput: requireElement("inputWorkoutUpload"),
+  workoutFileStatus: requireElement("txtWorkoutFileStatus"),
   workoutPresetSelect: requireElement("selectWorkoutPreset"),
   workoutGoalInputs: {
     correct: requireElement("inputWorkoutGoalCorrect"),
@@ -1660,10 +1666,21 @@ const jazzCadencesDropbacks = [
 
 const SETTINGS_STORAGE_KEY = "chordChallenge.settings";
 const SETTINGS_PRESETS_KEY = "chordChallenge.settings.presets";
+const SETTINGS_PRESET_SEED_VERSION_KEY =
+  "chordChallenge.settings.presets.seedVersion";
 const WORKOUTS_STORAGE_KEY = "chordChallenge.workouts";
 const WORKOUTS_SELECTED_KEY = "chordChallenge.workouts.selected";
+const WORKOUTS_SEED_VERSION_KEY = "chordChallenge.workouts.seedVersion";
 const SONGS_STORAGE_KEY = "chordChallenge.songs";
 const SONGS_SELECTED_KEY = "chordChallenge.songs.selected";
+const STARTER_CONTENT_VERSION = "starter-2026-07-07-short-names";
+const STARTER_PRESET_NAMES = {
+  chords: "Major & Minor Chords",
+  progressions: "I-IV-V Progressions",
+  degrees: "Scale Degrees",
+  scales: "Major & Minor Scales",
+  jazz: "Jazz ii-V-I",
+};
 const SONGS_FINISH_ACTIONS = {
   nothing: "nothing",
   nextFavorite: "nextFavorite",
@@ -1825,6 +1842,19 @@ function mergeSettings(base, extra) {
     }
   });
   return result;
+}
+
+function parseJsonObjectPayload(payload) {
+  try {
+    const parsed = typeof payload === "string" ? JSON.parse(payload) : payload;
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function sanitizeNamedCollectionName(name) {
+  return typeof name === "string" ? name.trim() : "";
 }
 
 function normalizeTextValue(value) {
@@ -3652,11 +3682,19 @@ function sanitizeWorkoutEntry(entry) {
   const preset = typeof entry.preset === "string" ? entry.preset.trim() : "";
   if (!preset) return null;
   const category = sanitizeWorkoutCategory(entry.category);
-  return {
+  const sanitized = {
     preset,
     goals: sanitizeWorkoutGoals(entry),
     category,
   };
+  if (
+    entry.settings &&
+    typeof entry.settings === "object" &&
+    !Array.isArray(entry.settings)
+  ) {
+    sanitized.settings = cloneObject(entry.settings);
+  }
+  return sanitized;
 }
 
 function sanitizeWorkoutEntries(entries) {
@@ -3683,11 +3721,21 @@ function sanitizeWorkoutMap(collection) {
   return sanitized;
 }
 
+function extractWorkoutPayload(payload) {
+  const parsed = parseJsonObjectPayload(payload);
+  if (!parsed) return {};
+  if (parsed.workouts && typeof parsed.workouts === "object") {
+    return parsed.workouts;
+  }
+  return parsed;
+}
+
 function workoutStoreFactory() {
   const store = {
     storage: getStorageHandle(),
     storageKey: WORKOUTS_STORAGE_KEY,
     selectedKey: WORKOUTS_SELECTED_KEY,
+    seedVersionKey: WORKOUTS_SEED_VERSION_KEY,
     resolveStorage() {
       if (this.storage) return this.storage;
       const handle = getStorageHandle();
@@ -3787,6 +3835,54 @@ function workoutStoreFactory() {
     replaceAll(workouts) {
       this.saveAll(workouts);
     },
+    exportWorkouts(pretty = true) {
+      try {
+        return JSON.stringify(
+          { workouts: this.loadAll() },
+          null,
+          pretty ? 2 : 0,
+        );
+      } catch (_) {
+        return '{"workouts":{}}';
+      }
+    },
+    importWorkouts(payload, { merge = true } = {}) {
+      const imported = sanitizeWorkoutMap(extractWorkoutPayload(payload));
+      const names = Object.keys(imported);
+      if (!names.length) return 0;
+      const next = merge ? this.loadAll() : {};
+      names.forEach((name) => {
+        next[name] = imported[name];
+      });
+      this.saveAll(next);
+      return names.length;
+    },
+    seedStarterWorkouts() {
+      const activeStorage = this.resolveStorage();
+      if (!activeStorage) return;
+      try {
+        if (
+          activeStorage.getItem(this.seedVersionKey) === STARTER_CONTENT_VERSION
+        ) {
+          return;
+        }
+        const workouts = this.loadAll();
+        const starterPresets =
+          typeof settingsStore !== "undefined" &&
+          settingsStore &&
+          typeof settingsStore.loadPresets === "function"
+            ? settingsStore.loadPresets()
+            : {};
+        const starterWorkouts = createStarterWorkouts(starterPresets);
+        Object.keys(starterWorkouts).forEach((name) => {
+          if (!Object.prototype.hasOwnProperty.call(workouts, name)) {
+            workouts[name] = starterWorkouts[name];
+          }
+        });
+        this.saveAll(workouts);
+        activeStorage.setItem(this.seedVersionKey, STARTER_CONTENT_VERSION);
+      } catch (_) {}
+    },
     setLastSelection(workoutName, entryIndex = 0) {
       const activeStorage = this.resolveStorage();
       if (!activeStorage) return;
@@ -3829,6 +3925,7 @@ function workoutStoreFactory() {
       } catch (_) {}
     },
   };
+  store.seedStarterWorkouts();
   return store;
 }
 
@@ -4221,6 +4318,155 @@ function createDefaultSettings() {
   return defaults;
 }
 
+function buildBooleanState(keys, enabledKeys = []) {
+  const enabled = new Set(enabledKeys);
+  return keys.reduce((state, key) => {
+    state[key] = enabled.has(key);
+    return state;
+  }, {});
+}
+
+function createStarterPreset(baseDefaults, overrides) {
+  return sanitizeSettings(mergeSettings(baseDefaults, overrides), baseDefaults);
+}
+
+function createStarterPresets(defaults) {
+  const normalKeyState = buildBooleanState(allNotes, normalNotes);
+  const whiteKeyState = buildBooleanState(allNotes, [
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "A",
+    "B",
+  ]);
+  const basicChordTypes = buildBooleanState(chordTypeIds, [
+    "chkChordMajor",
+    "chkChordMinor",
+  ]);
+  const progressionChordTypes = buildBooleanState(chordTypeIds, [
+    "chkChordMajor",
+    "chkChordMinor",
+    "chkChordSeventh",
+    "chkChordMinorSeventh",
+    "chkChordMajorSeventh",
+  ]);
+  const degreeToggles = buildBooleanState(Object.keys(romanNumerals), [
+    "I",
+    "II",
+    "III",
+    "IV",
+    "V",
+    "VI",
+    "VII",
+    "VIII",
+  ]);
+  const basicScales = buildBooleanState(Object.keys(scales), scaleGroups.basic);
+  const jazzCadenceState = buildBooleanState(
+    jazzCadences.map((cadence) => cadence.name),
+    ["Regular", "Two-Goes", "POT"],
+  );
+
+  return {
+    [STARTER_PRESET_NAMES.chords]: createStarterPreset(defaults, {
+      mode: "tabChords",
+      flow: { mode: "circleOfFourths", startKey: "C" },
+      chordTypes: basicChordTypes,
+      keyToggles: normalKeyState,
+      voicing: { mode: "default" },
+      statsGoals: { chords: { correct: 10, total: 15 } },
+    }),
+    [STARTER_PRESET_NAMES.progressions]: createStarterPreset(defaults, {
+      mode: "tabProgressions",
+      flow: { mode: "circleOfFifths", startKey: "C" },
+      progression: { selection: "I-IV-V", randomCount: 4 },
+      chordTypes: progressionChordTypes,
+      keyToggles: whiteKeyState,
+      statsGoals: { progressions: { correct: 5, total: 8 } },
+    }),
+    [STARTER_PRESET_NAMES.degrees]: createStarterPreset(defaults, {
+      mode: "tabDegrees",
+      flow: { mode: "ascendingWholeSteps", startKey: "C" },
+      degreeToggles,
+      keyToggles: normalKeyState,
+      statsGoals: { degrees: { correct: 8, total: 12 } },
+    }),
+    [STARTER_PRESET_NAMES.scales]: createStarterPreset(defaults, {
+      mode: "tabScales",
+      flow: { mode: "circleOfFourths", startKey: "C" },
+      scales: basicScales,
+      keyToggles: whiteKeyState,
+      statsGoals: { scales: { correct: 4, total: 6 } },
+    }),
+    [STARTER_PRESET_NAMES.jazz]: createStarterPreset(defaults, {
+      mode: "tabJazz",
+      flow: { mode: "circleOfFourths", startKey: "C" },
+      chordTypes: progressionChordTypes,
+      keyToggles: normalKeyState,
+      jazzCadences: jazzCadenceState,
+      statsGoals: { bricks: { correct: 4, total: 6 } },
+    }),
+  };
+}
+
+function createWorkoutEntryFromPreset(preset, goals, category, presets = {}) {
+  const entry = { preset, goals, category };
+  if (presets[preset]) {
+    entry.settings = cloneObject(presets[preset]);
+  }
+  return entry;
+}
+
+function createStarterWorkouts(presets = {}) {
+  return {
+    "Beginner Warmup": {
+      entries: [
+        createWorkoutEntryFromPreset(
+          STARTER_PRESET_NAMES.chords,
+          { correct: 10, total: 15 },
+          "chords",
+          presets,
+        ),
+        createWorkoutEntryFromPreset(
+          STARTER_PRESET_NAMES.progressions,
+          { correct: 5, total: 8 },
+          "progressions",
+          presets,
+        ),
+        createWorkoutEntryFromPreset(
+          STARTER_PRESET_NAMES.scales,
+          { correct: 4, total: 6 },
+          "scales",
+          presets,
+        ),
+      ],
+    },
+    "Beginner Jazz Start": {
+      entries: [
+        createWorkoutEntryFromPreset(
+          STARTER_PRESET_NAMES.jazz,
+          { correct: 4, total: 6 },
+          "bricks",
+          presets,
+        ),
+        createWorkoutEntryFromPreset(
+          STARTER_PRESET_NAMES.degrees,
+          { correct: 8, total: 12 },
+          "degrees",
+          presets,
+        ),
+        createWorkoutEntryFromPreset(
+          STARTER_PRESET_NAMES.progressions,
+          { correct: 5, total: 8 },
+          "progressions",
+          presets,
+        ),
+      ],
+    },
+  };
+}
+
 function applySimpleSettings(settings) {
   if (!settings) return;
   let appliedMode = null;
@@ -4333,6 +4579,49 @@ function sanitizeSettings(settings, defaults) {
   return mergeSettings(defaults, settings);
 }
 
+const presetIndependentSettingKeys = ["display", "spacedRep", "midi"];
+
+function mergePresetWithCurrentPreferences(presetSettings, currentSettings) {
+  const next = cloneObject(presetSettings || {});
+  const current = currentSettings || {};
+  presetIndependentSettingKeys.forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(current, key)) {
+      next[key] = cloneObject(current[key]);
+    }
+  });
+  return next;
+}
+
+function sanitizeSettingsPresetMap(collection, defaults) {
+  if (
+    !collection ||
+    typeof collection !== "object" ||
+    Array.isArray(collection)
+  ) {
+    return {};
+  }
+  const sanitized = {};
+  Object.keys(collection).forEach((name) => {
+    const cleanName = sanitizeNamedCollectionName(name);
+    const preset = collection[name];
+    if (!cleanName || !preset || typeof preset !== "object") return;
+    sanitized[cleanName] = sanitizeSettings(preset, defaults);
+  });
+  return sanitized;
+}
+
+function extractSettingsPresetPayload(payload) {
+  const parsed = parseJsonObjectPayload(payload);
+  if (!parsed) return {};
+  if (parsed.presets && typeof parsed.presets === "object") {
+    return parsed.presets;
+  }
+  if (typeof parsed.mode === "string") {
+    return { "Imported Preset": parsed };
+  }
+  return parsed;
+}
+
 function settingsStoreFactory() {
   const defaults = createDefaultSettings();
   const storage = getStorageHandle();
@@ -4343,6 +4632,7 @@ function settingsStoreFactory() {
     storage,
     storageKey: SETTINGS_STORAGE_KEY,
     presetsKey: SETTINGS_PRESETS_KEY,
+    presetSeedVersionKey: SETTINGS_PRESET_SEED_VERSION_KEY,
     initialized: false,
     attachedElements: new Set(),
     resolveStorage() {
@@ -4369,7 +4659,7 @@ function settingsStoreFactory() {
         const raw = activeStorage.getItem(this.presetsKey);
         if (!raw) return {};
         const parsed = JSON.parse(raw);
-        return typeof parsed === "object" && parsed ? parsed : {};
+        return sanitizeSettingsPresetMap(parsed, this.defaults);
       } catch (_) {
         return {};
       }
@@ -4387,14 +4677,16 @@ function settingsStoreFactory() {
     savePresets(presets) {
       const activeStorage = this.resolveStorage();
       if (!activeStorage) return;
+      const sanitized = sanitizeSettingsPresetMap(presets, this.defaults);
       try {
-        activeStorage.setItem(this.presetsKey, JSON.stringify(presets));
+        activeStorage.setItem(this.presetsKey, JSON.stringify(sanitized));
       } catch (_) {}
     },
     initialize() {
       const loaded = this.load();
       this.current = sanitizeSettings(loaded, this.defaults);
       this.initialized = true;
+      this.seedStarterPresets();
     },
     applyToDom(settings) {
       const source = settings
@@ -4416,16 +4708,27 @@ function settingsStoreFactory() {
     savePreset(name) {
       if (!name) return;
       const presets = this.loadPresets();
-      presets[name] = cloneObject(this.current);
+      const cleanName = sanitizeNamedCollectionName(name);
+      if (!cleanName) return;
+      presets[cleanName] = cloneObject(this.current);
       this.savePresets(presets);
     },
-    loadPreset(name) {
+    applyPresetSettings(settings, { preservePreferences = true } = {}) {
+      if (!settings || typeof settings !== "object") return false;
+      const source = preservePreferences
+        ? mergePresetWithCurrentPreferences(settings, captureSettingsFromDom())
+        : settings;
+      this.applyToDom(source);
+      this.save();
+      return true;
+    },
+    loadPreset(name, { preservePreferences = true } = {}) {
       if (!name) return false;
       const presets = this.loadPresets();
       if (!presets[name]) return false;
-      this.applyToDom(presets[name]);
-      this.save();
-      return true;
+      return this.applyPresetSettings(presets[name], {
+        preservePreferences,
+      });
     },
     deletePreset(name) {
       if (!name) return;
@@ -4437,7 +4740,58 @@ function settingsStoreFactory() {
     },
     listPresets() {
       const presets = this.loadPresets();
-      return Object.keys(presets);
+      return Object.keys(presets).sort((a, b) =>
+        a.localeCompare(b, "en", { sensitivity: "base" }),
+      );
+    },
+    exportPresets(pretty = true) {
+      try {
+        return JSON.stringify(
+          { presets: this.loadPresets() },
+          null,
+          pretty ? 2 : 0,
+        );
+      } catch (_) {
+        return '{"presets":{}}';
+      }
+    },
+    importPresets(payload, { merge = true } = {}) {
+      const imported = sanitizeSettingsPresetMap(
+        extractSettingsPresetPayload(payload),
+        this.defaults,
+      );
+      const names = Object.keys(imported);
+      if (!names.length) return 0;
+      const next = merge ? this.loadPresets() : {};
+      names.forEach((name) => {
+        next[name] = imported[name];
+      });
+      this.savePresets(next);
+      return names.length;
+    },
+    seedStarterPresets() {
+      const activeStorage = this.resolveStorage();
+      if (!activeStorage) return;
+      try {
+        if (
+          activeStorage.getItem(this.presetSeedVersionKey) ===
+          STARTER_CONTENT_VERSION
+        ) {
+          return;
+        }
+        const presets = this.loadPresets();
+        const starterPresets = createStarterPresets(this.defaults);
+        Object.keys(starterPresets).forEach((name) => {
+          if (!Object.prototype.hasOwnProperty.call(presets, name)) {
+            presets[name] = starterPresets[name];
+          }
+        });
+        this.savePresets(presets);
+        activeStorage.setItem(
+          this.presetSeedVersionKey,
+          STARTER_CONTENT_VERSION,
+        );
+      } catch (_) {}
     },
     resetToDefaults({ apply = true, save = true } = {}) {
       this.current = cloneObject(this.defaults);
