@@ -3364,6 +3364,20 @@ function nextChord(skip = false) {
   updateDisplay();
 }
 
+function progressionNameIsChordList(name) {
+  const text = String(name || "").trim();
+  if (!text.includes("-")) return false;
+
+  const chordNamePattern =
+    /^(?:[#b♯♭]?[ivIV]+|[A-G][#b♯♭]?)(?:[a-zA-Z0-9#b♯♭+\-°ºø△Δ]*)$/;
+  const parts = text.split("-").map((part) => part.trim());
+  return parts.length > 1 && parts.every((part) => chordNamePattern.test(part));
+}
+
+function shouldHideCurrentProgressionName(hideChordName) {
+  return hideChordName && progressionNameIsChordList(currentProgressionName);
+}
+
 function updateDisplay() {
   let hideChordName = dom.hideProgressionChordNames.checked;
   let hideNumerals = dom.hideProgressionChordNumerals.checked;
@@ -3440,7 +3454,7 @@ function updateDisplay() {
     dom.progressionDisplay.innerHTML = "";
   }
 
-  if (hideChordName) {
+  if (shouldHideCurrentProgressionName(hideChordName)) {
     dom.cadenceDisplay.textContent = " ?";
   } else {
     dom.cadenceDisplay.textContent = " " + currentProgressionName;
@@ -3460,6 +3474,7 @@ function updateDisplay() {
 }
 
 function refreshDisplayForThemeChange() {
+  if (!documentAvailable || typeof modeIsChords !== "function") return;
   updateDisplay();
 }
 

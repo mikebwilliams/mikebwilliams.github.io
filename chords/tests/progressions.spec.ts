@@ -21,6 +21,35 @@ test("Progression display preserves roman numeral capitalization", async ({
   await expect(progression).toHaveCSS("text-transform", "none");
 });
 
+test("Hide progression chord names keeps non-chord titles visible", async ({
+  page,
+}) => {
+  const songUrl = "irealbook://Named Song=Doe Jane=Medium Swing=C=n=[*AT44C7 Z";
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.click("label[for='tabModeProgressions']");
+  await page.selectOption("#selectProgression", "ii7-V7-IM7");
+  await page.evaluate(() => {
+    const checkbox = document.querySelector(
+      "#chkDisplayHideProgressionNames",
+    ) as HTMLInputElement;
+    checkbox.checked = true;
+    checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+
+  await expect(page.locator("#txtCadence")).toHaveText(" ?");
+
+  await page.click("label[for='tabModeSongs']");
+  await page.fill("#inputSongsUrl", songUrl);
+  await page.click("#btnSongsImport");
+
+  await expect(page.locator("#txtCadence")).toContainText("Named Song");
+  await expect(page.locator("#txtCadence")).not.toHaveText(" ?");
+});
+
 test("Progression custom and random fields only enable for their modes", async ({
   page,
 }) => {
