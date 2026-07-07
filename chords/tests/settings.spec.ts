@@ -1,6 +1,20 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 const TEST_URL = process.env.PLAYWRIGHT_TEST_URL || "http://localhost:8001/";
+
+async function openTrainingSetup(page: Page) {
+  const panel = page.locator("#panelTrainingSetup");
+  if ((await panel.getAttribute("open")) === null) {
+    await page.click("#panelTrainingSetup > summary");
+  }
+}
+
+async function openKeyboard(page: Page) {
+  const panel = page.locator("#panelKeyboard");
+  if ((await panel.getAttribute("open")) === null) {
+    await page.click("#panelKeyboard > summary");
+  }
+}
 
 test("Presets tab renders (and no console errors)", async ({ page }) => {
   const errors: string[] = [];
@@ -28,6 +42,107 @@ test("Presets tab renders (and no console errors)", async ({ page }) => {
   }
 });
 
+test("settings controls are split into independent sections", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+
+  await expect(page.locator("#panelTrainingSetup")).toBeVisible();
+  await expect(page.locator("#panelTrainingSetup")).not.toHaveAttribute(
+    "open",
+    "",
+  );
+  await expect(
+    page.getByRole("heading", { name: "Keys / Voicings" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Preferences" }),
+  ).toBeVisible();
+
+  await expect(page.locator("#panelOptionsPresets")).toBeHidden();
+  await openTrainingSetup(page);
+
+  await expect(page.locator("#panelOptionsPresets")).toBeVisible();
+  await expect(page.locator("#panelOptionsKeys")).toBeVisible();
+  await expect(page.locator("#panelOptionsDisplay")).toBeVisible();
+
+  await page.click("label[for='tabOptionsWorkouts']");
+  await expect(page.locator("#panelOptionsWorkouts")).toBeVisible();
+  await expect(page.locator("#panelOptionsKeys")).toBeVisible();
+  await expect(page.locator("#panelOptionsDisplay")).toBeVisible();
+
+  await page.click("label[for='tabOptionsVoicings']");
+  await expect(page.locator("#panelOptionsVoicings")).toBeVisible();
+  await expect(page.locator("#panelOptionsWorkouts")).toBeVisible();
+  await expect(page.locator("#panelOptionsDisplay")).toBeVisible();
+
+  await page.click("label[for='tabOptionsMidi']");
+  await expect(page.locator("#panelOptionsMidi")).toBeVisible();
+  await expect(page.locator("#panelOptionsVoicings")).toBeVisible();
+  await expect(page.locator("#panelOptionsWorkouts")).toBeVisible();
+});
+
+test("Presets and workouts summary and arrows track current selections", async ({
+  page,
+}) => {
+  const presetA = `Preset A ${Date.now()}`;
+  const presetB = `Preset B ${Date.now()}`;
+  const workoutA = `Workout A ${Date.now()}`;
+  const workoutB = `Workout B ${Date.now()}`;
+  const panel = page.locator("#panelTrainingSetup");
+  const summary = page.locator("#txtTrainingSetupSummary");
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await openTrainingSetup(page);
+
+  await expect(summary).toHaveText("Preset: None · Workout: None");
+
+  await page.fill("#inputSettingsPresetName", presetA);
+  await page.click("#btnSettingsSave");
+  await page.fill("#inputSettingsPresetName", presetB);
+  await page.click("#btnSettingsSave");
+
+  await expect(summary).toHaveText(`Preset: ${presetB} · Workout: None`);
+  await page.click("#panelTrainingSetup > summary .collapsibleTitle");
+  await expect(panel).not.toHaveAttribute("open", "");
+
+  await page.click("#btnSettingsPresetPrev");
+  await expect(page.locator("#selectSettingsPreset")).toHaveValue(presetA);
+  await expect(summary).toHaveText(`Preset: ${presetA} · Workout: None`);
+  await expect(panel).not.toHaveAttribute("open", "");
+  await page.click("#btnSettingsPresetNext");
+  await expect(page.locator("#selectSettingsPreset")).toHaveValue(presetB);
+  await expect(panel).not.toHaveAttribute("open", "");
+
+  await openTrainingSetup(page);
+  await page.click("label[for='tabOptionsWorkouts']");
+  await page.fill("#inputWorkoutName", workoutA);
+  await page.selectOption("#selectWorkoutPreset", presetA);
+  await page.click("#btnWorkoutAddEntry");
+  await page.click("#btnWorkoutSave");
+
+  await page.click("#btnWorkoutNew");
+  await page.fill("#inputWorkoutName", workoutB);
+  await page.selectOption("#selectWorkoutPreset", presetB);
+  await page.click("#btnWorkoutAddEntry");
+  await page.click("#btnWorkoutSave");
+
+  await expect(summary).toHaveText(`Preset: ${presetB} · Workout: ${workoutB}`);
+  await page.click("#panelTrainingSetup > summary .collapsibleTitle");
+  await expect(panel).not.toHaveAttribute("open", "");
+
+  await page.click("#btnWorkoutPrev");
+  await expect(page.locator("#selectWorkout")).toHaveValue(workoutA);
+  await expect(summary).toHaveText(`Preset: ${presetB} · Workout: ${workoutA}`);
+  await expect(panel).not.toHaveAttribute("open", "");
+  await page.click("#btnWorkoutNext");
+  await expect(page.locator("#selectWorkout")).toHaveValue(workoutB);
+  await expect(summary).toHaveText(`Preset: ${presetB} · Workout: ${workoutB}`);
+  await expect(panel).not.toHaveAttribute("open", "");
+});
+
 test("Overwrite button saves current settings to the selected preset", async ({
   page,
 }) => {
@@ -50,6 +165,7 @@ test("Overwrite button saves current settings to the selected preset", async ({
   await page.evaluate(() => localStorage.clear());
   await page.reload();
 
+  await openTrainingSetup(page);
   await selectTab("tabOptionsKeys");
   await page.selectOption("#selectFlow", "ascendingWholeSteps");
 
@@ -93,8 +209,20 @@ test("Metronome panel persists its open state and settings", async ({
   await page.evaluate(() => localStorage.clear());
   await page.reload();
 
+  await expect(page.locator("#panelKeyboard")).not.toHaveAttribute("open", "");
+  await expect(page.locator("#panelDailyStats")).not.toHaveAttribute(
+    "open",
+    "",
+  );
+  await expect(page.locator("#panelTrainingSetup")).not.toHaveAttribute(
+    "open",
+    "",
+  );
+
   await page.click("#panelMetronome > summary");
   await expect(page.locator("#panelMetronome")).toHaveAttribute("open", "");
+  await page.click("#panelDailyStats > summary");
+  await page.click("#panelTrainingSetup > summary");
 
   await page.fill("#inputMetronomeTempoNumber", "144");
   await page.locator("#inputMetronomeTempoNumber").blur();
@@ -115,6 +243,8 @@ test("Metronome panel persists its open state and settings", async ({
   await page.reload();
 
   await expect(page.locator("#panelMetronome")).toHaveAttribute("open", "");
+  await expect(page.locator("#panelDailyStats")).toHaveAttribute("open", "");
+  await expect(page.locator("#panelTrainingSetup")).toHaveAttribute("open", "");
   await expect(page.locator("#inputMetronomeTempoNumber")).toHaveValue("144");
   await expect(page.locator("#inputMetronomeBeatsPerMeasure")).toHaveValue("7");
   await expect(page.locator("#inputMetronomeXMeasures")).toHaveValue("3");
@@ -136,14 +266,15 @@ test("Collapsed metronome and stats summaries reflect current state", async ({
 
   await expect(metronomeSummary).toBeVisible();
   await expect(metronomeSummary).toHaveText("4/4 at 120 BPM");
-  await expect(statsSummary).toBeHidden();
+  await expect(statsSummary).toBeVisible();
+  await expect(statsSummary).toHaveText("Chords: 0 / 0");
 
   await page.click("#panelDailyStats > summary");
   await expect(statsSummary).toBeVisible();
   await expect(statsSummary).toHaveText("Chords: 0 / 0");
 
   await page.click("#panelMetronome > summary");
-  await expect(metronomeSummary).toBeHidden();
+  await expect(metronomeSummary).toBeVisible();
   await page.fill("#inputMetronomeTempoNumber", "144");
   await page.locator("#inputMetronomeTempoNumber").blur();
   await page.fill("#inputMetronomeBeatsPerMeasure", "7");
@@ -174,10 +305,10 @@ test("Collapsed daily stats summary reflects loaded workout goals", async ({
   await page.reload();
 
   const statsSummary = page.locator("#txtDailyStatsSummary");
-  await page.click("#panelDailyStats > summary");
   await expect(statsSummary).toBeVisible();
   await expect(statsSummary).toHaveText("Chords: 0 / 0");
 
+  await openTrainingSetup(page);
   await page.click("label[for='tabOptionsPresets']");
   await page.fill("#inputSettingsPresetName", presetName);
   await page.click("#btnSettingsSave");
@@ -263,6 +394,7 @@ test("Changing voicing mode updates chord answer and visible keyboard hints", as
         .sort((a, b) => a - b),
     );
 
+  await openKeyboard(page);
   await page.check("#chkDisplayHighlightKeys");
   await page.fill("#inputDisplayHighlightDelay", "0");
   await page.evaluate(() => highlightCorrectKeys());

@@ -278,18 +278,15 @@ function modeIsJazz() {
   return getSelectedMode() === "tabJazz";
 }
 
-function getSelectedOptionsTab() {
-  const sel = document.querySelector("input[name='options']:checked");
-  return sel ? sel.value : null;
-}
-
-function optionsIs(tabValue) {
-  return getSelectedOptionsTab() === tabValue;
-}
-
 function optionsChange() {
+  const selectedTabs = new Set(
+    Array.from(
+      document.querySelectorAll("input[data-options-tab]:checked"),
+    ).map((input) => input.value),
+  );
+
   Object.entries(dom.optionsPanels).forEach(([tabValue, panel]) => {
-    panel.style.display = optionsIs(tabValue) ? "block" : "none";
+    panel.style.display = selectedTabs.has(tabValue) ? "block" : "none";
   });
 }
 
@@ -394,6 +391,60 @@ function cycleChordToggle(config) {
   const state = getChordToggleState(ids);
   setChordCheckboxes(ids, state !== "allOn");
   syncSettingsStore();
+}
+
+function getSelectableOptionValues(select) {
+  if (!select || !select.options) return [];
+  return Array.from(select.options)
+    .filter((option) => !option.disabled && option.value)
+    .map((option) => option.value);
+}
+
+function updateSelectStepperButtons(select, prevButton, nextButton) {
+  const canStep =
+    !!select &&
+    !select.disabled &&
+    getSelectableOptionValues(select).length > 1;
+  [prevButton, nextButton].forEach((button) => {
+    if (button) button.disabled = !canStep;
+  });
+}
+
+function stepSelectValue(select, direction) {
+  const values = getSelectableOptionValues(select);
+  if (!select || !values.length) return;
+  const currentIndex = values.indexOf(select.value);
+  const startIndex =
+    currentIndex >= 0 ? currentIndex : direction > 0 ? -1 : values.length;
+  const nextIndex = (startIndex + direction + values.length) % values.length;
+  select.value = values[nextIndex];
+  select.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+function updateTrainingSetupSummary() {
+  const preset =
+    dom.settingsPresetSelect && dom.settingsPresetSelect.value
+      ? dom.settingsPresetSelect.value
+      : "None";
+  const workout =
+    workoutState.draftName ||
+    (dom.workoutSelect && dom.workoutSelect.value) ||
+    "None";
+
+  if (dom.trainingSetupSummary) {
+    dom.trainingSetupSummary.textContent = `Preset: ${preset} · Workout: ${workout}`;
+  }
+
+  updateSelectStepperButtons(
+    dom.settingsPresetSelect,
+    dom.settingsPresetPrevButton,
+    dom.settingsPresetNextButton,
+  );
+  updateSelectStepperButtons(
+    dom.workoutSelect,
+    dom.workoutPrevButton,
+    dom.workoutNextButton,
+  );
 }
 
 const modeSectionsByTab = {
@@ -663,7 +714,7 @@ document.querySelectorAll("input[name='mode']").forEach((input) => {
 });
 
 // Options tab listeners
-document.querySelectorAll("input[name='options']").forEach((input) => {
+document.querySelectorAll("input[data-options-tab]").forEach((input) => {
   input.addEventListener("change", optionsChange);
 });
 // Initialize options tab visibility
@@ -900,6 +951,7 @@ function refreshSettingsPresetOptions() {
     select.value = "";
   }
   refreshWorkoutPresetOptions();
+  updateTrainingSetupSummary();
 }
 
 function handleSettingsSave() {
@@ -913,6 +965,7 @@ function handleSettingsSave() {
   uiSettingsStore.savePreset(name);
   refreshSettingsPresetOptions();
   dom.settingsPresetSelect.value = name;
+  updateTrainingSetupSummary();
 }
 
 function handleSettingsLoad() {
@@ -930,6 +983,7 @@ function handleSettingsLoad() {
   syncProgressionParameterControls();
   refreshSettingsPresetOptions();
   dom.settingsPresetSelect.value = name;
+  updateTrainingSetupSummary();
 }
 
 function handleSettingsOverwrite() {
@@ -947,6 +1001,7 @@ function handleSettingsOverwrite() {
   if (dom.settingsPresetName) {
     dom.settingsPresetName.value = name;
   }
+  updateTrainingSetupSummary();
 }
 
 function handleSettingsDelete() {
@@ -960,6 +1015,7 @@ function handleSettingsDelete() {
   uiSettingsStore.deletePreset(name);
   refreshSettingsPresetOptions();
   dom.settingsPresetSelect.value = "";
+  updateTrainingSetupSummary();
 }
 
 function handleSettingsReset() {
@@ -971,6 +1027,7 @@ function handleSettingsReset() {
   dom.settingsPresetSelect.value = "";
   dom.settingsPresetName.value = "";
   dom.settingsDebugPanel.textContent = "";
+  updateTrainingSetupSummary();
 }
 
 function handleSettingsExport() {
@@ -1172,6 +1229,7 @@ function refreshWorkoutSelect(selectedName) {
     select.value = "";
   }
   select.disabled = !workouts.length;
+  updateTrainingSetupSummary();
 }
 
 function updateWorkoutControls() {
@@ -1256,6 +1314,7 @@ function renderWorkoutEditor() {
   }
   renderWorkoutEntries();
   updateWorkoutControls();
+  updateTrainingSetupSummary();
 }
 
 function setWorkoutStateFromRecord(record) {
@@ -1334,6 +1393,7 @@ function handleWorkoutSelectChange() {
     ) {
       uiWorkoutStore.clearLastSelection();
     }
+    updateTrainingSetupSummary();
     return;
   }
   if (!uiWorkoutStore || typeof uiWorkoutStore.getWorkout !== "function") {
@@ -1364,12 +1424,14 @@ function handleWorkoutSelectChange() {
   renderWorkoutEditor();
   refreshWorkoutSelect(record.name);
   dom.workoutSelect.value = record.name;
+  updateTrainingSetupSummary();
 }
 
 function handleWorkoutNameInput(event) {
   workoutState.draftName = event.target.value;
   workoutState.dirty = true;
   updateWorkoutControls();
+  updateTrainingSetupSummary();
 }
 
 function handleWorkoutNew() {
@@ -1385,6 +1447,7 @@ function handleWorkoutNew() {
   ) {
     uiWorkoutStore.clearLastSelection();
   }
+  updateTrainingSetupSummary();
 }
 
 function handleWorkoutSave() {
@@ -1447,6 +1510,7 @@ function handleWorkoutSave() {
         : 0;
     uiWorkoutStore.setLastSelection(name, active);
   }
+  updateTrainingSetupSummary();
 }
 
 function handleWorkoutDelete() {
@@ -1474,6 +1538,7 @@ function handleWorkoutDelete() {
   ) {
     uiWorkoutStore.clearLastSelection();
   }
+  updateTrainingSetupSummary();
 }
 
 function handleWorkoutAddEntry() {
@@ -1569,6 +1634,12 @@ function applyWorkoutEntry(index) {
     alert(`Preset "${presetName}" could not be loaded.`);
     return;
   }
+  if (
+    dom.settingsPresetSelect &&
+    getSelectableOptionValues(dom.settingsPresetSelect).includes(presetName)
+  ) {
+    dom.settingsPresetSelect.value = presetName;
+  }
   restoreThemeSelection(currentTheme);
   syncProgressionParameterControls();
   const presets = getPresetSnapshots();
@@ -1604,6 +1675,7 @@ function applyWorkoutEntry(index) {
   ) {
     uiWorkoutStore.setLastSelection(workoutState.originalName, index);
   }
+  updateTrainingSetupSummary();
 }
 
 function initWorkoutsPanel() {
@@ -1660,6 +1732,60 @@ if (
   typeof dom.workoutSelect.addEventListener === "function"
 ) {
   dom.workoutSelect.addEventListener("change", handleWorkoutSelectChange);
+}
+
+if (
+  dom.settingsPresetSelect &&
+  typeof dom.settingsPresetSelect.addEventListener === "function"
+) {
+  dom.settingsPresetSelect.addEventListener(
+    "change",
+    updateTrainingSetupSummary,
+  );
+}
+
+if (
+  dom.settingsPresetPrevButton &&
+  typeof dom.settingsPresetPrevButton.addEventListener === "function"
+) {
+  dom.settingsPresetPrevButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    stepSelectValue(dom.settingsPresetSelect, -1);
+  });
+}
+
+if (
+  dom.settingsPresetNextButton &&
+  typeof dom.settingsPresetNextButton.addEventListener === "function"
+) {
+  dom.settingsPresetNextButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    stepSelectValue(dom.settingsPresetSelect, 1);
+  });
+}
+
+if (
+  dom.workoutPrevButton &&
+  typeof dom.workoutPrevButton.addEventListener === "function"
+) {
+  dom.workoutPrevButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    stepSelectValue(dom.workoutSelect, -1);
+  });
+}
+
+if (
+  dom.workoutNextButton &&
+  typeof dom.workoutNextButton.addEventListener === "function"
+) {
+  dom.workoutNextButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    stepSelectValue(dom.workoutSelect, 1);
+  });
 }
 
 if (

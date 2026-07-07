@@ -1,6 +1,13 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 const TEST_URL = process.env.PLAYWRIGHT_TEST_URL || "http://localhost:8001/";
+
+async function openKeyboard(page: Page) {
+  const panel = page.locator("#panelKeyboard");
+  if ((await panel.getAttribute("open")) === null) {
+    await page.click("#panelKeyboard > summary");
+  }
+}
 
 test("Progression display preserves roman numeral capitalization", async ({
   page,
@@ -110,6 +117,7 @@ test("Mouse input clears selected keys and advances after a correct chord", asyn
   await page.selectOption("#selectFlow", "random");
   await page.selectOption("#selectFlowStart", "C");
   await page.click("label[for='tabModeProgressions']");
+  await openKeyboard(page);
 
   await expect
     .poll(() =>
@@ -198,6 +206,7 @@ test("Progression Type A/B accepts the highlighted Ab ii7 voicing", async ({
   await page.click("label[for='tabOptionsVoicings']");
   await page.click("label:has(#radVoicingUpperEither)");
   await page.click("label[for='tabModeProgressions']");
+  await openKeyboard(page);
   await page.check("#chkDisplayHighlightKeys");
   await page.fill("#inputDisplayHighlightDelay", "0");
   await page.evaluate(() => highlightCorrectKeys());
@@ -233,11 +242,13 @@ test("Progression Type A/B accepts Ab ii7 after advancing from Eb", async ({
   await page.selectOption("#selectProgression", "ii7-V7-IM7");
   await page.selectOption("#selectFlow", "circleOfFourths");
   await page.selectOption("#selectFlowStart", "Eb");
+  await openKeyboard(page);
   await page.check("#chkEarSendMidi");
 
   await page.click("label[for='tabOptionsVoicings']");
   await page.click("label:has(#radVoicingUpperEither)");
   await page.click("label[for='tabModeProgressions']");
+  await openKeyboard(page);
   await page.check("#chkDisplayHighlightKeys");
   await page.fill("#inputDisplayHighlightDelay", "0");
   await page.evaluate(() => highlightCorrectKeys());

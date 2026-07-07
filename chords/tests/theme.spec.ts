@@ -1,6 +1,13 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 const TEST_URL = process.env.PLAYWRIGHT_TEST_URL || "http://localhost:8001/";
+
+async function openTrainingSetup(page: Page) {
+  const panel = page.locator("#panelTrainingSetup");
+  if ((await panel.getAttribute("open")) === null) {
+    await page.click("#panelTrainingSetup > summary");
+  }
+}
 
 test("Real Book theme uses paper colors and handwritten chart typography", async ({
   page,
@@ -204,6 +211,7 @@ test("loading a workout entry preserves the current theme", async ({
   await page.evaluate(() => localStorage.clear());
   await page.reload();
 
+  await openTrainingSetup(page);
   await page.click("label[for='tabOptionsPresets']");
   await page.fill("#inputSettingsPresetName", presetName);
   await page.click("#btnSettingsSave");

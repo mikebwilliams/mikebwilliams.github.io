@@ -61,6 +61,8 @@ test("settings store saves and loads presets round-trip", () => {
   dom.flowStartSelect.value = "F#";
   dom.keyboardDetails.open = false;
   dom.metronomeDetails.open = true;
+  dom.dailyStatsDetails.open = true;
+  dom.trainingSetupDetails.open = true;
   setRadioGroupValue(dom.themeRadios, "darkClassical");
   dom.metronomeTempoInput.value = "144";
   dom.metronomeTempoNumberInput.value = "144";
@@ -117,6 +119,8 @@ test("settings store saves and loads presets round-trip", () => {
   dom.flowStartSelect.value = "C";
   dom.keyboardDetails.open = true;
   dom.metronomeDetails.open = false;
+  dom.dailyStatsDetails.open = false;
+  dom.trainingSetupDetails.open = false;
   setRadioGroupValue(dom.themeRadios, "lightBook");
   dom.metronomeTempoInput.value = "90";
   dom.metronomeTempoNumberInput.value = "90";
@@ -159,6 +163,8 @@ test("settings store saves and loads presets round-trip", () => {
   assert.strictEqual(dom.flowStartSelect.value, "F#");
   assert.strictEqual(dom.keyboardDetails.open, false);
   assert.strictEqual(dom.metronomeDetails.open, true);
+  assert.strictEqual(dom.dailyStatsDetails.open, true);
+  assert.strictEqual(dom.trainingSetupDetails.open, true);
   assert.strictEqual(
     dom.themeRadios.darkClassical.checked,
     true,

@@ -60,9 +60,12 @@
         </h2>
         <div id="txtProgression"></div>
         <div class="challengeActiveArea">
-          <details class="challengeCollapsible" id="panelKeyboard" open>
+          <details class="challengeCollapsible" id="panelKeyboard">
             <summary>
               <span class="collapsibleTitle">Keyboard</span>
+              <span class="collapsibleStatus" id="txtKeyboardSummary"
+                >Piano input</span
+              >
               <div class="summaryActions">
                 <button id="btnSkip" type="button">Skip</button>
                 <button id="btnPlayAnswer" type="button">Play Answer</button>
@@ -336,11 +339,7 @@
             </div>
           </details>
 
-          <details
-            class="challengeCollapsible statsPanel"
-            id="panelDailyStats"
-            open
-          >
+          <details class="challengeCollapsible statsPanel" id="panelDailyStats">
             <summary>
               <span class="collapsibleTitle">Daily Stats</span>
               <span class="collapsibleStatus" id="txtDailyStatsSummary"
@@ -735,963 +734,1075 @@
               </div>
             </div>
           </details>
+
+          <details
+            class="challengeCollapsible trainingSetupPanel"
+            id="panelTrainingSetup"
+          >
+            <summary>
+              <span class="collapsibleTitle">Presets & Workouts</span>
+              <span class="collapsibleStatus" id="txtTrainingSetupSummary"
+                >Preset: None · Workout: None</span
+              >
+              <span class="collapsibleSteppers">
+                <span class="summaryStepper" aria-label="Preset navigation">
+                  <button
+                    class="summaryStepButton"
+                    id="btnSettingsPresetPrev"
+                    type="button"
+                    aria-label="Previous preset"
+                    title="Previous preset"
+                  >
+                    &lt;
+                  </button>
+                  <span class="summaryStepperLabel">Preset</span>
+                  <button
+                    class="summaryStepButton"
+                    id="btnSettingsPresetNext"
+                    type="button"
+                    aria-label="Next preset"
+                    title="Next preset"
+                  >
+                    &gt;
+                  </button>
+                </span>
+                <span class="summaryStepper" aria-label="Workout navigation">
+                  <button
+                    class="summaryStepButton"
+                    id="btnWorkoutPrev"
+                    type="button"
+                    aria-label="Previous workout"
+                    title="Previous workout"
+                  >
+                    &lt;
+                  </button>
+                  <span class="summaryStepperLabel">Workout</span>
+                  <button
+                    class="summaryStepButton"
+                    id="btnWorkoutNext"
+                    type="button"
+                    aria-label="Next workout"
+                    title="Next workout"
+                  >
+                    &gt;
+                  </button>
+                </span>
+              </span>
+            </summary>
+            <div class="challengeCollapsibleBody">
+              <div class="tabs" id="tabsTrainingSetup">
+                <input
+                  type="radio"
+                  id="tabOptionsPresets"
+                  name="trainingSetupOptions"
+                  value="tabPresets"
+                  data-options-tab
+                  checked
+                />
+                <label for="tabOptionsPresets">Presets</label>
+
+                <input
+                  type="radio"
+                  id="tabOptionsWorkouts"
+                  name="trainingSetupOptions"
+                  value="tabWorkouts"
+                  data-options-tab
+                />
+                <label for="tabOptionsWorkouts">Workouts</label>
+              </div>
+
+              <div class="tabContent" id="panelOptionsPresets">
+                <div class="settingsRow settingsSelectRow">
+                  <label for="selectSettingsPreset">Presets:</label>
+                  <select id="selectSettingsPreset"></select>
+                  <div class="compactButtonGroup">
+                    <button id="btnSettingsLoad" type="button">Load</button>
+                    <button id="btnSettingsOverwrite" type="button">
+                      Overwrite
+                    </button>
+                    <button id="btnSettingsDelete" type="button">Delete</button>
+                  </div>
+                </div>
+                <div class="settingsRow">
+                  <label for="inputSettingsPresetName">Save As:</label>
+                  <input
+                    type="text"
+                    id="inputSettingsPresetName"
+                    placeholder="Preset name"
+                  />
+                  <button id="btnSettingsSave" type="button">New Preset</button>
+                </div>
+                <div class="settingsRow">
+                  <button id="btnSettingsReset" type="button">
+                    Reset to Defaults
+                  </button>
+                  <button id="btnSettingsExport" type="button">
+                    Show JSON
+                  </button>
+                </div>
+                <pre id="panelSettingsDebug" class="settingsDebugOutput"></pre>
+              </div>
+
+              <div class="tabContent" id="panelOptionsWorkouts">
+                <div class="workoutControls settingsSelectRow">
+                  <label for="selectWorkout">Workout:</label>
+                  <select id="selectWorkout"></select>
+                  <div class="compactButtonGroup">
+                    <button id="btnWorkoutNew" type="button">New</button>
+                    <button id="btnWorkoutSave" type="button">Save</button>
+                    <button id="btnWorkoutDelete" type="button">Delete</button>
+                  </div>
+                </div>
+                <div class="workoutNameRow">
+                  <label for="inputWorkoutName">Name:</label>
+                  <input id="inputWorkoutName" type="text" />
+                </div>
+                <div class="workoutEntriesHeader">
+                  <h5>Entries</h5>
+                </div>
+                <div id="panelWorkoutEntries" class="workoutEntries"></div>
+                <div class="workoutAddRow">
+                  <label for="selectWorkoutPreset">Preset:</label>
+                  <select id="selectWorkoutPreset"></select>
+                  <span class="workoutGoalLegend">Goal:</span>
+                  <label
+                    class="workoutGoalField"
+                    aria-label="Workout goal correct"
+                  >
+                    <span>Correct</span>
+                    <input
+                      id="inputWorkoutGoalCorrect"
+                      type="number"
+                      inputmode="numeric"
+                      min="0"
+                      max="999"
+                      value="0"
+                    />
+                  </label>
+                  <label
+                    class="workoutGoalField"
+                    aria-label="Workout goal total"
+                  >
+                    <span>Total</span>
+                    <input
+                      id="inputWorkoutGoalTotal"
+                      type="number"
+                      inputmode="numeric"
+                      min="0"
+                      max="999"
+                      value="0"
+                    />
+                  </label>
+                  <button id="btnWorkoutAddEntry" type="button">
+                    Add Entry
+                  </button>
+                </div>
+              </div>
+            </div>
+          </details>
         </div>
       </section>
 
-      <section class="surfaceCard optionsSection">
-        <h3 class="sectionTitle">Options</h3>
-        <div class="tabs" id="tabsOptions">
-          <input
-            type="radio"
-            id="tabOptionsKeys"
-            name="options"
-            value="tabKeys"
-            checked
-          />
-          <label for="tabOptionsKeys">Keys</label>
+      <div class="settingsRail">
+        <section class="surfaceCard settingsSection keyVoicingSection">
+          <h3 class="sectionTitle">Keys / Voicings</h3>
+          <div class="tabs" id="tabsKeyVoicings">
+            <input
+              type="radio"
+              id="tabOptionsKeys"
+              name="keyVoicingOptions"
+              value="tabKeys"
+              data-options-tab
+              checked
+            />
+            <label for="tabOptionsKeys">Keys</label>
 
-          <input
-            type="radio"
-            id="tabOptionsDisplay"
-            name="options"
-            value="tabDisplay"
-          />
-          <label for="tabOptionsDisplay">Display</label>
-
-          <input
-            type="radio"
-            id="tabOptionsVoicings"
-            name="options"
-            value="tabVoicings"
-          />
-          <label for="tabOptionsVoicings">Voicings</label>
-
-          <input
-            type="radio"
-            id="tabOptionsSpacedRep"
-            name="options"
-            value="tabSpacedRep"
-          />
-          <label for="tabOptionsSpacedRep">Spaced Repetition</label>
-
-          <input
-            type="radio"
-            id="tabOptionsPresets"
-            name="options"
-            value="tabPresets"
-          />
-          <label for="tabOptionsPresets">Presets</label>
-
-          <input
-            type="radio"
-            id="tabOptionsWorkouts"
-            name="options"
-            value="tabWorkouts"
-          />
-          <label for="tabOptionsWorkouts">Workouts</label>
-
-          <input
-            type="radio"
-            id="tabOptionsMidi"
-            name="options"
-            value="tabMidi"
-          />
-          <label for="tabOptionsMidi">MIDI</label>
-        </div>
-
-        <div class="tabContent" id="panelOptionsKeys">
-          <div id="panelFlowOptions">
-            <label for="selectFlow">Flow:</label>
-            <select id="selectFlow">
-              <option value="random">Random</option>
-              <option value="circleOfFourths">Circle of Fourths</option>
-              <option value="circleOfFifths">Circle of Fifths</option>
-              <option value="ascendingWholeSteps">Ascending Whole Steps</option>
-              <option value="descendingWholeSteps">
-                Descending Whole Steps
-              </option>
-              <option value="ascendingHalfSteps">Ascending Half Steps</option>
-              <option value="descendingHalfSteps">Descending Half Steps</option>
-              <option value="ascendingMinorThirds">
-                Ascending Minor Thirds
-              </option>
-              <option value="descendingMinorThirds">
-                Descending Minor Thirds
-              </option>
-            </select>
-            <label for="selectFlowStart">Starting Key:</label>
-            <select id="selectFlowStart"></select>
-            <button id="btnFlowReset" type="button">Reset Flow</button>
+            <input
+              type="radio"
+              id="tabOptionsVoicings"
+              name="keyVoicingOptions"
+              value="tabVoicings"
+              data-options-tab
+            />
+            <label for="tabOptionsVoicings">Voicings</label>
           </div>
-          <hr />
-          <br />
-          <div id="panelKeyPresets">
-            <button id="btnKeysNormal">Normal</button>
-            <button id="btnKeysWhite">White</button>
-            <button id="btnKeysBlack">Black</button>
-            <button id="btnKeysSharps">Sharps</button>
-            <button id="btnKeysFlats">Flats</button>
-            <button id="btnKeysNone">None</button>
-            <button id="btnKeysAll">All</button>
+
+          <div class="tabContent" id="panelOptionsKeys">
+            <div id="panelFlowOptions">
+              <label for="selectFlow">Flow:</label>
+              <select id="selectFlow">
+                <option value="random">Random</option>
+                <option value="circleOfFourths">Circle of Fourths</option>
+                <option value="circleOfFifths">Circle of Fifths</option>
+                <option value="ascendingWholeSteps">
+                  Ascending Whole Steps
+                </option>
+                <option value="descendingWholeSteps">
+                  Descending Whole Steps
+                </option>
+                <option value="ascendingHalfSteps">Ascending Half Steps</option>
+                <option value="descendingHalfSteps">
+                  Descending Half Steps
+                </option>
+                <option value="ascendingMinorThirds">
+                  Ascending Minor Thirds
+                </option>
+                <option value="descendingMinorThirds">
+                  Descending Minor Thirds
+                </option>
+              </select>
+              <label for="selectFlowStart">Starting Key:</label>
+              <select id="selectFlowStart"></select>
+              <button id="btnFlowReset" type="button">Reset Flow</button>
+            </div>
+            <hr />
+            <br />
+            <div id="panelKeyPresets">
+              <button id="btnKeysNormal">Normal</button>
+              <button id="btnKeysWhite">White</button>
+              <button id="btnKeysBlack">Black</button>
+              <button id="btnKeysSharps">Sharps</button>
+              <button id="btnKeysFlats">Flats</button>
+              <button id="btnKeysNone">None</button>
+              <button id="btnKeysAll">All</button>
+            </div>
+            <div id="panelKeyChecklist">
+              <table>
+                <tr>
+                  <th>Flats</th>
+                  <th>White</th>
+                  <th>Sharps</th>
+                </tr>
+                <tr>
+                  <td>
+                    <label><input type="checkbox" id="Cb" /> C♭</label>
+                  </td>
+                  <td>
+                    <label><input type="checkbox" id="C" checked /> C</label>
+                  </td>
+                  <td>
+                    <label><input type="checkbox" id="C#" checked /> C#</label>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <label><input type="checkbox" id="Db" checked /> D♭</label>
+                  </td>
+                  <td>
+                    <label><input type="checkbox" id="D" checked /> D</label>
+                  </td>
+                  <td>
+                    <label><input type="checkbox" id="D#" checked /> D#</label>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <label><input type="checkbox" id="Eb" checked /> E♭</label>
+                  </td>
+                  <td>
+                    <label><input type="checkbox" id="E" checked /> E</label>
+                  </td>
+                  <td>
+                    <label><input type="checkbox" id="E#" /> E#</label>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <label><input type="checkbox" id="Fb" /> F♭</label>
+                  </td>
+                  <td>
+                    <label><input type="checkbox" id="F" checked /> F</label>
+                  </td>
+                  <td>
+                    <label><input type="checkbox" id="F#" checked /> F#</label>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <label><input type="checkbox" id="Gb" checked /> G♭</label>
+                  </td>
+                  <td>
+                    <label><input type="checkbox" id="G" checked /> G</label>
+                  </td>
+                  <td>
+                    <label><input type="checkbox" id="G#" checked /> G#</label>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <label><input type="checkbox" id="Ab" checked /> A♭</label>
+                  </td>
+                  <td>
+                    <label><input type="checkbox" id="A" checked /> A</label>
+                  </td>
+                  <td>
+                    <label><input type="checkbox" id="A#" checked /> A#</label>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <label><input type="checkbox" id="Bb" checked /> B♭</label>
+                  </td>
+                  <td>
+                    <label><input type="checkbox" id="B" checked /> B</label>
+                  </td>
+                  <td>
+                    <label><input type="checkbox" id="B#" /> B#</label>
+                  </td>
+                </tr>
+              </table>
+            </div>
           </div>
-          <div id="panelKeyChecklist">
+
+          <div class="tabContent" id="panelOptionsVoicings">
             <table>
               <tr>
-                <th>Flats</th>
-                <th>White</th>
-                <th>Sharps</th>
+                <th>Category</th>
+                <th>Options</th>
               </tr>
               <tr>
+                <td>Normal</td>
                 <td>
-                  <label><input type="checkbox" id="Cb" /> C♭</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="C" checked /> C</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="C#" checked /> C#</label>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <label><input type="checkbox" id="Db" checked /> D♭</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="D" checked /> D</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="D#" checked /> D#</label>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <label><input type="checkbox" id="Eb" checked /> E♭</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="E" checked /> E</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="E#" /> E#</label>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <label><input type="checkbox" id="Fb" /> F♭</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="F" checked /> F</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="F#" checked /> F#</label>
+                  <label
+                    ><input
+                      type="radio"
+                      name="voicingMode"
+                      id="radVoicingDefault"
+                      value="default"
+                      checked
+                    />
+                    As Written</label
+                  >
+                  <label
+                    ><input
+                      type="radio"
+                      name="voicingMode"
+                      id="radVoicingRoot"
+                      value="normal:root"
+                    />
+                    Root</label
+                  >
+                  <label
+                    ><input
+                      type="radio"
+                      name="voicingMode"
+                      id="radVoicingTriad"
+                      value="normal:triad"
+                    />
+                    Triad</label
+                  >
+                  <label
+                    ><input
+                      type="radio"
+                      name="voicingMode"
+                      id="radVoicingNoExtensions"
+                      value="normal:noExtensions"
+                    />
+                    No Extensions</label
+                  >
                 </td>
               </tr>
               <tr>
+                <td>Shell</td>
                 <td>
-                  <label><input type="checkbox" id="Gb" checked /> G♭</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="G" checked /> G</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="G#" checked /> G#</label>
+                  <label
+                    ><input
+                      type="radio"
+                      name="voicingMode"
+                      id="radVoicingShellR37"
+                      value="shell:r37"
+                    />
+                    R-3-7</label
+                  >
+                  <label
+                    ><input
+                      type="radio"
+                      name="voicingMode"
+                      id="radVoicingShellR3Or7"
+                      value="shell:r3or7"
+                    />
+                    R-(3 or 7)</label
+                  >
+                  <label
+                    ><input
+                      type="radio"
+                      name="voicingMode"
+                      id="radVoicingShell37"
+                      value="shell:37"
+                    />
+                    3-7 (rootless)</label
+                  >
                 </td>
               </tr>
               <tr>
+                <td>Type A/B</td>
                 <td>
-                  <label><input type="checkbox" id="Ab" checked /> A♭</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="A" checked /> A</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="A#" checked /> A#</label>
+                  <label
+                    ><input
+                      type="radio"
+                      name="voicingMode"
+                      id="radVoicingUpperTypeA"
+                      value="upper:typeA"
+                    />
+                    Type A (3-7-9-5)</label
+                  >
+                  <label
+                    ><input
+                      type="radio"
+                      name="voicingMode"
+                      id="radVoicingUpperTypeB"
+                      value="upper:typeB"
+                    />
+                    Type B (7-3-5-9)</label
+                  >
+                  <label
+                    ><input
+                      type="radio"
+                      name="voicingMode"
+                      id="radVoicingUpperEither"
+                      value="upper:either"
+                    />
+                    Either (A or B)</label
+                  >
                 </td>
               </tr>
               <tr>
+                <td>One-Handed Type A/B</td>
                 <td>
-                  <label><input type="checkbox" id="Bb" checked /> B♭</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="B" checked /> B</label>
-                </td>
-                <td>
-                  <label><input type="checkbox" id="B#" /> B#</label>
+                  <label
+                    ><input
+                      type="radio"
+                      name="voicingMode"
+                      id="radVoicingUpperOneTypeA"
+                      value="upper1:typeA"
+                    />
+                    Type A (3-7-9)</label
+                  >
+                  <label
+                    ><input
+                      type="radio"
+                      name="voicingMode"
+                      id="radVoicingUpperOneTypeB"
+                      value="upper1:typeB"
+                    />
+                    Type B (7-3-5)</label
+                  >
+                  <label
+                    ><input
+                      type="radio"
+                      name="voicingMode"
+                      id="radVoicingUpperOneEither"
+                      value="upper1:either"
+                    />
+                    Either (A or B)</label
+                  >
                 </td>
               </tr>
             </table>
           </div>
-        </div>
+        </section>
 
-        <div class="tabContent" id="panelOptionsDisplay">
-          <label
-            ><input type="checkbox" id="chkDisplayHideProgressionNames" />Hide
-            Chord Prompt</label
-          ><br />
-          <label
-            ><input
-              type="checkbox"
-              id="chkDisplayHideProgressionNumerals"
-            />Hide Chord Symbols</label
-          ><br />
-          <label
-            ><input type="checkbox" id="chkDisplayRandomizeSpellings" checked />
-            Use Alternate Spellings (Cmaj7 => C△7)</label
-          ><br />
-        </div>
-
-        <div class="tabContent" id="panelOptionsSpacedRep">
-          <label
-            ><input type="checkbox" id="chkSpacedRepEnable" checked /> Enable
-            Spaced Repetition for Failed Items</label
-          ><br />
-          <label
-            >Mastery Threshold:
+        <section class="surfaceCard settingsSection preferencesSection">
+          <h3 class="sectionTitle">Preferences</h3>
+          <div class="tabs" id="tabsPreferences">
             <input
-              type="number"
-              id="inputSpacedRepThreshold"
-              value="3"
-              min="1" /></label
-          ><br />
-          <div id="panelSpacedRepListContainer">
-            <h4>Failed Items</h4>
-            <div id="panelSpacedRepList"></div>
-            <button id="btnSpacedRepClear">Clear List</button>
-          </div>
-        </div>
-
-        <div class="tabContent" id="panelOptionsVoicings">
-          <table>
-            <tr>
-              <th>Category</th>
-              <th>Options</th>
-            </tr>
-            <tr>
-              <td>Normal</td>
-              <td>
-                <label
-                  ><input
-                    type="radio"
-                    name="voicingMode"
-                    id="radVoicingDefault"
-                    value="default"
-                    checked
-                  />
-                  As Written</label
-                >
-                <label
-                  ><input
-                    type="radio"
-                    name="voicingMode"
-                    id="radVoicingRoot"
-                    value="normal:root"
-                  />
-                  Root</label
-                >
-                <label
-                  ><input
-                    type="radio"
-                    name="voicingMode"
-                    id="radVoicingTriad"
-                    value="normal:triad"
-                  />
-                  Triad</label
-                >
-                <label
-                  ><input
-                    type="radio"
-                    name="voicingMode"
-                    id="radVoicingNoExtensions"
-                    value="normal:noExtensions"
-                  />
-                  No Extensions</label
-                >
-              </td>
-            </tr>
-            <tr>
-              <td>Shell</td>
-              <td>
-                <label
-                  ><input
-                    type="radio"
-                    name="voicingMode"
-                    id="radVoicingShellR37"
-                    value="shell:r37"
-                  />
-                  R-3-7</label
-                >
-                <label
-                  ><input
-                    type="radio"
-                    name="voicingMode"
-                    id="radVoicingShellR3Or7"
-                    value="shell:r3or7"
-                  />
-                  R-(3 or 7)</label
-                >
-                <label
-                  ><input
-                    type="radio"
-                    name="voicingMode"
-                    id="radVoicingShell37"
-                    value="shell:37"
-                  />
-                  3-7 (rootless)</label
-                >
-              </td>
-            </tr>
-            <tr>
-              <td>Type A/B</td>
-              <td>
-                <label
-                  ><input
-                    type="radio"
-                    name="voicingMode"
-                    id="radVoicingUpperTypeA"
-                    value="upper:typeA"
-                  />
-                  Type A (3-7-9-5)</label
-                >
-                <label
-                  ><input
-                    type="radio"
-                    name="voicingMode"
-                    id="radVoicingUpperTypeB"
-                    value="upper:typeB"
-                  />
-                  Type B (7-3-5-9)</label
-                >
-                <label
-                  ><input
-                    type="radio"
-                    name="voicingMode"
-                    id="radVoicingUpperEither"
-                    value="upper:either"
-                  />
-                  Either (A or B)</label
-                >
-              </td>
-            </tr>
-            <tr>
-              <td>One-Handed Type A/B</td>
-              <td>
-                <label
-                  ><input
-                    type="radio"
-                    name="voicingMode"
-                    id="radVoicingUpperOneTypeA"
-                    value="upper1:typeA"
-                  />
-                  Type A (3-7-9)</label
-                >
-                <label
-                  ><input
-                    type="radio"
-                    name="voicingMode"
-                    id="radVoicingUpperOneTypeB"
-                    value="upper1:typeB"
-                  />
-                  Type B (7-3-5)</label
-                >
-                <label
-                  ><input
-                    type="radio"
-                    name="voicingMode"
-                    id="radVoicingUpperOneEither"
-                    value="upper1:either"
-                  />
-                  Either (A or B)</label
-                >
-              </td>
-            </tr>
-          </table>
-        </div>
-
-        <div class="tabContent" id="panelOptionsPresets">
-          <div class="settingsRow">
-            <label for="selectSettingsPreset">Presets:</label>
-            <select id="selectSettingsPreset"></select>
-            <button id="btnSettingsLoad" type="button">Load</button>
-            <button id="btnSettingsOverwrite" type="button">
-              Overwrite Selected
-            </button>
-            <button id="btnSettingsDelete" type="button">Delete</button>
-          </div>
-          <div class="settingsRow">
-            <label for="inputSettingsPresetName">Save As:</label>
-            <input
-              type="text"
-              id="inputSettingsPresetName"
-              placeholder="Preset name"
+              type="radio"
+              id="tabOptionsDisplay"
+              name="preferencesOptions"
+              value="tabDisplay"
+              data-options-tab
+              checked
             />
-            <button id="btnSettingsSave" type="button">New Preset</button>
-          </div>
-          <div class="settingsRow">
-            <button id="btnSettingsReset" type="button">
-              Reset to Defaults
-            </button>
-            <button id="btnSettingsExport" type="button">Show JSON</button>
-          </div>
-          <pre id="panelSettingsDebug" class="settingsDebugOutput"></pre>
-        </div>
+            <label for="tabOptionsDisplay">Display</label>
 
-        <div class="tabContent" id="panelOptionsWorkouts">
-          <div class="workoutControls">
-            <label for="selectWorkout">Workout:</label>
-            <select id="selectWorkout"></select>
-            <button id="btnWorkoutNew" type="button">New</button>
-            <button id="btnWorkoutSave" type="button">Save</button>
-            <button id="btnWorkoutDelete" type="button">Delete</button>
+            <input
+              type="radio"
+              id="tabOptionsSpacedRep"
+              name="preferencesOptions"
+              value="tabSpacedRep"
+              data-options-tab
+            />
+            <label for="tabOptionsSpacedRep">Spaced Repetition</label>
+
+            <input
+              type="radio"
+              id="tabOptionsMidi"
+              name="preferencesOptions"
+              value="tabMidi"
+              data-options-tab
+            />
+            <label for="tabOptionsMidi">MIDI</label>
           </div>
-          <div class="workoutNameRow">
-            <label for="inputWorkoutName">Name:</label>
-            <input id="inputWorkoutName" type="text" />
-          </div>
-          <div class="workoutEntriesHeader">
-            <h5>Entries</h5>
-          </div>
-          <div id="panelWorkoutEntries" class="workoutEntries"></div>
-          <div class="workoutAddRow">
-            <label for="selectWorkoutPreset">Preset:</label>
-            <select id="selectWorkoutPreset"></select>
-            <span class="workoutGoalLegend">Goal:</span>
-            <label class="workoutGoalField" aria-label="Workout goal correct">
-              <span>Correct</span>
-              <input
-                id="inputWorkoutGoalCorrect"
-                type="number"
-                inputmode="numeric"
-                min="0"
-                max="999"
-                value="0"
+
+          <div class="tabContent" id="panelOptionsDisplay">
+            <label
+              ><input type="checkbox" id="chkDisplayHideProgressionNames" />Hide
+              Chord Prompt</label
+            ><br />
+            <label
+              ><input
+                type="checkbox"
+                id="chkDisplayHideProgressionNumerals"
+              />Hide Chord Symbols</label
+            ><br />
+            <label
+              ><input
+                type="checkbox"
+                id="chkDisplayRandomizeSpellings"
+                checked
               />
-            </label>
-            <label class="workoutGoalField" aria-label="Workout goal total">
-              <span>Total</span>
+              Use Alternate Spellings (Cmaj7 => C△7)</label
+            ><br />
+          </div>
+
+          <div class="tabContent" id="panelOptionsSpacedRep">
+            <label
+              ><input type="checkbox" id="chkSpacedRepEnable" checked /> Enable
+              Spaced Repetition for Failed Items</label
+            ><br />
+            <label
+              >Mastery Threshold:
               <input
-                id="inputWorkoutGoalTotal"
                 type="number"
-                inputmode="numeric"
-                min="0"
-                max="999"
-                value="0"
-              />
-            </label>
-            <button id="btnWorkoutAddEntry" type="button">Add Entry</button>
-          </div>
-        </div>
-
-        <div class="tabContent" id="panelOptionsMidi">
-          <div class="midiStatusRow">
-            <label id="labelMidiStatus"
-              >MIDI Status: <span id="txtMidiStatus">Not Connected</span></label
-            >
-            <button id="btnMidiRefresh" type="button">Refresh Devices</button>
-          </div>
-          <table id="tableMidiInputs"></table>
-          <table id="tableMidiOutputs"></table>
-        </div>
-      </section>
-
-      <section class="surfaceCard modeSection">
-        <h3 class="sectionTitle">Mode</h3>
-        <div class="tabs">
-          <input
-            type="radio"
-            id="tabModeChords"
-            name="mode"
-            value="tabChords"
-            checked
-          />
-          <label for="tabModeChords">Chords</label>
-
-          <input
-            type="radio"
-            id="tabModeProgressions"
-            name="mode"
-            value="tabProgressions"
-          />
-          <label for="tabModeProgressions">Progressions</label>
-
-          <input type="radio" id="tabModeSongs" name="mode" value="tabSongs" />
-          <label for="tabModeSongs">Songs</label>
-
-          <input
-            type="radio"
-            id="tabModeScales"
-            name="mode"
-            value="tabScales"
-          />
-          <label for="tabModeScales">Scales</label>
-
-          <input
-            type="radio"
-            id="tabModeDegrees"
-            name="mode"
-            value="tabDegrees"
-          />
-          <label for="tabModeDegrees">Degrees</label>
-
-          <input type="radio" id="tabModeJazz" name="mode" value="tabJazz" />
-          <label for="tabModeJazz">Jazz Bricks</label>
-        </div>
-
-        <div class="tabContent" id="panelModeChords">
-          <table id="tableChordSelections" aria-label="Chord type selections">
-            <thead>
-              <tr>
-                <th scope="col">Group</th>
-                <th scope="col">Mode</th>
-                <th scope="col">Major</th>
-                <th scope="col">Minor</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="chordTypeModeRow">
-                <th scope="row">All</th>
-                <td class="chordTypeStateCell">
-                  <button
-                    class="chordTypeStateButton"
-                    id="btnChordsAll"
-                    type="button"
-                  >
-                    &#10003;
-                  </button>
-                </td>
-                <td class="chordTypeStateCell">
-                  <button
-                    class="chordTypeStateButton"
-                    id="btnChordsMajor"
-                    type="button"
-                  >
-                    &#10003;
-                  </button>
-                </td>
-                <td class="chordTypeStateCell">
-                  <button
-                    class="chordTypeStateButton"
-                    id="btnChordsMinor"
-                    type="button"
-                  >
-                    &#10003;
-                  </button>
-                </td>
-              </tr>
-              <tr>
-                <th scope="rowgroup" rowspan="3">Triads</th>
-                <td class="chordTypeStateCell" rowspan="3">
-                  <button
-                    class="chordTypeStateButton"
-                    id="btnChordsTriads"
-                    type="button"
-                  >
-                    &#10003;
-                  </button>
-                </td>
-                <td>
-                  <label class="chordTypeOption">
-                    <input type="checkbox" id="chkChordMajor" checked />
-                    <span>Major</span>
-                  </label>
-                </td>
-                <td>
-                  <label class="chordTypeOption">
-                    <input type="checkbox" id="chkChordMinor" checked />
-                    <span>Minor</span>
-                  </label>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <label class="chordTypeOption">
-                    <input type="checkbox" id="chkChordAugmented" checked />
-                    <span>Augmented</span>
-                  </label>
-                </td>
-                <td>
-                  <label class="chordTypeOption">
-                    <input type="checkbox" id="chkChordDiminished" checked />
-                    <span>Diminished</span>
-                  </label>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <label class="chordTypeOption">
-                    <input
-                      type="checkbox"
-                      id="chkChordSuspendedFourth"
-                      checked
-                    />
-                    <span>Suspended 4th</span>
-                  </label>
-                </td>
-                <td>
-                  <label class="chordTypeOption">
-                    <input
-                      type="checkbox"
-                      id="chkChordSuspendedSecond"
-                      checked
-                    />
-                    <span>Suspended 2nd</span>
-                  </label>
-                </td>
-              </tr>
-              <tr>
-                <th scope="row">Sixths</th>
-                <td class="chordTypeStateCell">
-                  <button
-                    class="chordTypeStateButton"
-                    id="btnChordsSixths"
-                    type="button"
-                  >
-                    &#10003;
-                  </button>
-                </td>
-                <td>
-                  <label class="chordTypeOption">
-                    <input type="checkbox" id="chkChordSixth" checked />
-                    <span>6th</span>
-                  </label>
-                </td>
-                <td>
-                  <label class="chordTypeOption">
-                    <input type="checkbox" id="chkChordMinorSixth" checked />
-                    <span>Minor 6th</span>
-                  </label>
-                </td>
-              </tr>
-              <tr>
-                <th scope="rowgroup" rowspan="4">Sevenths</th>
-                <td class="chordTypeStateCell" rowspan="4">
-                  <button
-                    class="chordTypeStateButton"
-                    id="btnChordsSevenths"
-                    type="button"
-                  >
-                    &#10003;
-                  </button>
-                </td>
-                <td>
-                  <label class="chordTypeOption">
-                    <input type="checkbox" id="chkChordSeventh" checked />
-                    <span>7th</span>
-                  </label>
-                </td>
-                <td>
-                  <label class="chordTypeOption">
-                    <input type="checkbox" id="chkChordMinorSeventh" checked />
-                    <span>Minor 7th</span>
-                  </label>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <label class="chordTypeOption">
-                    <input type="checkbox" id="chkChordMajorSeventh" checked />
-                    <span>Major 7th</span>
-                  </label>
-                </td>
-                <td>
-                  <label class="chordTypeOption">
-                    <input
-                      type="checkbox"
-                      id="chkChordMinorMajorSeventh"
-                      checked
-                    />
-                    <span>Minor Major 7th</span>
-                  </label>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <label class="chordTypeOption">
-                    <input
-                      type="checkbox"
-                      id="chkChordAugmentedSeventh"
-                      checked
-                    />
-                    <span>Augmented 7th</span>
-                  </label>
-                </td>
-                <td>
-                  <label class="chordTypeOption">
-                    <input
-                      type="checkbox"
-                      id="chkChordHalfDiminishedSeventh"
-                      checked
-                    />
-                    <span>Half-Diminished 7th</span>
-                  </label>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <label class="chordTypeOption">
-                    <input
-                      type="checkbox"
-                      id="chkChordAugmentedMajorSeventh"
-                      checked
-                    />
-                    <span>Augmented Major 7th</span>
-                  </label>
-                </td>
-                <td>
-                  <label class="chordTypeOption">
-                    <input
-                      type="checkbox"
-                      id="chkChordDiminishedSeventh"
-                      checked
-                    />
-                    <span>Diminished 7th</span>
-                  </label>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="tabContent" id="panelModeProgressions">
-          <br />
-          <label
-            >Progression:
-            <select id="selectProgression">
-              <option value="I-IV-V">I-IV-V</option>
-              <option value="ii-V-I">ii-V-I</option>
-              <option value="ii7-V7-IM7">ii7-V7-IM7</option>
-              <option value="I-V-vi-IV">I-V-vi-IV</option>
-              <option value="I-vi-ii-V">I-vi-ii-V</option>
-              <option value="vi-IV-I-V">vi-IV-I-V</option>
-              <option value="I-IV-iii-vi-ii-V-I">Jazzy Improv</option>
-              <option value="I-ii-iii-IV-V-vi-viio-I">
-                Ascending Major Key
-              </option>
-              <option value="I-viio-vi-V-IV-iii-ii-I">
-                Descending Major Key
-              </option>
-              <option value="i-ii-bIII-iv-v-bVI-bVII-i">
-                Ascending Minor Key
-              </option>
-              <option value="i-bVII-bVI-v-iv-bIII-ii-i">
-                Descending Minor Key
-              </option>
-              <option value="I-V-vi-iii-IV-I-IV-V">
-                I-V-vi-iii-IV-I-IV-V (Pachabel)
-              </option>
-              <option value="I-vi-IV-V">I-vi-IV-V (Doo-Wop)</option>
-              <option value="I-III-IV-vi">I-III-IV-vi (Lawsuits)</option>
-              <option value="custom">Custom</option>
-              <option value="random">Random</option>
-            </select>
-          </label>
-          <br />
-          <label
-            >Custom:
-            <input
-              type="text"
-              id="inputProgressionCustom"
-              value="I-II-iii-IV-V-vi-viio-I"
-              disabled
-            />
-          </label>
-          <br />
-          <label
-            >Random Count:
-            <input
-              type="number"
-              id="inputProgressionRandomCount"
-              min="1"
-              max="10"
-              value="5"
-              disabled
-            />
-          </label>
-
-          <div id="panelModeDegrees">
-            <p class="intervalTitle">Random Intervals</p>
-            <div class="intervalKeyboard">
-              <div class="intervalRow intervalRow--upper">
-                <label class="intervalKey intervalKey--black">
-                  <input type="checkbox" id="BII" />
-                  <span>♭II</span>
-                </label>
-                <label class="intervalKey intervalKey--black">
-                  <input type="checkbox" id="BIII" />
-                  <span>♭III</span>
-                </label>
-                <label class="intervalKey intervalKey--black">
-                  <input type="checkbox" id="BV" />
-                  <span>♭V</span>
-                </label>
-                <label class="intervalKey intervalKey--black">
-                  <input type="checkbox" id="BVI" />
-                  <span>♭VI</span>
-                </label>
-                <label class="intervalKey intervalKey--black">
-                  <input type="checkbox" id="BVII" />
-                  <span>♭VII</span>
-                </label>
-              </div>
-              <div class="intervalRow intervalRow--lower">
-                <label class="intervalKey intervalKey--white">
-                  <input type="checkbox" id="I" checked />
-                  <span>I</span>
-                </label>
-                <label class="intervalKey intervalKey--white">
-                  <input type="checkbox" id="II" checked />
-                  <span>II</span>
-                </label>
-                <label class="intervalKey intervalKey--white">
-                  <input type="checkbox" id="III" checked />
-                  <span>III</span>
-                </label>
-                <label class="intervalKey intervalKey--white">
-                  <input type="checkbox" id="IV" checked />
-                  <span>IV</span>
-                </label>
-                <label class="intervalKey intervalKey--white">
-                  <input type="checkbox" id="V" checked />
-                  <span>V</span>
-                </label>
-                <label class="intervalKey intervalKey--white">
-                  <input type="checkbox" id="VI" checked />
-                  <span>VI</span>
-                </label>
-                <label class="intervalKey intervalKey--white">
-                  <input type="checkbox" id="VII" checked />
-                  <span>VII</span>
-                </label>
-                <label class="intervalKey intervalKey--white">
-                  <input type="checkbox" id="VIII" checked />
-                  <span>VIII</span>
-                </label>
-              </div>
+                id="inputSpacedRepThreshold"
+                value="3"
+                min="1" /></label
+            ><br />
+            <div id="panelSpacedRepListContainer">
+              <h4>Failed Items</h4>
+              <div id="panelSpacedRepList"></div>
+              <button id="btnSpacedRepClear">Clear List</button>
             </div>
           </div>
-        </div>
 
-        <div class="tabContent" id="panelModeSongs">
-          <label class="songsFieldLabel" for="selectSong">Saved Songs</label>
-          <div class="songsSavedRow">
-            <select id="selectSong"></select>
+          <div class="tabContent" id="panelOptionsMidi">
+            <div class="midiStatusRow">
+              <label id="labelMidiStatus"
+                >MIDI Status:
+                <span id="txtMidiStatus">Not Connected</span></label
+              >
+              <button id="btnMidiRefresh" type="button">Refresh Devices</button>
+            </div>
+            <table id="tableMidiInputs"></table>
+            <table id="tableMidiOutputs"></table>
+          </div>
+        </section>
+
+        <section class="surfaceCard modeSection">
+          <h3 class="sectionTitle">Mode</h3>
+          <div class="tabs">
+            <input
+              type="radio"
+              id="tabModeChords"
+              name="mode"
+              value="tabChords"
+              checked
+            />
+            <label for="tabModeChords">Chords</label>
+
+            <input
+              type="radio"
+              id="tabModeProgressions"
+              name="mode"
+              value="tabProgressions"
+            />
+            <label for="tabModeProgressions">Progressions</label>
+
+            <input
+              type="radio"
+              id="tabModeSongs"
+              name="mode"
+              value="tabSongs"
+            />
+            <label for="tabModeSongs">Songs</label>
+
+            <input
+              type="radio"
+              id="tabModeScales"
+              name="mode"
+              value="tabScales"
+            />
+            <label for="tabModeScales">Scales</label>
+
+            <input
+              type="radio"
+              id="tabModeDegrees"
+              name="mode"
+              value="tabDegrees"
+            />
+            <label for="tabModeDegrees">Degrees</label>
+
+            <input type="radio" id="tabModeJazz" name="mode" value="tabJazz" />
+            <label for="tabModeJazz">Jazz Bricks</label>
+          </div>
+
+          <div class="tabContent" id="panelModeChords">
+            <table id="tableChordSelections" aria-label="Chord type selections">
+              <thead>
+                <tr>
+                  <th scope="col">Group</th>
+                  <th scope="col">Mode</th>
+                  <th scope="col">Major</th>
+                  <th scope="col">Minor</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="chordTypeModeRow">
+                  <th scope="row">All</th>
+                  <td class="chordTypeStateCell">
+                    <button
+                      class="chordTypeStateButton"
+                      id="btnChordsAll"
+                      type="button"
+                    >
+                      &#10003;
+                    </button>
+                  </td>
+                  <td class="chordTypeStateCell">
+                    <button
+                      class="chordTypeStateButton"
+                      id="btnChordsMajor"
+                      type="button"
+                    >
+                      &#10003;
+                    </button>
+                  </td>
+                  <td class="chordTypeStateCell">
+                    <button
+                      class="chordTypeStateButton"
+                      id="btnChordsMinor"
+                      type="button"
+                    >
+                      &#10003;
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="rowgroup" rowspan="3">Triads</th>
+                  <td class="chordTypeStateCell" rowspan="3">
+                    <button
+                      class="chordTypeStateButton"
+                      id="btnChordsTriads"
+                      type="button"
+                    >
+                      &#10003;
+                    </button>
+                  </td>
+                  <td>
+                    <label class="chordTypeOption">
+                      <input type="checkbox" id="chkChordMajor" checked />
+                      <span>Major</span>
+                    </label>
+                  </td>
+                  <td>
+                    <label class="chordTypeOption">
+                      <input type="checkbox" id="chkChordMinor" checked />
+                      <span>Minor</span>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <label class="chordTypeOption">
+                      <input type="checkbox" id="chkChordAugmented" checked />
+                      <span>Augmented</span>
+                    </label>
+                  </td>
+                  <td>
+                    <label class="chordTypeOption">
+                      <input type="checkbox" id="chkChordDiminished" checked />
+                      <span>Diminished</span>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <label class="chordTypeOption">
+                      <input
+                        type="checkbox"
+                        id="chkChordSuspendedFourth"
+                        checked
+                      />
+                      <span>Suspended 4th</span>
+                    </label>
+                  </td>
+                  <td>
+                    <label class="chordTypeOption">
+                      <input
+                        type="checkbox"
+                        id="chkChordSuspendedSecond"
+                        checked
+                      />
+                      <span>Suspended 2nd</span>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Sixths</th>
+                  <td class="chordTypeStateCell">
+                    <button
+                      class="chordTypeStateButton"
+                      id="btnChordsSixths"
+                      type="button"
+                    >
+                      &#10003;
+                    </button>
+                  </td>
+                  <td>
+                    <label class="chordTypeOption">
+                      <input type="checkbox" id="chkChordSixth" checked />
+                      <span>6th</span>
+                    </label>
+                  </td>
+                  <td>
+                    <label class="chordTypeOption">
+                      <input type="checkbox" id="chkChordMinorSixth" checked />
+                      <span>Minor 6th</span>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="rowgroup" rowspan="4">Sevenths</th>
+                  <td class="chordTypeStateCell" rowspan="4">
+                    <button
+                      class="chordTypeStateButton"
+                      id="btnChordsSevenths"
+                      type="button"
+                    >
+                      &#10003;
+                    </button>
+                  </td>
+                  <td>
+                    <label class="chordTypeOption">
+                      <input type="checkbox" id="chkChordSeventh" checked />
+                      <span>7th</span>
+                    </label>
+                  </td>
+                  <td>
+                    <label class="chordTypeOption">
+                      <input
+                        type="checkbox"
+                        id="chkChordMinorSeventh"
+                        checked
+                      />
+                      <span>Minor 7th</span>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <label class="chordTypeOption">
+                      <input
+                        type="checkbox"
+                        id="chkChordMajorSeventh"
+                        checked
+                      />
+                      <span>Major 7th</span>
+                    </label>
+                  </td>
+                  <td>
+                    <label class="chordTypeOption">
+                      <input
+                        type="checkbox"
+                        id="chkChordMinorMajorSeventh"
+                        checked
+                      />
+                      <span>Minor Major 7th</span>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <label class="chordTypeOption">
+                      <input
+                        type="checkbox"
+                        id="chkChordAugmentedSeventh"
+                        checked
+                      />
+                      <span>Augmented 7th</span>
+                    </label>
+                  </td>
+                  <td>
+                    <label class="chordTypeOption">
+                      <input
+                        type="checkbox"
+                        id="chkChordHalfDiminishedSeventh"
+                        checked
+                      />
+                      <span>Half-Diminished 7th</span>
+                    </label>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <label class="chordTypeOption">
+                      <input
+                        type="checkbox"
+                        id="chkChordAugmentedMajorSeventh"
+                        checked
+                      />
+                      <span>Augmented Major 7th</span>
+                    </label>
+                  </td>
+                  <td>
+                    <label class="chordTypeOption">
+                      <input
+                        type="checkbox"
+                        id="chkChordDiminishedSeventh"
+                        checked
+                      />
+                      <span>Diminished 7th</span>
+                    </label>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="tabContent" id="panelModeProgressions">
+            <br />
             <label
-              class="songsCheckboxRow songsCheckboxRow--inline"
-              for="chkSongFavorite"
-            >
-              <input type="checkbox" id="chkSongFavorite" />
-              <span>Favorite</span>
-            </label>
-          </div>
-          <div class="songsActions">
-            <button id="btnSongsDelete" type="button">Delete Selected</button>
-            <button id="btnSongsClear" type="button">Clear Songs</button>
-          </div>
-          <div class="songsControlGrid">
-            <label class="songsControlField" for="selectSongFinishAction">
-              <span class="songsFieldLabel">When Song Finishes</span>
-              <select id="selectSongFinishAction">
-                <option value="nothing">Nothing</option>
-                <option value="nextFavorite">Next Favorite</option>
-                <option value="randomFavorite">Random Favorite</option>
-                <option value="nextSong">Next Song</option>
-                <option value="randomSong">Random Song</option>
+              >Progression:
+              <select id="selectProgression">
+                <option value="I-IV-V">I-IV-V</option>
+                <option value="ii-V-I">ii-V-I</option>
+                <option value="ii7-V7-IM7">ii7-V7-IM7</option>
+                <option value="I-V-vi-IV">I-V-vi-IV</option>
+                <option value="I-vi-ii-V">I-vi-ii-V</option>
+                <option value="vi-IV-I-V">vi-IV-I-V</option>
+                <option value="I-IV-iii-vi-ii-V-I">Jazzy Improv</option>
+                <option value="I-ii-iii-IV-V-vi-viio-I">
+                  Ascending Major Key
+                </option>
+                <option value="I-viio-vi-V-IV-iii-ii-I">
+                  Descending Major Key
+                </option>
+                <option value="i-ii-bIII-iv-v-bVI-bVII-i">
+                  Ascending Minor Key
+                </option>
+                <option value="i-bVII-bVI-v-iv-bIII-ii-i">
+                  Descending Minor Key
+                </option>
+                <option value="I-V-vi-iii-IV-I-IV-V">
+                  I-V-vi-iii-IV-I-IV-V (Pachabel)
+                </option>
+                <option value="I-vi-IV-V">I-vi-IV-V (Doo-Wop)</option>
+                <option value="I-III-IV-vi">I-III-IV-vi (Lawsuits)</option>
+                <option value="custom">Custom</option>
+                <option value="random">Random</option>
               </select>
             </label>
-            <label class="songsControlField" for="inputSongRepeatCount">
-              <span class="songsFieldLabel">Repeats Before Finish</span>
+            <br />
+            <label
+              >Custom:
               <input
-                id="inputSongRepeatCount"
-                type="number"
-                min="1"
-                max="99"
-                step="1"
-                value="3"
+                type="text"
+                id="inputProgressionCustom"
+                value="I-II-iii-IV-V-vi-viio-I"
+                disabled
               />
             </label>
-            <div class="songsOptionRow songsOptionRow--keys">
+            <br />
+            <label
+              >Random Count:
+              <input
+                type="number"
+                id="inputProgressionRandomCount"
+                min="1"
+                max="10"
+                value="5"
+                disabled
+              />
+            </label>
+
+            <div id="panelModeDegrees">
+              <p class="intervalTitle">Random Intervals</p>
+              <div class="intervalKeyboard">
+                <div class="intervalRow intervalRow--upper">
+                  <label class="intervalKey intervalKey--black">
+                    <input type="checkbox" id="BII" />
+                    <span>♭II</span>
+                  </label>
+                  <label class="intervalKey intervalKey--black">
+                    <input type="checkbox" id="BIII" />
+                    <span>♭III</span>
+                  </label>
+                  <label class="intervalKey intervalKey--black">
+                    <input type="checkbox" id="BV" />
+                    <span>♭V</span>
+                  </label>
+                  <label class="intervalKey intervalKey--black">
+                    <input type="checkbox" id="BVI" />
+                    <span>♭VI</span>
+                  </label>
+                  <label class="intervalKey intervalKey--black">
+                    <input type="checkbox" id="BVII" />
+                    <span>♭VII</span>
+                  </label>
+                </div>
+                <div class="intervalRow intervalRow--lower">
+                  <label class="intervalKey intervalKey--white">
+                    <input type="checkbox" id="I" checked />
+                    <span>I</span>
+                  </label>
+                  <label class="intervalKey intervalKey--white">
+                    <input type="checkbox" id="II" checked />
+                    <span>II</span>
+                  </label>
+                  <label class="intervalKey intervalKey--white">
+                    <input type="checkbox" id="III" checked />
+                    <span>III</span>
+                  </label>
+                  <label class="intervalKey intervalKey--white">
+                    <input type="checkbox" id="IV" checked />
+                    <span>IV</span>
+                  </label>
+                  <label class="intervalKey intervalKey--white">
+                    <input type="checkbox" id="V" checked />
+                    <span>V</span>
+                  </label>
+                  <label class="intervalKey intervalKey--white">
+                    <input type="checkbox" id="VI" checked />
+                    <span>VI</span>
+                  </label>
+                  <label class="intervalKey intervalKey--white">
+                    <input type="checkbox" id="VII" checked />
+                    <span>VII</span>
+                  </label>
+                  <label class="intervalKey intervalKey--white">
+                    <input type="checkbox" id="VIII" checked />
+                    <span>VIII</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tabContent" id="panelModeSongs">
+            <label class="songsFieldLabel" for="selectSong">Saved Songs</label>
+            <div class="songsSavedRow">
+              <select id="selectSong"></select>
               <label
-                class="songsCheckboxRow songsControlField"
-                for="chkSongUseOriginalKey"
+                class="songsCheckboxRow songsCheckboxRow--inline"
+                for="chkSongFavorite"
               >
-                <input type="checkbox" id="chkSongUseOriginalKey" checked />
-                <span>Use original key</span>
-              </label>
-              <label
-                class="songsCheckboxRow songsControlField"
-                for="chkSongAdvanceKeyOnRepeat"
-              >
-                <input type="checkbox" id="chkSongAdvanceKeyOnRepeat" />
-                <span>Advance key on repeat</span>
-              </label>
-              <label
-                class="songsCheckboxRow songsControlField"
-                for="chkSongAdvanceKeyOnSongChange"
-              >
-                <input type="checkbox" id="chkSongAdvanceKeyOnSongChange" />
-                <span>Advance key on song change</span>
+                <input type="checkbox" id="chkSongFavorite" />
+                <span>Favorite</span>
               </label>
             </div>
-            <label
-              class="songsCheckboxRow songsCheckboxRow--full"
-              for="chkSongCountsTowardGoals"
-            >
-              <input type="checkbox" id="chkSongCountsTowardGoals" checked />
-              <span>Count song chords toward daily goals</span>
+            <div class="songsActions">
+              <button id="btnSongsDelete" type="button">Delete Selected</button>
+              <button id="btnSongsClear" type="button">Clear Songs</button>
+            </div>
+            <div class="songsControlGrid">
+              <label class="songsControlField" for="selectSongFinishAction">
+                <span class="songsFieldLabel">When Song Finishes</span>
+                <select id="selectSongFinishAction">
+                  <option value="nothing">Nothing</option>
+                  <option value="nextFavorite">Next Favorite</option>
+                  <option value="randomFavorite">Random Favorite</option>
+                  <option value="nextSong">Next Song</option>
+                  <option value="randomSong">Random Song</option>
+                </select>
+              </label>
+              <label class="songsControlField" for="inputSongRepeatCount">
+                <span class="songsFieldLabel">Repeats Before Finish</span>
+                <input
+                  id="inputSongRepeatCount"
+                  type="number"
+                  min="1"
+                  max="99"
+                  step="1"
+                  value="3"
+                />
+              </label>
+              <div class="songsOptionRow songsOptionRow--keys">
+                <label
+                  class="songsCheckboxRow songsControlField"
+                  for="chkSongUseOriginalKey"
+                >
+                  <input type="checkbox" id="chkSongUseOriginalKey" checked />
+                  <span>Use original key</span>
+                </label>
+                <label
+                  class="songsCheckboxRow songsControlField"
+                  for="chkSongAdvanceKeyOnRepeat"
+                >
+                  <input type="checkbox" id="chkSongAdvanceKeyOnRepeat" />
+                  <span>Advance key on repeat</span>
+                </label>
+                <label
+                  class="songsCheckboxRow songsControlField"
+                  for="chkSongAdvanceKeyOnSongChange"
+                >
+                  <input type="checkbox" id="chkSongAdvanceKeyOnSongChange" />
+                  <span>Advance key on song change</span>
+                </label>
+              </div>
+              <label
+                class="songsCheckboxRow songsCheckboxRow--full"
+                for="chkSongCountsTowardGoals"
+              >
+                <input type="checkbox" id="chkSongCountsTowardGoals" checked />
+                <span>Count song chords toward daily goals</span>
+              </label>
+              <label
+                class="songsCheckboxRow songsCheckboxRow--full"
+                for="chkSongDisplayRomanNumerals"
+              >
+                <input type="checkbox" id="chkSongDisplayRomanNumerals" />
+                <span>Display chords as roman numerals</span>
+              </label>
+            </div>
+            <label class="songsFieldLabel" for="inputSongsUrl">
+              Import Song(s)
             </label>
-            <label
-              class="songsCheckboxRow songsCheckboxRow--full"
-              for="chkSongDisplayRomanNumerals"
-            >
-              <input type="checkbox" id="chkSongDisplayRomanNumerals" />
-              <span>Display chords as roman numerals</span>
-            </label>
+            <textarea
+              id="inputSongsUrl"
+              class="songsUrlInput"
+              rows="3"
+              placeholder="Paste an irealb:// or irealbook:// link to import song(s)"
+              spellcheck="false"
+            ></textarea>
+            <div class="songsActions">
+              <button id="btnSongsImport" type="button">Import URL</button>
+            </div>
+            <p id="txtSongsStatus" class="songsStatus"></p>
           </div>
-          <label class="songsFieldLabel" for="inputSongsUrl">
-            Import Song(s)
-          </label>
-          <textarea
-            id="inputSongsUrl"
-            class="songsUrlInput"
-            rows="3"
-            placeholder="Paste an irealb:// or irealbook:// link to import song(s)"
-            spellcheck="false"
-          ></textarea>
-          <div class="songsActions">
-            <button id="btnSongsImport" type="button">Import URL</button>
+
+          <div class="tabContent" id="panelModeScales">
+            <br />
+            <div id="panelScalesButtons"></div>
+            <div id="panelScalesSelected"></div>
           </div>
-          <p id="txtSongsStatus" class="songsStatus"></p>
-        </div>
 
-        <div class="tabContent" id="panelModeScales">
-          <br />
-          <div id="panelScalesButtons"></div>
-          <div id="panelScalesSelected"></div>
-        </div>
-
-        <div class="tabContent" id="panelModeJazz">
-          <h4>
-            Courtesy of
-            <a href="https://linktr.ee/Jaelliott">John Elliott</a> and his book
-            <a href="https://dropback.co.uk/the-book/">Insights in Jazz</a>
-          </h4>
-          <button id="btnJazzBricksNone">None</button>
-          <button id="btnJazzBricksAll">All</button>
-          <button id="btnJazzBricksBasic">Beginner</button>
-          <button id="btnJazzBricksIntermediate">Intermediate</button>
-          <button id="btnJazzBricksTurnarounds">Turnarounds</button>
-          <button id="btnJazzBricksMetabricks">Metabricks</button>
-          <button id="btnJazzBricksDropbacks">Dropbacks</button>
-          <table id="tableJazzBricks">
-            <thead>
-              <tr>
-                <th>Chord</th>
-                <th>Chord Name</th>
-                <th>Enabled</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </section>
+          <div class="tabContent" id="panelModeJazz">
+            <h4>
+              Courtesy of
+              <a href="https://linktr.ee/Jaelliott">John Elliott</a> and his
+              book
+              <a href="https://dropback.co.uk/the-book/">Insights in Jazz</a>
+            </h4>
+            <button id="btnJazzBricksNone">None</button>
+            <button id="btnJazzBricksAll">All</button>
+            <button id="btnJazzBricksBasic">Beginner</button>
+            <button id="btnJazzBricksIntermediate">Intermediate</button>
+            <button id="btnJazzBricksTurnarounds">Turnarounds</button>
+            <button id="btnJazzBricksMetabricks">Metabricks</button>
+            <button id="btnJazzBricksDropbacks">Dropbacks</button>
+            <table id="tableJazzBricks">
+              <thead>
+                <tr>
+                  <th>Chord</th>
+                  <th>Chord Name</th>
+                  <th>Enabled</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
     </main>
 
     <script src="data.js"></script>

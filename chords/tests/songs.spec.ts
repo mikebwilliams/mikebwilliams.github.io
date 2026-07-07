@@ -1,6 +1,13 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
 const TEST_URL = process.env.PLAYWRIGHT_TEST_URL || "http://localhost:8001/";
+
+async function openKeyboard(page: Page) {
+  const panel = page.locator("#panelKeyboard");
+  if ((await panel.getAttribute("open")) === null) {
+    await page.click("#panelKeyboard > summary");
+  }
+}
 
 test("Songs tab imports an iReal URL and loads it for practice", async ({
   page,
@@ -726,6 +733,7 @@ test("Songs tab sync updates keyboard hints and answer-note output for the activ
   await page.fill("#inputSongsUrl", songUrl);
   await page.click("#btnSongsImport");
 
+  await openKeyboard(page);
   await page.check("#chkDisplayHighlightKeys");
   await page.fill("#inputDisplayHighlightDelay", "0.1");
   await page.locator("#inputDisplayHighlightDelay").blur();

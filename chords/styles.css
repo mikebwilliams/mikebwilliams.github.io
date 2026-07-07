@@ -422,9 +422,7 @@ main.page {
   padding: 28px 24px 72px;
   display: grid;
   grid-template-columns: minmax(640px, 1fr) minmax(620px, 700px);
-  grid-template-areas:
-    "practice mode"
-    "practice options";
+  grid-template-areas: "practice settings";
   gap: 22px;
   align-items: start;
 }
@@ -435,8 +433,7 @@ main.page {
     grid-template-columns: 1fr;
     grid-template-areas:
       "practice"
-      "mode"
-      "options";
+      "settings";
     gap: 24px;
   }
 }
@@ -533,16 +530,29 @@ html[data-theme="darkClassical"] .surfaceCard {
     inset 0 -5px 0 var(--hero-foot);
 }
 
-.modeSection {
-  grid-area: mode;
+.settingsRail {
+  grid-area: settings;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  align-self: start;
 }
 
-.optionsSection {
-  grid-area: options;
+.modeSection {
+  order: 1;
+}
+
+.keyVoicingSection {
+  order: 2;
+}
+
+.preferencesSection {
+  order: 3;
 }
 
 .modeSection,
-.optionsSection {
+.settingsSection {
   min-width: 0;
 }
 
@@ -669,7 +679,8 @@ html[data-theme="darkClassical"] .surfaceCard {
 
 #panelKeyboard,
 #panelMetronome,
-#panelDailyStats {
+#panelDailyStats,
+#panelTrainingSetup {
   grid-column: 1 / -1;
 }
 
@@ -1217,7 +1228,7 @@ details.challengeCollapsible > summary::after {
   color: var(--text-muted);
   transition: transform var(--transition);
   margin-left: 0;
-  order: 2;
+  order: 4;
 }
 
 details.challengeCollapsible[open] > summary::after {
@@ -1244,15 +1255,47 @@ details.challengeCollapsible > summary .collapsibleTitle {
 }
 
 details.challengeCollapsible > summary .collapsibleStatus {
-  order: 3;
+  order: 2;
   color: var(--text-muted);
   font-size: 0.9rem;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 
-details.challengeCollapsible[open] > summary .collapsibleStatus {
-  display: none;
+details.challengeCollapsible > summary .collapsibleSteppers {
+  order: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.summaryStepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.summaryStepperLabel {
+  min-width: 3.6rem;
+  text-align: center;
+}
+
+button.summaryStepButton {
+  width: 1.7rem;
+  min-width: 1.7rem;
+  height: 1.7rem;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  line-height: 1;
+  box-shadow: 1px 2px 0 var(--button-shadow);
 }
 
 details.challengeCollapsible > summary .summaryActions {
@@ -1757,14 +1800,14 @@ details.challengeCollapsible > summary .summaryActions {
   display: block;
 }
 
-.optionsSection .tabContent,
+.settingsSection .tabContent,
 .modeSection .tabContent {
   margin-bottom: 0;
 }
 
 @media (min-width: 1361px) {
   .modeSection .tabContent,
-  .optionsSection .tabContent {
+  .settingsSection .tabContent {
     max-height: min(640px, calc(100vh - 150px));
     overflow: auto;
   }
@@ -1773,7 +1816,7 @@ details.challengeCollapsible > summary .summaryActions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .optionsSection .tabs {
+  .settingsSection .tabs {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -1811,10 +1854,12 @@ label {
   margin: 0;
 }
 
+#panelOptionsPresets label,
 #panelOptionsWorkouts label {
   margin: 0;
 }
 
+.settingsRow,
 .workoutControls,
 .workoutNameRow,
 .workoutAddRow {
@@ -1823,6 +1868,26 @@ label {
   align-items: center;
   gap: 12px;
   margin-bottom: 12px;
+}
+
+.settingsSelectRow {
+  align-items: stretch;
+  gap: 8px;
+}
+
+.settingsSelectRow select {
+  flex: 1 1 220px;
+  min-width: min(100%, 220px);
+}
+
+.compactButtonGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.compactButtonGroup button {
+  padding: 0.48rem 0.78rem;
 }
 
 .midiStatusRow {
@@ -2003,7 +2068,7 @@ textarea:focus {
   width: max(520px, 100%);
 }
 
-.optionsSection table,
+.settingsSection table,
 .modeSection table {
   width: 100%;
   border-collapse: collapse;
@@ -2016,8 +2081,8 @@ textarea:focus {
   min-width: 520px;
 }
 
-.optionsSection th,
-.optionsSection td,
+.settingsSection th,
+.settingsSection td,
 .modeSection th,
 .modeSection td {
   border-bottom: 1px solid var(--border-soft);
@@ -2026,7 +2091,7 @@ textarea:focus {
   vertical-align: middle;
 }
 
-.optionsSection th,
+.settingsSection th,
 .modeSection th {
   color: var(--text-muted);
   font-weight: 600;

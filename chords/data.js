@@ -581,6 +581,8 @@ const domElements = {
   songCountGoals: requireElement("chkSongCountsTowardGoals"),
   songDisplayRomanNumerals: requireElement("chkSongDisplayRomanNumerals"),
   songStatus: requireElement("txtSongsStatus"),
+  dailyStatsDetails: requireElement("panelDailyStats"),
+  trainingSetupDetails: requireElement("panelTrainingSetup"),
   metronomeDetails: requireElement("panelMetronome"),
   metronomeToggleButton: requireElement("btnMetronomeToggle"),
   metronomeResetButton: requireElement("btnMetronomeReset"),
@@ -658,6 +660,8 @@ const domElements = {
   midiInputs: requireElement("tableMidiInputs"),
   midiOutputs: requireElement("tableMidiOutputs"),
   settingsPresetSelect: requireElement("selectSettingsPreset"),
+  settingsPresetPrevButton: requireElement("btnSettingsPresetPrev"),
+  settingsPresetNextButton: requireElement("btnSettingsPresetNext"),
   settingsPresetName: requireElement("inputSettingsPresetName"),
   settingsSaveButton: requireElement("btnSettingsSave"),
   settingsLoadButton: requireElement("btnSettingsLoad"),
@@ -666,8 +670,11 @@ const domElements = {
   settingsResetButton: requireElement("btnSettingsReset"),
   settingsExportButton: requireElement("btnSettingsExport"),
   settingsDebugPanel: requireElement("panelSettingsDebug"),
+  trainingSetupSummary: requireElement("txtTrainingSetupSummary"),
   workoutPanel: requireElement("panelOptionsWorkouts"),
   workoutSelect: requireElement("selectWorkout"),
+  workoutPrevButton: requireElement("btnWorkoutPrev"),
+  workoutNextButton: requireElement("btnWorkoutNext"),
   workoutNameInput: requireElement("inputWorkoutName"),
   workoutNewButton: requireElement("btnWorkoutNew"),
   workoutSaveButton: requireElement("btnWorkoutSave"),
@@ -4131,6 +4138,12 @@ function captureSimpleSettings() {
       showMetronome: domElements.metronomeDetails
         ? !!domElements.metronomeDetails.open
         : false,
+      showDailyStats: domElements.dailyStatsDetails
+        ? !!domElements.dailyStatsDetails.open
+        : false,
+      showTrainingSetup: domElements.trainingSetupDetails
+        ? !!domElements.trainingSetupDetails.open
+        : false,
       highlightKeys: !!domElements.highlightCorrectKeys.checked,
       highlightDelay: parseFloat(domElements.highlightDelay.value) || 3,
       hideProgressionNames: !!domElements.hideProgressionChordNames.checked,
@@ -4234,6 +4247,16 @@ function applySimpleSettings(settings) {
     if (domElements.metronomeDetails) {
       if (Object.prototype.hasOwnProperty.call(display, "showMetronome")) {
         domElements.metronomeDetails.open = !!display.showMetronome;
+      }
+    }
+    if (domElements.dailyStatsDetails) {
+      if (Object.prototype.hasOwnProperty.call(display, "showDailyStats")) {
+        domElements.dailyStatsDetails.open = !!display.showDailyStats;
+      }
+    }
+    if (domElements.trainingSetupDetails) {
+      if (Object.prototype.hasOwnProperty.call(display, "showTrainingSetup")) {
+        domElements.trainingSetupDetails.open = !!display.showTrainingSetup;
       }
     }
     domElements.highlightCorrectKeys.checked = !!display.highlightKeys;
@@ -4443,6 +4466,8 @@ function settingsStoreFactory() {
       this.watchElement(domElements.flowStartSelect);
       this.watchElement(domElements.keyboardDetails, "toggle");
       this.watchElement(domElements.metronomeDetails, "toggle");
+      this.watchElement(domElements.dailyStatsDetails, "toggle");
+      this.watchElement(domElements.trainingSetupDetails, "toggle");
       this.watchElement(domElements.highlightCorrectKeys);
       this.watchElement(domElements.highlightDelay, "input");
       this.watchElement(domElements.hideProgressionChordNames);
