@@ -373,18 +373,12 @@ const keyCheckboxes = allNotes.reduce((acc, note) => {
 }, {});
 
 const chordToggleButtons = {
-  allOn: requireElement("btnChordsAllOn"),
-  allOff: requireElement("btnChordsAllOff"),
-  triadsOn: requireElement("btnChordsTriadsOn"),
-  triadsOff: requireElement("btnChordsTriadsOff"),
-  sixthsOn: requireElement("btnChordsSixthsOn"),
-  sixthsOff: requireElement("btnChordsSixthsOff"),
-  seventhsOn: requireElement("btnChordsSeventhsOn"),
-  seventhsOff: requireElement("btnChordsSeventhsOff"),
-  majorsOn: requireElement("btnChordsMajorOn"),
-  majorsOff: requireElement("btnChordsMajorOff"),
-  minorsOn: requireElement("btnChordsMinorOn"),
-  minorsOff: requireElement("btnChordsMinorOff"),
+  all: requireElement("btnChordsAll"),
+  triads: requireElement("btnChordsTriads"),
+  sixths: requireElement("btnChordsSixths"),
+  sevenths: requireElement("btnChordsSevenths"),
+  majors: requireElement("btnChordsMajor"),
+  minors: requireElement("btnChordsMinor"),
 };
 
 const keyPresetButtons = {
@@ -759,34 +753,34 @@ const chordStructureNames = {
 
   7: ["7"],
   m7: ["m7", "mi7", "min7", "-7"],
-  M7: ["M7", "ma7", "maj7", "△7", "△"],
-  mM7: ["mM7", "m maj7", "-△7", "-△"],
+  M7: ["M7", "ma7", "maj7", "△7", "△", "Δ7", "Δ"],
+  mM7: ["mM7", "m maj7", "-△7", "-△", "-Δ7", "-Δ"],
   dim7: ["dim7", "o7", "º7"],
   m7b5: ["m7b5", "-7b5", "ø", "ø7"],
-  M7b5: ["M7b5", "maj7b5", "ma7b5", "△7b5", "△b5"],
+  M7b5: ["M7b5", "maj7b5", "ma7b5", "△7b5", "△b5", "Δ7b5", "Δb5"],
   "7b5": ["7b5"],
-  "M7#11": ["M7#11", "ma7#11", "maj7#11", "△7#11"],
+  "M7#11": ["M7#11", "ma7#11", "maj7#11", "△7#11", "Δ7#11"],
   aug7: ["7#5", "+7", "aug7"],
   augM7: ["M7#5", "+M7", "augM7"],
 
   9: ["9"],
   m9: ["m9", "min9", "-9"],
-  M9: ["M9", "maj9", "△9"],
+  M9: ["M9", "maj9", "△9", "Δ9"],
   "9b5": ["9b5"],
   "9#11": ["9#11"],
-  "M9#11": ["M9#11", "maj9#11", "△9#11"],
+  "M9#11": ["M9#11", "maj9#11", "△9#11", "Δ9#11"],
 
   11: ["11"],
   m11: ["m11", "min11", "-11"],
-  M11: ["M11", "maj11", "△11"],
+  M11: ["M11", "maj11", "△11", "Δ11"],
 
   13: ["13"],
   m13: ["m13", "min13", "-13"],
-  M13: ["M13", "maj13", "△13"],
+  M13: ["M13", "maj13", "△13", "Δ13"],
   "13b9": ["13b9"],
   "13#9": ["13#9"],
   "13#11": ["13#11"],
-  "M13#11": ["M13#11", "maj13#11", "△13#11"],
+  "M13#11": ["M13#11", "maj13#11", "△13#11", "Δ13#11"],
 
   "7alt": ["7alt", "alt"],
   "7b9": ["7b9"],
@@ -1341,162 +1335,162 @@ const scaleGroups = {
 };
 
 const jazzCadences = [
-  { name: "Amen", chords: ["IVΔ", "IΔ"], enabled: false },
+  { name: "Amen", chords: ["IV△", "I△"], enabled: false },
   {
     name: "Autumnal",
-    chords: ["ii7", "V7", "viiø", "III7", "viΔ"],
+    chords: ["ii7", "V7", "viiø", "III7", "vi△"],
     enabled: false,
   },
   {
     name: "Body & Soul",
-    chords: ["ii7", "VI7", "ii7", "V7", "IΔ", "IΔ"],
+    chords: ["ii7", "VI7", "ii7", "V7", "I△", "I△"],
     enabled: false,
   },
-  { name: "Dizzy", chords: ["bvi7", "bII7", "IΔ", "IΔ"], enabled: false },
-  { name: "Dogleg", chords: ["vi7", "II7", "ii7", "V7", "IΔ"], enabled: false },
+  { name: "Dizzy", chords: ["bvi7", "bII7", "I△", "I△"], enabled: false },
+  { name: "Dogleg", chords: ["vi7", "II7", "ii7", "V7", "I△"], enabled: false },
   {
     name: "(7-chord) Dropback",
-    chords: ["ii7", "V7", "IΔ", "VI7", "ii7", "V7", "IΔ"],
+    chords: ["ii7", "V7", "I△", "VI7", "ii7", "V7", "I△"],
     enabled: false,
   },
-  { name: "Extended", chords: ["vi7", "ii7", "V7", "IΔ"], enabled: false },
+  { name: "Extended", chords: ["vi7", "ii7", "V7", "I△"], enabled: false },
   {
     name: "Happenstance",
-    chords: ["#iv7", "VII7", "IΔ", "IΔ"],
+    chords: ["#iv7", "VII7", "I△", "I△"],
     enabled: false,
   },
-  { name: "Long", chords: ["iii7", "VI7", "ii7", "V7", "IΔ"], enabled: false },
-  { name: "Overrun", chords: ["ii7", "V7", "IΔ", "IVΔ"], enabled: false },
+  { name: "Long", chords: ["iii7", "VI7", "ii7", "V7", "I△"], enabled: false },
+  { name: "Overrun", chords: ["ii7", "V7", "I△", "IV△"], enabled: false },
   {
     name: "Moment’s",
-    chords: ["#i7", "#IV7", "ii7", "V7", "IΔ", "IΔ"],
+    chords: ["#i7", "#IV7", "ii7", "V7", "I△", "I△"],
     enabled: false,
   },
-  { name: "Night & Day", chords: ["bVIΔ", "V7", "IΔ", "IΔ"], enabled: false },
-  { name: "Nobody’s", chords: ["IΔ", "III7", "viΔ"], enabled: false },
-  { name: "Nowhere", chords: ["bVI7", "V7", "IΔ", "IΔ"], enabled: false },
+  { name: "Night & Day", chords: ["bVI△", "V7", "I△", "I△"], enabled: false },
+  { name: "Nobody’s", chords: ["I△", "III7", "vi△"], enabled: false },
+  { name: "Nowhere", chords: ["bVI7", "V7", "I△", "I△"], enabled: false },
   {
     name: "(7-chord) Pullback",
-    chords: ["ii7", "V7", "iii7", "VI7", "ii7", "V7", "IΔ"],
+    chords: ["ii7", "V7", "iii7", "VI7", "ii7", "V7", "I△"],
     enabled: false,
   },
-  { name: "Rainbow", chords: ["IΔ", "III7", "IVΔ", "IVΔ"], enabled: false },
+  { name: "Rainbow", chords: ["I△", "III7", "IV△", "IV△"], enabled: false },
   {
     name: "Rainy",
-    chords: ["iii7", "bIIIø", "ii7", "V7", "IΔ", "IΔ"],
+    chords: ["iii7", "bIIIø", "ii7", "V7", "I△", "I△"],
     enabled: false,
   },
   {
     name: "Satin",
-    chords: ["vi7", "ii7", "bvi7", "bII7", "IΔ", "IΔ"],
+    chords: ["vi7", "ii7", "bvi7", "bII7", "I△", "I△"],
     enabled: false,
   },
   {
     name: "Spring",
-    chords: ["VIIø", "III7", "ii7", "V7", "IΔ", "IΔ"],
+    chords: ["VIIø", "III7", "ii7", "V7", "I△", "I△"],
     enabled: false,
   },
   {
     name: "Stablemates",
-    chords: ["biii7", "bVI7", "ii7", "V7", "IΔ", "IΔ"],
+    chords: ["biii7", "bVI7", "ii7", "V7", "I△", "I△"],
     enabled: false,
   },
   {
     name: "Starlight",
-    chords: ["#IVø", "VII7", "iii7", "VI7", "ii7", "V7", "IΔ"],
+    chords: ["#IVø", "VII7", "iii7", "VI7", "ii7", "V7", "I△"],
     enabled: false,
   },
   {
     name: "Starlight N&D Variant",
-    chords: ["#IVø", "vi7", "biiio7", "VI7", "ii7", "V7", "IΔ"],
+    chords: ["#IVø", "vi7", "biiio7", "VI7", "ii7", "V7", "I△"],
     enabled: false,
   },
-  { name: "Regular", chords: ["ii7", "V7", "IΔ"], enabled: false },
+  { name: "Regular", chords: ["ii7", "V7", "I△"], enabled: false },
   {
     name: "Regular (minor)",
-    chords: ["iiø", "V7+9", "IΔ", "IΔ"],
+    chords: ["iiø", "V7+9", "I△", "I△"],
     enabled: false,
   },
   { name: "Tension Ending", chords: ["ii7", "V7", "I7", "I7"], enabled: false },
   {
     name: "Tritone Substitution",
-    chords: ["ii7", "bII7", "IΔ", "IΔ"],
+    chords: ["ii7", "bII7", "I△", "I△"],
     enabled: false,
   },
   {
     name: "Two-Goes",
-    chords: ["ii7", "V7", "ii7", "V7", "IΔ"],
+    chords: ["ii7", "V7", "ii7", "V7", "I△"],
     enabled: false,
   },
-  { name: "Yardbird", chords: ["iv7", "bVII7", "IΔ", "IΔ"], enabled: false },
+  { name: "Yardbird", chords: ["iv7", "bVII7", "I△", "I△"], enabled: false },
   // Turnarounds
-  { name: "Foggy", chords: ["IΔ", "bIII7", "ii7", "V7"], enabled: false },
+  { name: "Foggy", chords: ["I△", "bIII7", "ii7", "V7"], enabled: false },
   { name: "II ’n’ Back", chords: ["ii7", "#iio7", "iii7"], enabled: false },
-  { name: "Ladybird", chords: ["IΔ", "bIII7", "bVIΔ", "bII7"], enabled: false },
+  { name: "Ladybird", chords: ["I△", "bIII7", "bVI△", "bII7"], enabled: false },
   {
     name: "Nowhere (turnaround)",
-    chords: ["IΔ", "VI7", "bVI7", "V7"],
+    chords: ["I△", "VI7", "bVI7", "V7"],
     enabled: false,
   },
   {
     name: "Pennies",
-    chords: ["IΔ", "ii7", "iii7", "bIIIø", "ii7", "V7"],
+    chords: ["I△", "ii7", "iii7", "bIIIø", "ii7", "V7"],
     enabled: false,
   },
-  { name: "POT", chords: ["IΔ", "VI7", "ii7", "V7"], enabled: false },
-  { name: "POT (minor)", chords: ["iΔ", "viø", "iiø", "V7+9"], enabled: false },
-  { name: "Rhythm", chords: ["IΔ", "bIIo7", "ii7", "bIIIo7"], enabled: false },
+  { name: "POT", chords: ["I△", "VI7", "ii7", "V7"], enabled: false },
+  { name: "POT (minor)", chords: ["i△", "viø", "iiø", "V7+9"], enabled: false },
+  { name: "Rhythm", chords: ["I△", "bIIo7", "ii7", "bIIIo7"], enabled: false },
   { name: "SPOT", chords: ["iii7", "VI7", "ii7", "V7"], enabled: false },
   {
     name: "To IV 'n' Back",
-    chords: ["IΔ", "I7", "IVΔ", "#IVo7", "IΔ"],
+    chords: ["I△", "I7", "IV△", "#IVo7", "I△"],
     enabled: false,
   },
   {
     name: "To IV 'n' Hack",
-    chords: ["IΔ", "I7", "IVΔ", "VII7", "IΔ"],
+    chords: ["I△", "I7", "IV△", "VII7", "I△"],
     enabled: false,
   },
   {
     name: "To IV 'n' Mack",
-    chords: ["IΔ", "I7", "IVΔ", "ivΔ", "IΔ"],
+    chords: ["I△", "I7", "IV△", "iv△", "I△"],
     enabled: false,
   },
   {
     name: "To IV 'n' Yak",
-    chords: ["IΔ", "I7", "IVΔ", "bVII7", "IΔ"],
+    chords: ["I△", "I7", "IV△", "bVII7", "I△"],
     enabled: false,
   },
-  { name: "Whoopee", chords: ["IΔ", "bIIo7", "ii7", "V7"], enabled: false },
+  { name: "Whoopee", chords: ["I△", "bIIo7", "ii7", "V7"], enabled: false },
   // Metabricks
   {
     name: "Autumn Leaves Opening",
-    chords: ["ii7", "V7", "IΔ", "IVΔ", "viiø", "III7", "viΔ", "VI7"],
+    chords: ["ii7", "V7", "I△", "IV△", "viiø", "III7", "vi△", "VI7"],
     enabled: false,
   },
   {
     name: "Four-Star Ending",
-    chords: ["IVΔ", "#iv7", "VII7", "iii7", "VI7", "ii7", "V7", "IΔ", "IΔ"],
+    chords: ["IV△", "#iv7", "VII7", "iii7", "VI7", "ii7", "V7", "I△", "I△"],
     enabled: false,
   },
   {
     name: "Honeysuckle Bridge",
-    chords: ["v7", "I7", "IVΔ", "IVΔ", "vi7", "II7", "ii7", "V7"],
+    chords: ["v7", "I7", "IV△", "IV△", "vi7", "II7", "ii7", "V7"],
     enabled: false,
   },
   {
     name: "ITCHY Opening",
-    chords: ["IΔ", "iii7", "VI7", "ii7", "#iv7", "VII7"],
+    chords: ["I△", "iii7", "VI7", "ii7", "#iv7", "VII7"],
     enabled: false,
   },
   {
     name: "On-Off(any dom7)-On + Dropback",
-    chords: ["IΔ", "III7", "IΔ", "VI7"],
+    chords: ["I△", "III7", "I△", "VI7"],
     enabled: false,
   },
   {
     name: "Pennies Ending",
-    chords: ["IVΔ", "#ivo7", "IΔ", "iii7", "VI7", "ii7", "V7", "IΔ", "IΔ"],
+    chords: ["IV△", "#ivo7", "I△", "iii7", "VI7", "ii7", "V7", "I△", "I△"],
     enabled: false,
   },
   {
@@ -1510,13 +1504,13 @@ const jazzCadences = [
       "#ivø",
       "iv7",
       "bVII7",
-      "IΔ",
+      "I△",
       "iii7",
       "VI7",
       "ii7",
       "V7",
-      "IΔ",
-      "IΔ",
+      "I△",
+      "I△",
     ],
     enabled: false,
   },
@@ -1526,30 +1520,30 @@ const jazzCadences = [
       "vi7",
       "iv7",
       "bVII7",
-      "IΔ",
+      "I△",
       "iii7",
       "VI7",
       "ii7",
       "V7",
-      "IΔ",
-      "IΔ",
+      "I△",
+      "I△",
     ],
     enabled: false,
   },
   {
     name: "To IV ’n’ Bird SPOT",
-    chords: ["IΔ", "I7", "IVΔ", "bVII7", "iii7", "VI7", "ii7", "V7"],
+    chords: ["I△", "I7", "IV△", "bVII7", "iii7", "VI7", "ii7", "V7"],
     enabled: false,
   },
   {
     name: "Twopenny Ending",
-    chords: ["ii7", "iv7", "bVII7", "IΔ", "iii7", "VI7", "ii7", "V7", "IΔ"],
+    chords: ["ii7", "iv7", "bVII7", "I△", "iii7", "VI7", "ii7", "V7", "I△"],
     enabled: false,
   },
   // Miscellaneous
   {
     name: "Chromatic Dropback",
-    chords: ["IΔ", "VII7", "bVII7", "VI7", "ii7"],
+    chords: ["I△", "VII7", "bVII7", "VI7", "ii7"],
     enabled: false,
   },
   {
@@ -1557,7 +1551,7 @@ const jazzCadences = [
     chords: ["ii7", "V7", "v7", "I7", "i7"],
     enabled: false,
   },
-  { name: "Dropback", chords: ["IΔ", "VI7", "ii7"], enabled: false },
+  { name: "Dropback", chords: ["I△", "VI7", "ii7"], enabled: false },
   {
     name: "Raindrop Dropback",
     chords: ["iii7", "bIIIo7", "ii7"],
@@ -1570,12 +1564,12 @@ const jazzCadences = [
   },
   {
     name: "TINGLe Dropback",
-    chords: ["IΔ", "IV7", "bVII7", "VI7", "ii7"],
+    chords: ["I△", "IV7", "bVII7", "VI7", "ii7"],
     enabled: false,
   },
   {
     name: "TTFA Dropback",
-    chords: ["IΔ", "IV7", "iii7", "VI7", "ii7"],
+    chords: ["I△", "IV7", "iii7", "VI7", "ii7"],
     enabled: false,
   },
 ];
@@ -1818,6 +1812,20 @@ function mergeSettings(base, extra) {
 
 function normalizeTextValue(value) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function formatKeyDisplay(key) {
+  const normalized = normalizeTextValue(key);
+  if (!normalized) return "";
+  return normalized.replace(/^([A-Ga-g])([b#♭♯]?)/, (_, root, accidental) => {
+    const symbol =
+      accidental === "b" || accidental === "♭"
+        ? "♭"
+        : accidental === "#" || accidental === "♯"
+          ? "♯"
+          : "";
+    return `${root.toUpperCase()}${symbol}`;
+  });
 }
 
 function parseIRealProTitle(title) {
@@ -2839,9 +2847,9 @@ function formatIRealProDisplayQuality(quality) {
     formatted = "ø" + formatted.slice(1);
   }
   return formatted
-    .replace(/maj/g, "Δ")
+    .replace(/maj/g, "△")
     .replace(/min/g, "-")
-    .replace(/\^/g, "Δ")
+    .replace(/\^/g, "△")
     .replace(/o/g, "°")
     .replace(/#/g, "♯")
     .replace(/b/g, "♭");
@@ -2899,7 +2907,7 @@ function formatIRealProRomanChordDisplay(chord, targetKey = "") {
   }
 
   const raw = normalizeTextValue(chord.raw);
-  return raw.replace(/\^/g, "Δ").replace(/#/g, "♯").replace(/b/g, "♭");
+  return raw.replace(/\^/g, "△").replace(/#/g, "♯").replace(/b/g, "♭");
 }
 
 function formatIRealProChordDisplay(chord) {
@@ -2924,7 +2932,7 @@ function formatIRealProChordDisplay(chord) {
   }
 
   const raw = normalizeTextValue(chord.raw);
-  return raw.replace(/\^/g, "Δ").replace(/#/g, "♯").replace(/b/g, "♭");
+  return raw.replace(/\^/g, "△").replace(/#/g, "♯").replace(/b/g, "♭");
 }
 
 function transposeIRealProChord(chord, semitoneOffset, targetKey = "") {
@@ -4524,6 +4532,7 @@ appGlobals.getMetronomeCompletedMeasures = getMetronomeCompletedMeasures;
 appGlobals.getMetronomeDisplayedMeasure = getMetronomeDisplayedMeasure;
 appGlobals.getMetronomeCycleDisplay = getMetronomeCycleDisplay;
 appGlobals.sanitizeSongsPracticeSettings = sanitizeSongsPracticeSettings;
+appGlobals.formatKeyDisplay = formatKeyDisplay;
 appGlobals.pickSongIdForSongNavigation = pickSongIdForSongNavigation;
 appGlobals.pickSongIdForFavoriteNavigation = pickSongIdForFavoriteNavigation;
 appGlobals.pickSongIdForFinishAction = pickSongIdForFinishAction;
@@ -4536,6 +4545,7 @@ if (appGlobals.root) {
   appGlobals.root.getMetronomeDisplayedMeasure = getMetronomeDisplayedMeasure;
   appGlobals.root.getMetronomeCycleDisplay = getMetronomeCycleDisplay;
   appGlobals.root.sanitizeSongsPracticeSettings = sanitizeSongsPracticeSettings;
+  appGlobals.root.formatKeyDisplay = formatKeyDisplay;
   appGlobals.root.pickSongIdForSongNavigation = pickSongIdForSongNavigation;
   appGlobals.root.pickSongIdForFavoriteNavigation =
     pickSongIdForFavoriteNavigation;
@@ -4583,6 +4593,7 @@ const dataExports = {
   buildSongPracticeTimeline,
   buildSongDisplayRows,
   formatIRealProChordDisplay,
+  formatKeyDisplay,
   sanitizeMetronomeSettings,
   getMetronomeTickType,
   getSongSyncMetronomeTickType,

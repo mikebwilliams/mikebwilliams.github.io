@@ -34,7 +34,7 @@ test("Songs tab imports an iReal URL and loads it for practice", async ({
   await expect(page.locator("#txtProgression .songMeasure")).toHaveCount(8);
   await expect(
     page.locator("#txtProgression .songMeasure").nth(0),
-  ).toContainText("B♭Δ7");
+  ).toContainText("B♭△7");
   await expect(
     page.locator("#txtProgression .songMeasure").nth(1),
   ).toContainText("E-7♭5");
@@ -51,7 +51,7 @@ test("Songs tab imports an iReal URL and loads it for practice", async ({
   await expect(page.locator("#txtProgression .songMeasureNumber")).toHaveCount(
     0,
   );
-  await expect(page.locator("#txtCurrentKey")).toHaveText("Bb");
+  await expect(page.locator("#txtCurrentKey")).toHaveText("B♭");
 
   if (errors.length) {
     console.error("=== JavaScript Errors Detected ===");
@@ -269,7 +269,7 @@ test("Songs tab applies major seventh notes after an altered dominant", async ({
   const thirdChord = page.locator("#txtProgression .songMeasureChord").nth(2);
 
   await expect(firstChord).toHaveText("B♭7alt");
-  await expect(secondChord).toHaveText("E♭Δ7");
+  await expect(secondChord).toHaveText("E♭△7");
   await expect(firstChord).toHaveClass(/songMeasureChord--current/);
 
   await page.evaluate(() => {
@@ -322,7 +322,7 @@ test("Songs tab places parsed slash bass notes at the bottom", async ({
     },
     {
       label: "/B",
-rawLabel: "C-/B",
+      rawLabel: "C-/B",
       notes: [11, 0, 3, 7],
     },
     {
@@ -432,17 +432,17 @@ test("Songs tab can practice a song in the current key instead of the original k
   await page.fill("#inputSongsUrl", songUrl);
   await page.click("#btnSongsImport");
 
-  await expect(page.locator("#txtCurrentKey")).toHaveText("Bb");
+  await expect(page.locator("#txtCurrentKey")).toHaveText("B♭");
   await expect(
     page.locator("#txtProgression .songMeasure").nth(0),
-  ).toContainText("B♭Δ7");
+  ).toContainText("B♭△7");
 
   await page.uncheck("#chkSongUseOriginalKey");
 
   await expect(page.locator("#txtCurrentKey")).toHaveText("C");
   await expect(
     page.locator("#txtProgression .songMeasure").nth(0),
-  ).toContainText("CΔ7");
+  ).toContainText("C△7");
   await expect(
     page.locator("#txtProgression .songMeasure").nth(1),
   ).toContainText("A-7");
@@ -512,16 +512,16 @@ test("Songs tab can advance key on repeat and on song change", async ({
   await expect(page.locator("#txtCurrentKey")).toHaveText("C");
   await expect(
     page.locator("#txtProgression .songMeasure").nth(0),
-  ).toContainText("CΔ7");
+  ).toContainText("C△7");
 
   await page.evaluate(() => {
     nextChord(false);
   });
 
-  await expect(page.locator("#txtCurrentKey")).toHaveText("C#");
+  await expect(page.locator("#txtCurrentKey")).toHaveText("C♯");
   await expect(
     page.locator("#txtProgression .songMeasure").nth(0),
-  ).toContainText("C♯Δ7");
+  ).toContainText("C♯△7");
   await expect(page.locator("#selectSong")).toHaveValue(
     /alpha-study--jane-doe/,
   );
@@ -534,7 +534,7 @@ test("Songs tab can advance key on repeat and on song change", async ({
   await expect(page.locator("#txtCurrentKey")).toHaveText("D");
   await expect(
     page.locator("#txtProgression .songMeasure").nth(0),
-  ).toContainText("DΔ7");
+  ).toContainText("D△7");
 });
 
 test("Songs tab can sync measure timing to the metronome", async ({ page }) => {

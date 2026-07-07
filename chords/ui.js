@@ -185,6 +185,7 @@ function enforceVoicingChordConstraints() {
   }
 
   _lastVoicingMode = currentMode;
+  refreshChordToggleButtons();
 }
 
 function noKeys() {
@@ -307,21 +308,92 @@ function optionsChange() {
 
 function setChordCheckboxes(ids, state) {
   ids.forEach((id) => {
-    dom.chordCheckboxes[id].checked = state;
+    const checkbox = dom.chordCheckboxes[id];
+    if (checkbox && !checkbox.disabled) {
+      checkbox.checked = state;
+    }
   });
+  refreshChordToggleButtons();
 }
 
-const toggleAllChords = (state) => setChordCheckboxes(chordTypeIds, state);
-const toggleTriadChords = (state) =>
-  setChordCheckboxes(getChordGroupIds("triads"), state);
-const toggleSixthChords = (state) =>
-  setChordCheckboxes(getChordGroupIds("sixths"), state);
-const toggleSeventhChords = (state) =>
-  setChordCheckboxes(getChordGroupIds("sevenths"), state);
-const toggleMajorChords = (state) =>
-  setChordCheckboxes(getChordGroupIds("major"), state);
-const toggleMinorChords = (state) =>
-  setChordCheckboxes(getChordGroupIds("minor"), state);
+const chordToggleConfigs = [
+  { key: "all", label: "All", ids: () => chordTypeIds },
+  { key: "triads", label: "Triads", ids: () => getChordGroupIds("triads") },
+  { key: "sixths", label: "Sixths", ids: () => getChordGroupIds("sixths") },
+  {
+    key: "sevenths",
+    label: "Sevenths",
+    ids: () => getChordGroupIds("sevenths"),
+  },
+  { key: "majors", label: "Major", ids: () => getChordGroupIds("major") },
+  { key: "minors", label: "Minor", ids: () => getChordGroupIds("minor") },
+];
+
+function getChordToggleState(ids) {
+  const checkboxes = ids.map((id) => dom.chordCheckboxes[id]).filter(Boolean);
+  const selectableCheckboxes = checkboxes.filter((checkbox) => {
+    return !checkbox.disabled;
+  });
+  const visibleCheckboxes = selectableCheckboxes.length
+    ? selectableCheckboxes
+    : checkboxes;
+  const checkedCount = visibleCheckboxes.filter(
+    (checkbox) => checkbox.checked,
+  ).length;
+
+  if (checkedCount === 0) return "allOff";
+  if (checkedCount === visibleCheckboxes.length) return "allOn";
+  return "partial";
+}
+
+function updateChordToggleButton(config) {
+  const button = dom.chordToggleButtons[config.key];
+  if (!button) return;
+
+  const ids = config.ids();
+  const state = getChordToggleState(ids);
+  const stateLabels = {
+    allOn: "All on",
+    allOff: "All off",
+    partial: "Partial",
+  };
+  const stateIcons = {
+    allOn: "✓",
+    allOff: "×",
+    partial: "−",
+  };
+  const ariaPressed = {
+    allOn: "true",
+    allOff: "false",
+    partial: "mixed",
+  };
+  const allDisabled = ids.every((id) => dom.chordCheckboxes[id]?.disabled);
+  const stateClass = `is-${state.replace(/[A-Z]/g, (match) => `-${match.toLowerCase()}`)}`;
+
+  const accessibleLabel = config.label
+    ? `${config.label}: ${stateLabels[state]}`
+    : stateLabels[state];
+
+  button.textContent = stateIcons[state];
+  button.setAttribute("aria-label", accessibleLabel);
+  button.title = accessibleLabel;
+  button.dataset.state = state;
+  button.setAttribute("aria-pressed", ariaPressed[state]);
+  button.classList.remove("is-all-on", "is-all-off", "is-partial");
+  button.classList.add(stateClass);
+  button.disabled = allDisabled;
+}
+
+function refreshChordToggleButtons() {
+  chordToggleConfigs.forEach(updateChordToggleButton);
+}
+
+function cycleChordToggle(config) {
+  const ids = config.ids();
+  const state = getChordToggleState(ids);
+  setChordCheckboxes(ids, state !== "allOn");
+  syncSettingsStore();
+}
 
 const modeSectionsByTab = {
   tabChords: ["chordOptions"],
@@ -573,22 +645,17 @@ if (dom.songDisplayRomanNumerals) {
 refreshSongSelect();
 syncSongKeyControls();
 
-[
-  { key: "allOn", handler: () => toggleAllChords(true) },
-  { key: "allOff", handler: () => toggleAllChords(false) },
-  { key: "triadsOn", handler: () => toggleTriadChords(true) },
-  { key: "triadsOff", handler: () => toggleTriadChords(false) },
-  { key: "sixthsOn", handler: () => toggleSixthChords(true) },
-  { key: "sixthsOff", handler: () => toggleSixthChords(false) },
-  { key: "seventhsOn", handler: () => toggleSeventhChords(true) },
-  { key: "seventhsOff", handler: () => toggleSeventhChords(false) },
-  { key: "majorsOn", handler: () => toggleMajorChords(true) },
-  { key: "majorsOff", handler: () => toggleMajorChords(false) },
-  { key: "minorsOn", handler: () => toggleMinorChords(true) },
-  { key: "minorsOff", handler: () => toggleMinorChords(false) },
-].forEach(({ key, handler }) => {
-  dom.chordToggleButtons[key].addEventListener("click", handler);
+chordToggleConfigs.forEach((config) => {
+  dom.chordToggleButtons[config.key].addEventListener("click", () => {
+    cycleChordToggle(config);
+  });
 });
+Object.values(dom.chordCheckboxes).forEach((checkbox) => {
+  checkbox.addEventListener("change", () => {
+    refreshChordToggleButtons();
+  });
+});
+refreshChordToggleButtons();
 
 document.querySelectorAll("input[name='mode']").forEach((input) => {
   input.addEventListener("change", modeChange);

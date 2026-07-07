@@ -111,6 +111,24 @@ const logicPickSongIdForSongNavigation =
       (currentIndex + step + orderedSongs.length) % orderedSongs.length
     ].id;
   });
+const logicFormatKeyDisplay =
+  sharedGlobals.formatKeyDisplay ||
+  runtimeRoot.formatKeyDisplay ||
+  ((key) =>
+    typeof key === "string"
+      ? key
+          .trim()
+          .replace(
+            /^([A-Ga-g])([b#♭♯]?)/,
+            (_, root, accidental) =>
+              root.toUpperCase() +
+              (accidental === "b" || accidental === "♭"
+                ? "♭"
+                : accidental === "#" || accidental === "♯"
+                  ? "♯"
+                  : ""),
+          )
+      : "");
 const logicBuildSongPracticeTimeline =
   sharedGlobals.buildSongPracticeTimeline ||
   runtimeRoot.buildSongPracticeTimeline ||
@@ -3249,8 +3267,8 @@ function updateDisplay() {
 
   dom.currentKey.textContent =
     modeIsSongs() && currentSong
-      ? getCurrentSongTargetKey(currentSong)
-      : keys[keyIndex];
+      ? logicFormatKeyDisplay(getCurrentSongTargetKey(currentSong))
+      : logicFormatKeyDisplay(keys[keyIndex]);
 
   if (Array.isArray(currentProgression)) {
     const progressionLabel = (entry) =>
@@ -3355,7 +3373,7 @@ function getIntervalChordNotesAndName(key, degree, wrap = true) {
   let noteValue = (keyValue + degreeValue) % (wrap ? 12 : 127);
 
   // Get sevenths
-  let majorSeventh = degree.match(/M7/) || degree.match(/Δ/);
+  let majorSeventh = degree.match(/M7/) || degree.match(/[Δ△]/);
   let domSeventh = !majorSeventh && (halfDiminished || degree.match(/7/));
 
   // Later fix this to handle key signatures with flats
@@ -3415,7 +3433,7 @@ function getIntervalChordNotesAndName(key, degree, wrap = true) {
 }
 
 function generateProgression() {
-  dom.currentKey.textContent = keys[keyIndex];
+  dom.currentKey.textContent = logicFormatKeyDisplay(keys[keyIndex]);
 
   currentIndex = 0;
 
@@ -3533,7 +3551,7 @@ function generateProgression() {
 
     // Select a random cadence from the enabled list
     if (Object.keys(enabledCadences).length === 0) {
-      enabledCadences["Regular"] = ["ii7", "V7", "IΔ"];
+      enabledCadences["Regular"] = ["ii7", "V7", "I△"];
       enabledNames["Regular"] = "Regular";
     }
 

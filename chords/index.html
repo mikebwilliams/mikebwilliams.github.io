@@ -1173,135 +1173,218 @@
         </div>
 
         <div class="tabContent" id="panelModeChords">
-          <table id="tableChordSelections">
-            <tr>
-              <td><button id="btnChordsAllOn">All</button></td>
-              <td><button id="btnChordsAllOff">None</button></td>
-              <td><button id="btnChordsMajorOn">On</button></td>
-              <td><button id="btnChordsMajorOff">Off</button></td>
-              <td><button id="btnChordsMinorOn">On</button></td>
-              <td><button id="btnChordsMinorOff">Off</button></td>
-            </tr>
-            <tr>
-              <td><button id="btnChordsTriadsOn">Triads On</button></td>
-              <td><button id="btnChordsTriadsOff">Triads Off</button></td>
-              <td colspan="2">
-                <input type="checkbox" id="chkChordMajor" checked />Major
-              </td>
-              <td colspan="2">
-                <input type="checkbox" id="chkChordMinor" checked />Minor
-              </td>
-            </tr>
-
-            <tr>
-              <td></td>
-              <td></td>
-              <td colspan="2">
-                <input
-                  type="checkbox"
-                  id="chkChordAugmented"
-                  checked
-                />Augmented
-              </td>
-              <td colspan="2">
-                <input
-                  type="checkbox"
-                  id="chkChordDiminished"
-                  checked
-                />Diminished
-              </td>
-            </tr>
-            <tr>
-              <td></td>
-              <td></td>
-              <td colspan="2">
-                <input
-                  type="checkbox"
-                  id="chkChordSuspendedFourth"
-                  checked
-                />Suspended 4th
-              </td>
-              <td colspan="2">
-                <input
-                  type="checkbox"
-                  id="chkChordSuspendedSecond"
-                  checked
-                />Suspended 2nd
-              </td>
-            </tr>
-            <tr>
-              <td><button id="btnChordsSixthsOn">Sixths On</button></td>
-              <td><button id="btnChordsSixthsOff">Sixths Off</button></td>
-              <td colspan="2">
-                <input type="checkbox" id="chkChordSixth" checked />6th
-              </td>
-              <td colspan="2">
-                <input type="checkbox" id="chkChordMinorSixth" checked />Minor
-                6th
-              </td>
-            </tr>
-            <tr>
-              <td><button id="btnChordsSeventhsOn">Sevenths On</button></td>
-              <td><button id="btnChordsSeventhsOff">Sevenths Off</button></td>
-              <td colspan="2">
-                <input type="checkbox" id="chkChordSeventh" checked />7th
-              </td>
-              <td colspan="2">
-                <input type="checkbox" id="chkChordMinorSeventh" checked />Minor
-                7th
-              </td>
-            </tr>
-            <tr>
-              <td></td>
-              <td></td>
-              <td colspan="2">
-                <input type="checkbox" id="chkChordMajorSeventh" checked />Major
-                7th
-              </td>
-              <td colspan="2">
-                <input
-                  type="checkbox"
-                  id="chkChordMinorMajorSeventh"
-                  checked
-                />Minor Major 7th
-              </td>
-            </tr>
-            <tr>
-              <td></td>
-              <td></td>
-              <td colspan="2">
-                <input type="checkbox" id="chkChordAugmentedSeventh" checked />
-                Augmented 7th
-              </td>
-              <td colspan="2">
-                <input
-                  type="checkbox"
-                  id="chkChordHalfDiminishedSeventh"
-                  checked
-                />Half-Diminished 7th
-              </td>
-            </tr>
-            <tr>
-              <td></td>
-              <td></td>
-              <td colspan="2">
-                <input
-                  type="checkbox"
-                  id="chkChordAugmentedMajorSeventh"
-                  checked
-                />Augmented Major 7th
-              </td>
-              <td colspan="2">
-                <input
-                  type="checkbox"
-                  id="chkChordDiminishedSeventh"
-                  checked
-                />Diminished 7th
-              </td>
-            </tr>
+          <table id="tableChordSelections" aria-label="Chord type selections">
+            <thead>
+              <tr>
+                <th scope="col">Group</th>
+                <th scope="col">Mode</th>
+                <th scope="col">Major</th>
+                <th scope="col">Minor</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="chordTypeModeRow">
+                <th scope="row">All</th>
+                <td class="chordTypeStateCell">
+                  <button
+                    class="chordTypeStateButton"
+                    id="btnChordsAll"
+                    type="button"
+                  >
+                    &#10003;
+                  </button>
+                </td>
+                <td class="chordTypeStateCell">
+                  <button
+                    class="chordTypeStateButton"
+                    id="btnChordsMajor"
+                    type="button"
+                  >
+                    &#10003;
+                  </button>
+                </td>
+                <td class="chordTypeStateCell">
+                  <button
+                    class="chordTypeStateButton"
+                    id="btnChordsMinor"
+                    type="button"
+                  >
+                    &#10003;
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <th scope="rowgroup" rowspan="3">Triads</th>
+                <td class="chordTypeStateCell" rowspan="3">
+                  <button
+                    class="chordTypeStateButton"
+                    id="btnChordsTriads"
+                    type="button"
+                  >
+                    &#10003;
+                  </button>
+                </td>
+                <td>
+                  <label class="chordTypeOption">
+                    <input type="checkbox" id="chkChordMajor" checked />
+                    <span>Major</span>
+                  </label>
+                </td>
+                <td>
+                  <label class="chordTypeOption">
+                    <input type="checkbox" id="chkChordMinor" checked />
+                    <span>Minor</span>
+                  </label>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <label class="chordTypeOption">
+                    <input type="checkbox" id="chkChordAugmented" checked />
+                    <span>Augmented</span>
+                  </label>
+                </td>
+                <td>
+                  <label class="chordTypeOption">
+                    <input type="checkbox" id="chkChordDiminished" checked />
+                    <span>Diminished</span>
+                  </label>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <label class="chordTypeOption">
+                    <input
+                      type="checkbox"
+                      id="chkChordSuspendedFourth"
+                      checked
+                    />
+                    <span>Suspended 4th</span>
+                  </label>
+                </td>
+                <td>
+                  <label class="chordTypeOption">
+                    <input
+                      type="checkbox"
+                      id="chkChordSuspendedSecond"
+                      checked
+                    />
+                    <span>Suspended 2nd</span>
+                  </label>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Sixths</th>
+                <td class="chordTypeStateCell">
+                  <button
+                    class="chordTypeStateButton"
+                    id="btnChordsSixths"
+                    type="button"
+                  >
+                    &#10003;
+                  </button>
+                </td>
+                <td>
+                  <label class="chordTypeOption">
+                    <input type="checkbox" id="chkChordSixth" checked />
+                    <span>6th</span>
+                  </label>
+                </td>
+                <td>
+                  <label class="chordTypeOption">
+                    <input type="checkbox" id="chkChordMinorSixth" checked />
+                    <span>Minor 6th</span>
+                  </label>
+                </td>
+              </tr>
+              <tr>
+                <th scope="rowgroup" rowspan="4">Sevenths</th>
+                <td class="chordTypeStateCell" rowspan="4">
+                  <button
+                    class="chordTypeStateButton"
+                    id="btnChordsSevenths"
+                    type="button"
+                  >
+                    &#10003;
+                  </button>
+                </td>
+                <td>
+                  <label class="chordTypeOption">
+                    <input type="checkbox" id="chkChordSeventh" checked />
+                    <span>7th</span>
+                  </label>
+                </td>
+                <td>
+                  <label class="chordTypeOption">
+                    <input type="checkbox" id="chkChordMinorSeventh" checked />
+                    <span>Minor 7th</span>
+                  </label>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <label class="chordTypeOption">
+                    <input type="checkbox" id="chkChordMajorSeventh" checked />
+                    <span>Major 7th</span>
+                  </label>
+                </td>
+                <td>
+                  <label class="chordTypeOption">
+                    <input
+                      type="checkbox"
+                      id="chkChordMinorMajorSeventh"
+                      checked
+                    />
+                    <span>Minor Major 7th</span>
+                  </label>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <label class="chordTypeOption">
+                    <input
+                      type="checkbox"
+                      id="chkChordAugmentedSeventh"
+                      checked
+                    />
+                    <span>Augmented 7th</span>
+                  </label>
+                </td>
+                <td>
+                  <label class="chordTypeOption">
+                    <input
+                      type="checkbox"
+                      id="chkChordHalfDiminishedSeventh"
+                      checked
+                    />
+                    <span>Half-Diminished 7th</span>
+                  </label>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <label class="chordTypeOption">
+                    <input
+                      type="checkbox"
+                      id="chkChordAugmentedMajorSeventh"
+                      checked
+                    />
+                    <span>Augmented Major 7th</span>
+                  </label>
+                </td>
+                <td>
+                  <label class="chordTypeOption">
+                    <input
+                      type="checkbox"
+                      id="chkChordDiminishedSeventh"
+                      checked
+                    />
+                    <span>Diminished 7th</span>
+                  </label>
+                </td>
+              </tr>
+            </tbody>
           </table>
-
-          <br />
         </div>
 
         <div class="tabContent" id="panelModeProgressions">

@@ -217,18 +217,21 @@ test("Random flow resumes from the last practiced key after reload", async ({
     Math.random = originalRandom;
   });
 
-  const advancedKey = (
+  const advancedKeyDisplay = (
     (await page.locator("#txtCurrentKey").textContent()) || ""
   ).trim();
+  const advancedKeyValue = await page.locator("#selectFlowStart").inputValue();
 
-  expect(advancedKey).toBeTruthy();
-  expect(advancedKey).not.toBe("C");
+  expect(advancedKeyDisplay).toBeTruthy();
+  expect(advancedKeyDisplay).not.toBe("C");
+  expect(advancedKeyValue).toBeTruthy();
+  expect(advancedKeyValue).not.toBe("C");
 
   await page.reload();
 
   await expect(page.locator("#selectFlow")).toHaveValue("random");
-  await expect(page.locator("#selectFlowStart")).toHaveValue(advancedKey);
-  await expect(page.locator("#txtCurrentKey")).toHaveText(advancedKey);
+  await expect(page.locator("#selectFlowStart")).toHaveValue(advancedKeyValue);
+  await expect(page.locator("#txtCurrentKey")).toHaveText(advancedKeyDisplay);
 });
 
 test("Changing voicing mode updates chord answer and visible keyboard hints", async ({

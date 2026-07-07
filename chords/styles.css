@@ -417,18 +417,34 @@ a:visited {
 main.page {
   position: relative;
   z-index: 1;
-  width: min(100%, 1100px);
+  width: min(100%, 1760px);
   margin: 0 auto;
-  padding: 56px 24px 96px;
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
+  padding: 28px 24px 72px;
+  display: grid;
+  grid-template-columns: minmax(640px, 1fr) minmax(620px, 700px);
+  grid-template-areas:
+    "practice mode"
+    "practice options";
+  gap: 22px;
+  align-items: start;
+}
+
+@media (max-width: 1360px) {
+  main.page {
+    width: min(100%, 1180px);
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "practice"
+      "mode"
+      "options";
+    gap: 24px;
+  }
 }
 
 @media (max-width: 640px) {
   main.page {
-    padding: 36px 16px 72px;
-    gap: 24px;
+    padding: 18px 12px 56px;
+    gap: 16px;
   }
 }
 
@@ -446,7 +462,7 @@ main.page {
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
-  padding: 32px 36px;
+  padding: 22px 24px;
 }
 
 html[data-theme="classical"] .surfaceCard {
@@ -501,18 +517,70 @@ html[data-theme="darkClassical"] .surfaceCard {
 
 .heroCard {
   position: relative;
-  text-align: center;
+  grid-area: practice;
+  min-width: 0;
+  text-align: left;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 32px;
-  padding: 60px 36px 52px;
+  gap: 18px;
+  padding: 34px 28px 30px;
   background-color: var(--surface-900);
   border-color: var(--border-strong);
   box-shadow:
     var(--shadow-soft),
     inset 0 0 0 2px var(--hero-inset),
     inset 0 -5px 0 var(--hero-foot);
+}
+
+.modeSection {
+  grid-area: mode;
+}
+
+.optionsSection {
+  grid-area: options;
+}
+
+.modeSection,
+.optionsSection {
+  min-width: 0;
+}
+
+@media (max-width: 1360px) {
+  .heroCard {
+    padding: 30px 26px 28px;
+  }
+
+  .challengeActiveArea {
+    grid-template-columns: 1fr;
+  }
+
+  #panelHeader,
+  #txtProgression {
+    text-align: center;
+    justify-content: center;
+  }
+
+  #panelHeader {
+    padding-right: 48px;
+  }
+}
+
+@media (max-width: 640px) {
+  .surfaceCard {
+    border-radius: var(--radius-md);
+    padding: 18px 16px;
+  }
+
+  .heroCard {
+    gap: 16px;
+    padding: 52px 16px 22px;
+  }
+
+  #panelHeader {
+    padding-right: 0;
+    font-size: clamp(2.1rem, 1.45rem + 6vw, 3.15rem);
+  }
 }
 
 .themePicker {
@@ -593,10 +661,16 @@ html[data-theme="darkClassical"] .surfaceCard {
 }
 
 .challengeActiveArea {
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
   align-items: stretch;
+}
+
+#panelKeyboard,
+#panelMetronome,
+#panelDailyStats {
+  grid-column: 1 / -1;
 }
 
 .challengePiano {
@@ -660,9 +734,10 @@ html[data-theme="darkClassical"] .surfaceCard {
   margin: 0;
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0.45rem;
-  font-size: clamp(2.1rem, 1.35rem + 2vw, 3.2rem);
+  padding-right: 54px;
+  font-size: clamp(2.35rem, 1.2rem + 3.2vw, 4.4rem);
   font-family: var(--font-hand);
   font-weight: var(--display-font-weight);
   letter-spacing: 0;
@@ -691,8 +766,8 @@ html[data-theme="darkClassical"] .surfaceCard {
 }
 
 #txtProgression {
-  text-align: center;
-  margin-top: -0.6rem;
+  text-align: left;
+  margin-top: -0.35rem;
   font-family: var(--font-hand);
   font-size: clamp(0.85rem, 0.7rem + 0.8vw, 1.1rem);
   letter-spacing: 0.16em;
@@ -1608,8 +1683,8 @@ details.challengeCollapsible > summary .summaryActions {
 }
 
 .sectionTitle {
-  margin: 0 0 18px;
-  font-size: 1.6rem;
+  margin: 0 0 12px;
+  font-size: 1.15rem;
   font-family: var(--font-hand);
   font-weight: var(--display-font-weight);
   letter-spacing: 0;
@@ -1617,10 +1692,10 @@ details.challengeCollapsible > summary .summaryActions {
 
 .tabs {
   position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .tabs input[type="radio"] {
@@ -1634,7 +1709,7 @@ details.challengeCollapsible > summary .summaryActions {
   color: var(--text-dim);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-sm);
-  padding: 0.55rem 1.1rem;
+  padding: 0.52rem 0.72rem;
   cursor: pointer;
   transition:
     background var(--transition),
@@ -1644,6 +1719,10 @@ details.challengeCollapsible > summary .summaryActions {
     box-shadow var(--transition);
   font-weight: 700;
   letter-spacing: 0.02em;
+  justify-content: center;
+  margin: 0;
+  min-height: 2.45rem;
+  text-align: center;
 }
 
 .tabs label:hover {
@@ -1664,8 +1743,9 @@ details.challengeCollapsible > summary .summaryActions {
   background: var(--panel-bg);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
-  padding: 22px 24px;
+  padding: 18px;
   margin-bottom: 12px;
+  overflow-x: auto;
 }
 
 .tabContent.active {
@@ -1680,6 +1760,22 @@ details.challengeCollapsible > summary .summaryActions {
 .optionsSection .tabContent,
 .modeSection .tabContent {
   margin-bottom: 0;
+}
+
+@media (min-width: 1361px) {
+  .modeSection .tabContent,
+  .optionsSection .tabContent {
+    max-height: min(640px, calc(100vh - 150px));
+    overflow: auto;
+  }
+
+  .modeSection .tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .optionsSection .tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 hr {
@@ -1914,6 +2010,12 @@ textarea:focus {
   margin: 12px 0;
 }
 
+#tableJazzBricks,
+#panelOptionsVoicings table,
+#panelKeyChecklist table {
+  min-width: 520px;
+}
+
 .optionsSection th,
 .optionsSection td,
 .modeSection th,
@@ -1937,8 +2039,76 @@ textarea:focus {
   margin: 4px 6px;
 }
 
-#tableChordSelections button {
+#tableChordSelections {
   width: 100%;
+  table-layout: fixed;
+}
+
+#tableChordSelections th:first-child {
+  width: 24%;
+}
+
+#tableChordSelections th:nth-child(2) {
+  width: 19%;
+}
+
+#tableChordSelections td {
+  overflow-wrap: anywhere;
+}
+
+#tableChordSelections .chordTypeStateCell {
+  text-align: left;
+  vertical-align: top;
+}
+
+.chordTypeModeRow th,
+.chordTypeModeRow td {
+  background: var(--inner-card-bg);
+}
+
+.chordTypeOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.chordTypeOption span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+#panelModeChords .chordTypeStateButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  min-height: 2.2rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border-color: var(--border-strong);
+  font-size: 1.1rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.chordTypeStateButton.is-all-on {
+  background: color-mix(in srgb, var(--accent) 82%, var(--panel-bg));
+  color: var(--button-color);
+}
+
+.chordTypeStateButton.is-all-off {
+  background: var(--button-bg);
+  color: var(--text-muted);
+}
+
+.chordTypeStateButton.is-partial {
+  background: var(--input-bg-soft);
+  border-style: dashed;
+  color: var(--text-primary);
 }
 
 #panelModeProgressions select,

@@ -6,6 +6,7 @@ const {
   buildSongPracticeTimeline,
   buildSongDisplayRows,
   formatIRealProChordDisplay,
+  formatKeyDisplay,
 } = require("../data.js");
 
 const tests = [];
@@ -22,6 +23,12 @@ test("parseIRealProSource parses a single irealbook song url", () => {
   assert.strictEqual(parsed.songs[0].title, "Practice Song");
   assert.strictEqual(parsed.songs[0].composer, "John Doe");
   assert.strictEqual(parsed.songs[0].key, "C");
+});
+
+test("formatKeyDisplay uses music symbols for key accidentals", () => {
+  assert.strictEqual(formatKeyDisplay("Bb"), "B♭");
+  assert.strictEqual(formatKeyDisplay("C#"), "C♯");
+  assert.strictEqual(formatKeyDisplay("A-"), "A-");
 });
 
 test("buildPlayableSongEntries normalizes iReal qualities and repeats", () => {
@@ -41,7 +48,7 @@ test("buildPlayableSongEntries normalizes iReal qualities and repeats", () => {
     })),
     [
       {
-        label: "B♭Δ7/E♭",
+        label: "B♭△7/E♭",
         rawLabel: "Bb^7/Eb",
         playableChord: "BbM7",
         bassNote: "Eb",
@@ -115,7 +122,7 @@ test("buildPlayableSongEntries preserves altered fifths and ninths", () => {
         playableChord: "Bb7b9b5",
       },
       {
-        label: "B♭Δ7♭5",
+        label: "B♭△7♭5",
         rawLabel: "Bb^7b5",
         playableChord: "BbM7b5",
       },
@@ -298,18 +305,18 @@ test("buildPlayableSongEntries resolves spaced slash bass over previous harmony"
       },
       {
         label: "/B",
-rawLabel: "C-/B",
+        rawLabel: "C-/B",
         playableChord: "Cm",
         bassNote: "B",
-measureIndex: 0,
-chordIndex: 1,
+        measureIndex: 0,
+        chordIndex: 1,
       },
       {
         label: "C-7/B♭",
         rawLabel: "C-7/Bb",
         playableChord: "Cm7",
         bassNote: "Bb",
-measureIndex: 1,
+        measureIndex: 1,
         chordIndex: 0,
       },
     ],
@@ -369,12 +376,12 @@ test("buildPlayableSongEntries preserves 11th and sharp-11 qualities", () => {
         playableChord: "C11",
       },
       {
-        label: "CΔ11",
+        label: "C△11",
         rawLabel: "C^11",
         playableChord: "CM11",
       },
       {
-        label: "CΔ7♯11",
+        label: "C△7♯11",
         rawLabel: "C^7#11",
         playableChord: "CM7#11",
       },
@@ -384,7 +391,7 @@ test("buildPlayableSongEntries preserves 11th and sharp-11 qualities", () => {
         playableChord: "C9#11",
       },
       {
-        label: "CΔ9♯11",
+        label: "C△9♯11",
         rawLabel: "C^9#11",
         playableChord: "CM9#11",
       },
@@ -394,7 +401,7 @@ test("buildPlayableSongEntries preserves 11th and sharp-11 qualities", () => {
         playableChord: "C13#11",
       },
       {
-        label: "CΔ13♯11",
+        label: "C△13♯11",
         rawLabel: "C^13#11",
         playableChord: "CM13#11",
       },
@@ -419,7 +426,7 @@ test("buildPlayableSongEntries can label songs with roman numerals", () => {
     })),
     [
       {
-        label: "IΔ7/III",
+        label: "I△7/III",
         rawLabel: "C^7/E",
         playableChord: "CM7",
         bassNote: "E",
@@ -463,7 +470,7 @@ test("buildPlayableSongEntries transposes songs into a requested target key", ()
     })),
     [
       {
-        label: "CΔ7/F",
+        label: "C△7/F",
         rawLabel: "C^7/F",
         playableChord: "CM7",
         bassNote: "F",
@@ -512,7 +519,7 @@ test("buildSongDisplayRows transposes displayed chord labels when requested", ()
     rows[0].map((measure) =>
       measure.chords.map((chord) => chord.label).join(" "),
     ),
-    ["CΔ7", "A-7", "D7", "G7"],
+    ["C△7", "A-7", "D7", "G7"],
   );
 });
 
@@ -529,7 +536,7 @@ test("buildSongDisplayRows can render roman numeral labels", () => {
     rows[0].map((measure) =>
       measure.chords.map((chord) => chord.label).join(" "),
     ),
-    ["IΔ7", "vi7", "II7", "V7"],
+    ["I△7", "vi7", "II7", "V7"],
   );
 });
 
@@ -604,7 +611,7 @@ test("song transposition uses the tonic from minor key names", () => {
 
   assert.deepStrictEqual(
     entries.map((entry) => entry.label),
-    ["C-7", "F7", "A♯Δ7"],
+    ["C-7", "F7", "A♯△7"],
   );
 });
 
@@ -617,7 +624,7 @@ test("formatIRealProChordDisplay uses jazz symbols for accidentals and major cho
 
   assert.strictEqual(
     formatIRealProChordDisplay(firstMeasure.chords[0]),
-    "B♭Δ7 (E7♯9)",
+    "B♭△7 (E7♯9)",
   );
   assert.strictEqual(
     formatIRealProChordDisplay(secondMeasure.chords[0]),
