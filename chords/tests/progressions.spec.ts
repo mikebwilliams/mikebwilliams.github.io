@@ -17,7 +17,7 @@ test("Progression display preserves roman numeral capitalization", async ({
   await expect(cadence).toHaveCSS("text-transform", "none");
 
   const progression = page.locator("#txtProgression");
-  await expect(progression).toContainText("ii7 - V7 - IM7");
+  await expect(progression).toContainText("iiί - Vί - Iª");
   await expect(progression).toHaveCSS("text-transform", "none");
 });
 

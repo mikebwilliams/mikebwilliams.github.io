@@ -3899,6 +3899,12 @@ function applyThemeSelection(theme) {
   if (hasDocument && document.documentElement) {
     document.documentElement.dataset.theme = selectedTheme;
   }
+  const refreshDisplay =
+    appGlobals.refreshDisplayForThemeChange ||
+    (appGlobals.root && appGlobals.root.refreshDisplayForThemeChange);
+  if (typeof refreshDisplay === "function") {
+    refreshDisplay(selectedTheme);
+  }
   return selectedTheme;
 }
 

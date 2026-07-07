@@ -44,6 +44,75 @@ test("Chord type controls fit the desktop control rail without horizontal scroll
   expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth);
 });
 
+test("Non-book themes display triangle major symbols instead of Greek delta", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+
+  await page.evaluate(() => {
+    document.documentElement.dataset.theme = "classical";
+    currentChordName = "C#-Δ7";
+    updateDisplay();
+  });
+
+  await expect(page.locator("#txtChord")).toHaveText("C♯-△7");
+});
+
+test("Book themes display chord symbols with Realbook glyph codepoints", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+
+  await page.evaluate(() => {
+    document.documentElement.dataset.theme = "lightBook";
+    currentChordName = "Cm7";
+    updateDisplay();
+  });
+  await expect(page.locator("#txtChord")).toHaveText("CΜί");
+  await expect
+    .poll(() =>
+      page
+        .locator("#txtChord")
+        .evaluate((el) =>
+          Array.from(el.textContent || "").map((char) =>
+            char.codePointAt(0)?.toString(16),
+          ),
+        ),
+    )
+    .toEqual(["43", "39c", "3af"]);
+
+  await page.evaluate(() => {
+    currentChordName = "Cdim7";
+    updateDisplay();
+  });
+  await expect(page.locator("#txtChord")).toHaveText("C°ί");
+
+  await page.evaluate(() => {
+    currentChordName = "Cmaj7";
+    updateDisplay();
+  });
+  await expect(page.locator("#txtChord")).toHaveText("Cª");
+
+  await page.evaluate(() => {
+    currentChordName = "Bbm7b5";
+    updateDisplay();
+  });
+  await expect(page.locator("#txtChord")).toHaveText("BьØ");
+
+  await page.evaluate(() => {
+    currentChordName = "C#-Δ7";
+    updateDisplay();
+  });
+  await expect(page.locator("#txtChord")).toHaveText("C#Μª");
+
+  await page.evaluate(() => {
+    document.documentElement.dataset.theme = "classical";
+    currentChordName = "Cm7";
+    updateDisplay();
+  });
+  await expect(page.locator("#txtChord")).toHaveText("Cm7");
+});
+
 test("Chord type group controls cycle and reflect partial selections", async ({
   page,
 }) => {

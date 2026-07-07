@@ -169,6 +169,32 @@ test("theme picker switches and persists alternate book themes", async ({
   }
 });
 
+test("theme picker re-renders visible chord symbols for the selected font", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.evaluate(() => {
+    currentChordName = "Bbm7b5";
+    updateDisplay();
+  });
+  await expect(page.locator("#txtChord")).toHaveText("BьØ");
+
+  await page.locator("#panelThemePicker summary").click();
+  await page.getByLabel("Classical", { exact: true }).check();
+
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "classical");
+  await expect(page.locator("#txtChord")).toHaveText("B♭m7♭5");
+
+  await page.locator("#panelThemePicker summary").click();
+  await page.getByLabel("DarkBook", { exact: true }).check();
+
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "darkBook");
+  await expect(page.locator("#txtChord")).toHaveText("BьØ");
+});
+
 test("loading a workout entry preserves the current theme", async ({
   page,
 }) => {

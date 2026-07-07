@@ -1481,6 +1481,126 @@ function generateChordName(root, chordType) {
   return root + chordType;
 }
 
+function chordDisplayUsesRealbookGlyphs() {
+  if (!documentAvailable || !document.documentElement) return false;
+  const theme = document.documentElement.dataset.theme;
+  return theme === "lightBook" || theme === "darkBook";
+}
+
+const REALBOOK_FLAT = "ь";
+const REALBOOK_SUFFIX_FLAT = "β";
+const REALBOOK_MINOR = "Μ";
+const REALBOOK_MAJOR = "ª";
+const REALBOOK_SEVENTH = "ί";
+const REALBOOK_SIXTH = "ή";
+const REALBOOK_NINTH = "α";
+const REALBOOK_PLUS = "δ";
+const REALBOOK_HALF_DIMINISHED = "Ø";
+const REALBOOK_DIMINISHED = "°";
+
+function formatStandardChordDisplayText(chordName) {
+  return String(chordName || "")
+    .replace(/#/g, "♯")
+    .replace(/b/g, "♭")
+    .replace(/Δ/g, "△");
+}
+
+function formatRealbookRootAccidental(accidental) {
+  if (accidental === "b" || accidental === "♭" || accidental === REALBOOK_FLAT)
+    return REALBOOK_FLAT;
+  if (accidental === "♯" || accidental === "#") return "#";
+  return "";
+}
+
+function formatRealbookChordSuffix(suffix) {
+  let text = String(suffix || "")
+    .replace(/♭/g, "b")
+    .replace(/♯/g, "#")
+    .replace(/Δ/g, "△");
+  const compact = text.replace(/\s+/g, "");
+
+  if (/^(?:m|-)?7?b5$/.test(compact) || /^ø7?$/i.test(compact)) {
+    return REALBOOK_HALF_DIMINISHED;
+  }
+  if (/^(?:m|-)(?:M7?|ma7?|maj7?|△7?)$/.test(compact)) {
+    return REALBOOK_MINOR + REALBOOK_MAJOR;
+  }
+
+  text = text.replace(/^(?:maj|ma|M|△)7?/, REALBOOK_MAJOR);
+  text = text.replace(/^(?:min|mi|m)(?!aj)/, REALBOOK_MINOR);
+  text = text.replace(/^-/, REALBOOK_MINOR);
+  text = text.replace(/^dim/, REALBOOK_DIMINISHED);
+  text = text.replace(/^[oº°]/, REALBOOK_DIMINISHED);
+  text = text.replace(/^aug/, REALBOOK_PLUS);
+
+  return text
+    .replace(/ø/g, REALBOOK_HALF_DIMINISHED)
+    .replace(/Ø/g, REALBOOK_HALF_DIMINISHED)
+    .replace(/△/g, REALBOOK_MAJOR)
+    .replace(/7/g, REALBOOK_SEVENTH)
+    .replace(/6/g, REALBOOK_SIXTH)
+    .replace(/9/g, REALBOOK_NINTH)
+    .replace(/b/g, REALBOOK_SUFFIX_FLAT)
+    .replace(/\+/g, REALBOOK_PLUS);
+}
+
+function formatRealbookNoteName(noteName) {
+  const match = String(noteName || "").match(/^([A-G])([#b♯♭ь]?)$/);
+  if (!match) return noteName;
+  return match[1] + formatRealbookRootAccidental(match[2]);
+}
+
+function formatRealbookChordToken(token) {
+  const match = String(token || "").match(/^([A-G])([#b♯♭ь]?)(.*)$/);
+  if (!match) return token;
+
+  const root = match[1] + formatRealbookRootAccidental(match[2]);
+  const slashMatch = match[3].match(/^([^/]*)(\/[A-G][#b♯♭ь]?)(.*)$/);
+  if (slashMatch) {
+    const bass = slashMatch[2].slice(1);
+    return (
+      root +
+      formatRealbookChordSuffix(slashMatch[1]) +
+      "/" +
+      formatRealbookNoteName(bass) +
+      slashMatch[3]
+    );
+  }
+
+  return root + formatRealbookChordSuffix(match[3]);
+}
+
+function formatRealbookFallbackSymbols(text) {
+  return text
+    .replace(/(^|[\s(/|,-])b(?=[ivIV]+)/g, `$1${REALBOOK_FLAT}`)
+    .replace(/(?:maj|ma|M)7/g, REALBOOK_MAJOR)
+    .replace(/△7?|Δ7?/g, REALBOOK_MAJOR)
+    .replace(/ø7?/gi, REALBOOK_HALF_DIMINISHED)
+    .replace(/[♭ь]/g, REALBOOK_FLAT)
+    .replace(/♯/g, "#")
+    .replace(/o(?=7|$)/g, REALBOOK_DIMINISHED)
+    .replace(/º|°/g, REALBOOK_DIMINISHED)
+    .replace(/\+/g, REALBOOK_PLUS)
+    .replace(/7/g, REALBOOK_SEVENTH)
+    .replace(/6/g, REALBOOK_SIXTH)
+    .replace(/9/g, REALBOOK_NINTH);
+}
+
+function formatRealbookChordDisplayText(chordName) {
+  const text = String(chordName || "");
+  const withChordTokens = text.replace(
+    /[A-G][#b♯♭ь]?[^\s()[\]{}|,;:]*/g,
+    formatRealbookChordToken,
+  );
+  return formatRealbookFallbackSymbols(withChordTokens);
+}
+
+function formatChordDisplayText(chordName) {
+  return chordDisplayUsesRealbookGlyphs()
+    ? formatRealbookChordDisplayText(chordName)
+    : formatStandardChordDisplayText(chordName);
+}
+
 function escapeHtml(value) {
   return String(value)
     .replace(/&/g, "&amp;")
@@ -1631,7 +1751,10 @@ function buildSongBarHtml(bar, location) {
 }
 
 function renderSongChordLabelHtml(label) {
-  return escapeHtml(label).replace(
+  const displayLabel = chordDisplayUsesRealbookGlyphs()
+    ? formatChordDisplayText(label)
+    : label;
+  return escapeHtml(displayLabel).replace(
     /[♭♯]/g,
     (symbol) => `<span class="songMeasureAccidental">${symbol}</span>`,
   );
@@ -3264,11 +3387,7 @@ function updateDisplay() {
     dom.progressionDisplay.style.display = "block";
   }
 
-  let text = currentChordName;
-
-  // Turn # and b into sharp and flat symbols
-  text = text.replace(/#/g, "♯");
-  text = text.replace(/b/g, "♭");
+  let text = formatChordDisplayText(currentChordName);
 
   dom.chordDisplay.textContent = text;
   dom.chordDisplay.title = "";
@@ -3279,10 +3398,11 @@ function updateDisplay() {
     dom.chordDisplay.classList.remove("incorrect");
   }
 
-  dom.currentKey.textContent =
+  const currentKeyText =
     modeIsSongs() && currentSong
       ? logicFormatKeyDisplay(getCurrentSongTargetKey(currentSong))
       : logicFormatKeyDisplay(keys[keyIndex]);
+  dom.currentKey.textContent = formatChordDisplayText(currentKeyText);
 
   if (Array.isArray(currentProgression)) {
     const progressionLabel = (entry) =>
@@ -3291,6 +3411,8 @@ function updateDisplay() {
         : entry && typeof entry.label === "string"
           ? entry.label
           : "";
+    const progressionDisplayLabel = (entry) =>
+      formatChordDisplayText(progressionLabel(entry));
     if (modeIsSongs() && currentSong) {
       dom.progressionDisplay.innerHTML = buildSongChartHtml(
         currentSong,
@@ -3310,7 +3432,7 @@ function updateDisplay() {
       dom.progressionDisplay.innerHTML = currentProgression
         .map(
           (chord) =>
-            `<span class="chord">${escapeHtml(progressionLabel(chord))}</span>`,
+            `<span class="chord">${escapeHtml(progressionDisplayLabel(chord))}</span>`,
         )
         .join(" - ");
     }
@@ -3335,6 +3457,15 @@ function updateDisplay() {
       }
     }
   });
+}
+
+function refreshDisplayForThemeChange() {
+  updateDisplay();
+}
+
+sharedGlobals.refreshDisplayForThemeChange = refreshDisplayForThemeChange;
+if (runtimeRoot) {
+  runtimeRoot.refreshDisplayForThemeChange = refreshDisplayForThemeChange;
 }
 
 function getIntervalChordNotesAndName(key, degree, wrap = true) {
