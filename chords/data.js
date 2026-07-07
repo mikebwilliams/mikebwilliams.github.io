@@ -398,7 +398,6 @@ const optionsPanels = {
   tabSpacedRep: requireElement("panelOptionsSpacedRep"),
   tabPresets: requireElement("panelOptionsPresets"),
   tabWorkouts: requireElement("panelOptionsWorkouts"),
-  tabMidi: requireElement("panelOptionsMidi"),
 };
 
 const modeSections = {
@@ -642,6 +641,7 @@ const domElements = {
   degreeCheckboxes,
   piano: requireElement("panelPiano"),
   keyboardDetails: requireElement("panelKeyboard"),
+  keyboardSummary: requireElement("txtKeyboardSummary"),
   skipButton: requireElement("btnSkip"),
   playAnswerButton: requireElement("btnPlayAnswer"),
   spacedRepClearButton: requireElement("btnSpacedRepClear"),

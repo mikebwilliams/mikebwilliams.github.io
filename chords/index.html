@@ -64,7 +64,7 @@
             <summary>
               <span class="collapsibleTitle">Keyboard</span>
               <span class="collapsibleStatus" id="txtKeyboardSummary"
-                >Piano input</span
+                >MIDI: not connected</span
               >
               <div class="summaryActions">
                 <button id="btnSkip" type="button">Skip</button>
@@ -125,6 +125,26 @@
                   <span>Play Answer Notes over MIDI</span>
                 </label>
               </div>
+
+              <details class="keyboardSubCollapsible" id="panelKeyboardMidi">
+                <summary>
+                  <span class="collapsibleTitle">MIDI</span>
+                  <span class="collapsibleStatus">Devices</span>
+                </summary>
+                <div class="keyboardSubCollapsibleBody" id="panelOptionsMidi">
+                  <div class="midiStatusRow">
+                    <label id="labelMidiStatus"
+                      >MIDI Status:
+                      <span id="txtMidiStatus">Not Connected</span></label
+                    >
+                    <button id="btnMidiRefresh" type="button">
+                      Refresh Devices
+                    </button>
+                  </div>
+                  <table id="tableMidiInputs"></table>
+                  <table id="tableMidiOutputs"></table>
+                </div>
+              </details>
             </div>
           </details>
 
@@ -1223,15 +1243,6 @@
               data-options-tab
             />
             <label for="tabOptionsSpacedRep">Spaced Repetition</label>
-
-            <input
-              type="radio"
-              id="tabOptionsMidi"
-              name="preferencesOptions"
-              value="tabMidi"
-              data-options-tab
-            />
-            <label for="tabOptionsMidi">MIDI</label>
           </div>
 
           <div class="tabContent" id="panelOptionsDisplay">
@@ -1273,18 +1284,6 @@
               <div id="panelSpacedRepList"></div>
               <button id="btnSpacedRepClear">Clear List</button>
             </div>
-          </div>
-
-          <div class="tabContent" id="panelOptionsMidi">
-            <div class="midiStatusRow">
-              <label id="labelMidiStatus"
-                >MIDI Status:
-                <span id="txtMidiStatus">Not Connected</span></label
-              >
-              <button id="btnMidiRefresh" type="button">Refresh Devices</button>
-            </div>
-            <table id="tableMidiInputs"></table>
-            <table id="tableMidiOutputs"></table>
           </div>
         </section>
 

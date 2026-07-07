@@ -76,7 +76,11 @@ test("settings controls are split into independent sections", async ({
   await expect(page.locator("#panelOptionsWorkouts")).toBeVisible();
   await expect(page.locator("#panelOptionsDisplay")).toBeVisible();
 
-  await page.click("label[for='tabOptionsMidi']");
+  await expect(page.locator("label[for='tabOptionsMidi']")).toHaveCount(0);
+  await expect(page.locator("#panelOptionsMidi")).toBeHidden();
+  await openKeyboard(page);
+  await expect(page.locator("#panelOptionsMidi")).toBeHidden();
+  await page.click("#panelKeyboardMidi > summary");
   await expect(page.locator("#panelOptionsMidi")).toBeVisible();
   await expect(page.locator("#panelOptionsVoicings")).toBeVisible();
   await expect(page.locator("#panelOptionsWorkouts")).toBeVisible();

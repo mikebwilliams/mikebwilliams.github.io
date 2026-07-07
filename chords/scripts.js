@@ -2855,6 +2855,35 @@ function handleMidiStateChange() {
   refreshMidiDeviceState();
 }
 
+function setMidiStatusText(statusText, keyboardStatusText = statusText) {
+  if (dom.midiStatusText) {
+    dom.midiStatusText.textContent = statusText;
+  }
+  if (dom.keyboardSummary) {
+    dom.keyboardSummary.textContent = keyboardStatusText;
+  }
+}
+
+function updateMidiKeyboardSummary(
+  inputs = getAvailableMidiInputs(),
+  outputs = getAvailableMidiOutputs(),
+) {
+  if (!dom.keyboardSummary) return;
+  if (!midiAccess) {
+    dom.keyboardSummary.textContent = "MIDI: not connected";
+    return;
+  }
+  if (!inputs.length) {
+    dom.keyboardSummary.textContent = "MIDI: no inputs";
+    return;
+  }
+
+  const activeInputs = inputs.filter((input) =>
+    selectedMidiInputIds.has(input.id),
+  ).length;
+  dom.keyboardSummary.textContent = `MIDI: ${activeInputs} in / ${outputs.length} out`;
+}
+
 function refreshMidiDeviceState() {
   if (!midiAccess) return;
 
@@ -2865,10 +2894,13 @@ function refreshMidiDeviceState() {
 
   // If there are no inputs, notify the user.
   if (!inputs.length) {
-    dom.midiStatusText.textContent =
-      "No MIDI inputs detected. Please connect a MIDI device.";
+    setMidiStatusText(
+      "No MIDI inputs detected. Please connect a MIDI device.",
+      "MIDI: no inputs",
+    );
   } else {
-    dom.midiStatusText.textContent = "MIDI connected.";
+    setMidiStatusText("MIDI connected.");
+    updateMidiKeyboardSummary(inputs, outputs);
   }
 
   renderMidiDeviceTables(inputs, outputs);
@@ -2937,13 +2969,18 @@ function spacedRepClearAll() {
 }
 
 function onMIDIFailure(error) {
-  dom.midiStatusText.textContent = "Failed to get MIDI access. Error: " + error;
+  setMidiStatusText(
+    "Failed to get MIDI access. Error: " + error,
+    "MIDI: access failed",
+  );
 }
 
 function requestMIDIDeviceAccess() {
   if (!navigator.requestMIDIAccess) {
-    dom.midiStatusText.textContent =
-      "Your browser does not support MIDI access. Please ensure you are using a browser that supports WebMIDI, and that you are accessing this site from HTTPS, as some browsers require secure connections for WebMIDI.";
+    setMidiStatusText(
+      "Your browser does not support MIDI access. Please ensure you are using a browser that supports WebMIDI, and that you are accessing this site from HTTPS, as some browsers require secure connections for WebMIDI.",
+      "MIDI: unsupported",
+    );
     return;
   }
   navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
@@ -2955,7 +2992,7 @@ function initMIDI() {
 }
 
 function refreshMIDIDevices() {
-  dom.midiStatusText.textContent = "Refreshing MIDI devices...";
+  setMidiStatusText("Refreshing MIDI devices...", "MIDI: refreshing");
   requestMIDIDeviceAccess();
 }
 
@@ -3036,6 +3073,7 @@ function renderMidiDeviceTables(
           disabledMidiInputIds.add(id);
           selectedMidiInputIds.delete(id);
         }
+        updateMidiKeyboardSummary(inputs, outputs);
         refreshMidiListeners();
       });
     });
@@ -3048,6 +3086,7 @@ function renderMidiDeviceTables(
         const id = e.target.getAttribute("data-midi-out");
         if (e.target.checked) selectedMidiOutputIds.add(id);
         else selectedMidiOutputIds.delete(id);
+        updateMidiKeyboardSummary(inputs, outputs);
       });
     });
 }
