@@ -2335,15 +2335,17 @@ function recordDegreeCompletion() {
 
 function handleMidiMessage(midiMessage) {
   let pressedNotes = midiMessage.data;
-  let command = pressedNotes[0] & 0xf0;
   let velocity = pressedNotes[2];
   let keyEvent = false;
 
   // Check for MIDI message type to determine if the key is pressed or released.
-  if (command === 0x90 && velocity > 0) {
+  if (pressedNotes[0] === 144 && velocity > 0) {
     handleKeyPressed(pressedNotes[1]);
     keyEvent = true;
-  } else if (command === 0x80 || (command === 0x90 && velocity === 0)) {
+  } else if (
+    pressedNotes[0] === 128 ||
+    (pressedNotes[0] === 144 && velocity === 0)
+  ) {
     handleKeyReleased(pressedNotes[1]);
     keyEvent = true;
   }
