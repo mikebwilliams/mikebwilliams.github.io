@@ -1984,21 +1984,23 @@ function setRandomChord() {
     return null;
   }
 
-  do {
-    // 'Random' root may actually be circle of fourths/fifths, and is generated in the nextKey function
-    let randomRoot = keys[keyIndex];
-    let randomChordType =
-      selectedChordTypes[Math.floor(Math.random() * selectedChordTypes.length)];
-
-    currentChordInternalName = randomRoot + randomChordType;
-    const baseNotes = generateNotesFromChordName(currentChordInternalName);
-    currentChordNotes = applySelectedVoicing(baseNotes);
-    currentChordName = generateChordName(randomRoot, randomChordType);
-    // Loop until we get a new chord, or the user has only selected one chord type
-  } while (
-    currentChordInternalName === lastChordInternalName &&
-    (selectedChordTypes.length > 1 || keys.length > 1)
+  // 'Random' root may actually be circle of fourths/fifths, and is generated
+  // in nextKey(). Avoid repeating the previous chord when another chord type
+  // is available without retrying indefinitely when the root cannot change.
+  const randomRoot = keys[keyIndex];
+  const alternateChordTypes = selectedChordTypes.filter(
+    (type) => randomRoot + type !== lastChordInternalName,
   );
+  const chordTypePool = alternateChordTypes.length
+    ? alternateChordTypes
+    : selectedChordTypes;
+  const randomChordType =
+    chordTypePool[Math.floor(Math.random() * chordTypePool.length)];
+
+  currentChordInternalName = randomRoot + randomChordType;
+  const baseNotes = generateNotesFromChordName(currentChordInternalName);
+  currentChordNotes = applySelectedVoicing(baseNotes);
+  currentChordName = generateChordName(randomRoot, randomChordType);
 }
 
 function handleKeyClick(key) {

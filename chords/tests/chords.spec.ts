@@ -151,6 +151,32 @@ test("Chord title visibly reports incorrect and correct answers", async ({
   await expect(chord).toHaveCSS("color", "rgb(56, 114, 53)");
 });
 
+test("Chord selection returns when only one chord type can repeat", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+  await page.evaluate(() => {
+    keys = ["C", "D"];
+    keyIndex = 0;
+    currentChordInternalName = "C";
+    Object.values(dom.chordCheckboxes).forEach((checkbox) => {
+      checkbox.checked = checkbox.id === "chkChordMajor";
+    });
+
+    const originalRandom = Math.random;
+    Math.random = () => 0;
+    try {
+      setRandomChord();
+    } finally {
+      Math.random = originalRandom;
+    }
+  });
+
+  await expect
+    .poll(() => page.evaluate(() => currentChordInternalName))
+    .toBe("C");
+});
+
 test("Chord type group controls cycle and reflect partial selections", async ({
   page,
 }) => {
