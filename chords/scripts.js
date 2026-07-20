@@ -3573,16 +3573,16 @@ function getIntervalChordNotesAndName(key, degree, wrap = true) {
 
   // Get the degree
   let bareDegree = degree.match(/[bB#iIvV]{1,4}/)[0];
+  const degreeValue = romanNumerals[bareDegree.toUpperCase()];
+  const rawNoteValue = keyValue + degreeValue;
+  const noteValue = normalizePitchClass(rawNoteValue);
 
   // We only need the degree if we're in scale degree mode since
   // we only need the first note of the chord
   if (modeIsDegrees() || modeIsScales()) {
     return [
       generateChordName(bareDegree, ""),
-      [
-        (keyValue + romanNumerals[bareDegree.toUpperCase()]) %
-          (wrap ? 12 : 127),
-      ],
+      [wrap ? noteValue : rawNoteValue],
     ];
   }
 
@@ -3603,12 +3603,6 @@ function getIntervalChordNotesAndName(key, degree, wrap = true) {
 
   // Get minor status, by checking for lower case or a dash
   let minor = bareDegree === bareDegree.toLowerCase() || degree.match(/-/);
-
-  // Convert the degree to a number using romanNumerals
-  let degreeValue = romanNumerals[bareDegree.toUpperCase()];
-
-  // Then add the interval to get the new degree
-  let noteValue = (keyValue + degreeValue) % (wrap ? 12 : 127);
 
   // Get sevenths
   let majorSeventh = degree.match(/M7/) || degree.match(/[Δ△]/);
@@ -3662,10 +3656,15 @@ function getIntervalChordNotesAndName(key, degree, wrap = true) {
   }
 
   const internalName = degreeChordRoot + chordQuality + chord7th + ext;
+  let notes = generateNotesFromChordName(internalName);
+  if (!wrap) {
+    const octaveOffset = rawNoteValue - noteValue;
+    notes = notes.map((note) => note + octaveOffset);
+  }
 
   return [
     generateChordName(degreeChordRoot, chordQuality + chord7th + ext),
-    generateNotesFromChordName(internalName),
+    notes,
     internalName,
   ];
 }

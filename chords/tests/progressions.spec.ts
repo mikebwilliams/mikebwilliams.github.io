@@ -9,6 +9,47 @@ async function openKeyboard(page: Page) {
   }
 }
 
+test("Interval chords normalize roots across octave boundaries", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+
+  const result = await page.evaluate(() => {
+    keys = ["Bb"];
+    keyIndex = 0;
+    const [, upperNotes, upperInternalName] = getIntervalChordNotesAndName(
+      "Bb",
+      "ii7",
+      false,
+    );
+
+    keys = ["C"];
+    const [, wrappedLowerNotes, lowerInternalName] =
+      getIntervalChordNotesAndName("C", "bI", true);
+    const [, unwrappedLowerNotes] = getIntervalChordNotesAndName(
+      "C",
+      "bI",
+      false,
+    );
+
+    return {
+      upperNotes,
+      upperInternalName,
+      wrappedLowerNotes,
+      unwrappedLowerNotes,
+      lowerInternalName,
+    };
+  });
+
+  expect(result).toEqual({
+    upperNotes: [12, 15, 19, 22],
+    upperInternalName: "Cm7",
+    wrappedLowerNotes: [11, 15, 18],
+    unwrappedLowerNotes: [-1, 3, 6],
+    lowerInternalName: "B",
+  });
+});
+
 test("Matching progression name is rendered once as the primary sequence", async ({
   page,
 }) => {
