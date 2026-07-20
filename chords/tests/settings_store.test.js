@@ -333,9 +333,12 @@ test("settings store persists the canonical values applied to the DOM", () => {
   assert.strictEqual(
     settingsStore.applyPresetSettings(
       {
+        mode: "not-a-mode",
+        flow: { mode: "not-a-flow", startKey: "H" },
         display: { highlightDelay: 0 },
         progression: { randomCount: 999 },
         metronome: { tempo: 999 },
+        voicing: { mode: "not-a-voicing" },
       },
       { preservePreferences: false },
     ),
@@ -343,18 +346,28 @@ test("settings store persists the canonical values applied to the DOM", () => {
   );
 
   assert.strictEqual(dom.highlightDelay.value, "0");
+  assert.strictEqual(dom.modeRadios.tabChords.checked, true);
+  assert.strictEqual(dom.flowSelect.value, "random");
+  assert.strictEqual(dom.flowStartSelect.value, "C");
+  assert.strictEqual(dom.radioGroups.voicingMode.default.checked, true);
   assert.strictEqual(dom.randomProgressionCount.value, "10");
   assert.strictEqual(dom.metronomeTempoInput.value, "240");
 
   const snapshot = settingsStore.getCurrentSnapshot();
+  assert.strictEqual(snapshot.mode, "tabChords");
+  assert.deepStrictEqual(snapshot.flow, { mode: "random", startKey: "C" });
   assert.strictEqual(snapshot.display.highlightDelay, 0);
   assert.strictEqual(snapshot.progression.randomCount, 10);
   assert.strictEqual(snapshot.metronome.tempo, 240);
+  assert.strictEqual(snapshot.voicing.mode, "default");
 
   const persisted = JSON.parse(storageMock.getItem(settingsStore.storageKey));
+  assert.strictEqual(persisted.mode, "tabChords");
+  assert.deepStrictEqual(persisted.flow, { mode: "random", startKey: "C" });
   assert.strictEqual(persisted.display.highlightDelay, 0);
   assert.strictEqual(persisted.progression.randomCount, 10);
   assert.strictEqual(persisted.metronome.tempo, 240);
+  assert.strictEqual(persisted.voicing.mode, "default");
 });
 
 run();

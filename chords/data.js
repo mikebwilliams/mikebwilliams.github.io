@@ -94,9 +94,29 @@ const hasDocument = typeof document !== "undefined";
 appGlobals.hasDocument = hasDocument;
 const DEFAULT_THEME = "lightBook";
 const themeIds = ["lightBook", "darkBook", "classical", "darkClassical"];
+const flowModeIds = [
+  "random",
+  "circleOfFourths",
+  "circleOfFifths",
+  "ascendingWholeSteps",
+  "descendingWholeSteps",
+  "ascendingHalfSteps",
+  "descendingHalfSteps",
+  "ascendingMinorThirds",
+  "descendingMinorThirds",
+];
 
 function sanitizeTheme(theme) {
   return themeIds.includes(theme) ? theme : DEFAULT_THEME;
+}
+
+function sanitizeFlowMode(mode) {
+  return flowModeIds.includes(mode) ? mode : "random";
+}
+
+function sanitizeFlowStartKey(key) {
+  const normalized = typeof key === "string" ? key.trim() : "";
+  return normalNotes.includes(normalized) ? normalized : "C";
 }
 
 function createClassListStub() {
@@ -3973,6 +3993,7 @@ function getRadioValue(name, fallback) {
   if (hasDocument) {
     const selected = document.querySelector(`input[name='${name}']:checked`);
     if (selected) return selected.value;
+    return fallback;
   }
   const groups = domElements.radioGroups || {};
   const selections = domElements.radioSelections || {};
@@ -3993,31 +4014,36 @@ function getRadioValue(name, fallback) {
   return fallback;
 }
 
-function setRadioValue(name, targetValue) {
+function setRadioValue(name, targetValue, fallback) {
   if (typeof targetValue === "undefined") return;
   const selections = domElements.radioSelections || {};
+  const groups = domElements.radioGroups || {};
+  const group = groups[name] || null;
+  const values = group ? Object.keys(group) : [];
+  const selectedValue = values.includes(targetValue)
+    ? targetValue
+    : values.includes(fallback)
+      ? fallback
+      : values[0];
+  if (typeof selectedValue === "undefined") return;
   if (hasDocument) {
     const radios = document.querySelectorAll(`input[name='${name}']`);
     radios.forEach((radio) => {
-      radio.checked = radio.value === targetValue;
+      radio.checked = radio.value === selectedValue;
     });
   }
-  const groups = domElements.radioGroups || {};
-  const group = groups[name] || null;
   if (group) {
     Object.entries(group).forEach(([value, el]) => {
-      if (el) el.checked = value === targetValue;
+      if (el) el.checked = value === selectedValue;
     });
-    selections[name] = targetValue;
-  } else {
-    selections[name] = targetValue;
   }
+  selections[name] = selectedValue;
   domElements.radioSelections = selections;
 }
 
 function applyThemeSelection(theme) {
   const selectedTheme = sanitizeTheme(theme);
-  setRadioValue("theme", selectedTheme);
+  setRadioValue("theme", selectedTheme, DEFAULT_THEME);
   if (hasDocument && document.documentElement) {
     document.documentElement.dataset.theme = selectedTheme;
   }
@@ -4280,8 +4306,8 @@ function captureSimpleSettings() {
   return {
     mode: getRadioValue("mode", "tabChords"),
     flow: {
-      mode: domElements.flowSelect.value || "random",
-      startKey: domElements.flowStartSelect.value || "C",
+      mode: sanitizeFlowMode(domElements.flowSelect.value),
+      startKey: sanitizeFlowStartKey(domElements.flowStartSelect.value),
     },
     display: {
       theme: sanitizeTheme(getRadioValue("theme", DEFAULT_THEME)),
@@ -4532,15 +4558,16 @@ function applySimpleSettings(settings) {
   if (!settings) return;
   let appliedMode = null;
   if (Object.prototype.hasOwnProperty.call(settings, "mode")) {
-    setRadioValue("mode", settings.mode);
-    appliedMode = settings.mode;
+    setRadioValue("mode", settings.mode, "tabChords");
+    appliedMode = getRadioValue("mode", "tabChords");
   }
   if (settings.flow) {
-    domElements.flowSelect.value = settings.flow.mode;
-    domElements.flowStartSelect.value = settings.flow.startKey;
+    const flowMode = sanitizeFlowMode(settings.flow.mode);
+    const flowStartKey = sanitizeFlowStartKey(settings.flow.startKey);
+    domElements.flowSelect.value = flowMode;
+    domElements.flowStartSelect.value = flowStartKey;
     if (domElements.flowStartSelect.dataset) {
-      domElements.flowStartSelect.dataset.pendingValue =
-        settings.flow.startKey || "";
+      domElements.flowStartSelect.dataset.pendingValue = flowStartKey;
     }
   }
   if (settings.display) {
@@ -4624,7 +4651,7 @@ function applySimpleSettings(settings) {
     notifySongsSettingsChange();
   }
   if (settings.voicing) {
-    setRadioValue("voicingMode", settings.voicing.mode);
+    setRadioValue("voicingMode", settings.voicing.mode, "default");
   }
   applyStatGoalState(settings.statsGoals);
   notifyStatGoalsChange();
@@ -4766,7 +4793,7 @@ function settingsStoreFactory() {
         domElements.flowStartSelect.options.length > 0;
       const pendingFlowStart = flowStartHasOptions
         ? ""
-        : normalizeTextValue(source.flow && source.flow.startKey);
+        : sanitizeFlowStartKey(source.flow && source.flow.startKey);
       this.current = cloneObject(source);
       applyScaleState(source.scales);
       applyJazzCadenceState(source.jazzCadences);

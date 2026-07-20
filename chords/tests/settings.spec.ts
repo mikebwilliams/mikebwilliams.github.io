@@ -108,6 +108,41 @@ test("key preset selections persist after reload", async ({ page }) => {
   await expect(page.locator("#Db")).not.toBeChecked();
 });
 
+test("malformed radio and flow settings fall back consistently", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  const settings = await page.evaluate(() => {
+    const store = (window as any).appGlobals.settingsStore;
+    store.applyPresetSettings(
+      {
+        mode: "not-a-mode",
+        flow: { mode: "not-a-flow", startKey: "H" },
+        voicing: { mode: "not-a-voicing" },
+      },
+      { preservePreferences: false },
+    );
+    return {
+      current: store.getCurrentSnapshot(),
+      persisted: JSON.parse(localStorage.getItem(store.storageKey)),
+    };
+  });
+
+  await expect(page.locator("#tabModeChords")).toBeChecked();
+  await expect(page.locator("#selectFlow")).toHaveValue("random");
+  await expect(page.locator("#selectFlowStart")).toHaveValue("C");
+  await expect(page.locator("#radVoicingDefault")).toBeChecked();
+  expect(settings.current.mode).toBe("tabChords");
+  expect(settings.current.flow).toEqual({ mode: "random", startKey: "C" });
+  expect(settings.current.voicing.mode).toBe("default");
+  expect(settings.persisted.mode).toBe("tabChords");
+  expect(settings.persisted.flow).toEqual({ mode: "random", startKey: "C" });
+  expect(settings.persisted.voicing.mode).toBe("default");
+});
+
 test("Presets and workouts summary and arrows track current selections", async ({
   page,
 }) => {
