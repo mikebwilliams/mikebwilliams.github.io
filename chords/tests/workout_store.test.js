@@ -190,6 +190,36 @@ test("workout store imports and exports workout JSON", () => {
   ]);
 });
 
+test("workout store sanitizes malformed goal objects", () => {
+  storageMock.clear();
+  workoutStore.replaceAll({});
+
+  const importedCount = workoutStore.importWorkouts({
+    workouts: {
+      Hostile: {
+        entries: [
+          {
+            preset: "Goal Fuzz",
+            goals: {
+              correct: { toString: "not callable" },
+              total: { valueOf: "not callable" },
+            },
+          },
+        ],
+      },
+    },
+  });
+
+  assert.strictEqual(importedCount, 1, "workout should import");
+  assert.deepStrictEqual(workoutStore.getWorkout("Hostile").entries, [
+    {
+      preset: "Goal Fuzz",
+      goals: { correct: 0, total: 0 },
+      category: null,
+    },
+  ]);
+});
+
 let passed = 0;
 let failed = 0;
 tests.forEach(({ name, fn }) => {

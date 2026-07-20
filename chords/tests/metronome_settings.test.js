@@ -44,6 +44,13 @@ function run() {
   console.log(`${tests.length} tests passed.`);
 }
 
+function hostileObject() {
+  return {
+    toString: "not callable",
+    valueOf: "not callable",
+  };
+}
+
 test("sanitizeMetronomeSettings clamps values and falls back to defaults", () => {
   assert.deepStrictEqual(
     sanitizeMetronomeSettings({
@@ -59,6 +66,28 @@ test("sanitizeMetronomeSettings clamps values and falls back to defaults", () =>
       yMeasures: 8,
       countInMeasures: 1,
       syncToSongs: false,
+    },
+  );
+});
+
+test("sanitizeMetronomeSettings handles hostile numeric values", () => {
+  const hostile = hostileObject();
+  assert.deepStrictEqual(
+    sanitizeMetronomeSettings({
+      tempo: hostile,
+      beatsPerMeasure: hostile,
+      xMeasures: hostile,
+      yMeasures: hostile,
+      countInMeasures: hostile,
+      syncToSongs: hostile,
+    }),
+    {
+      tempo: 120,
+      beatsPerMeasure: 4,
+      xMeasures: 4,
+      yMeasures: 8,
+      countInMeasures: 1,
+      syncToSongs: true,
     },
   );
 });

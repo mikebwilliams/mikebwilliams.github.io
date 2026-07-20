@@ -53,6 +53,13 @@ function setRadioGroupValue(collection, value) {
   });
 }
 
+function hostileObject() {
+  return {
+    toString: "not callable",
+    valueOf: "not callable",
+  };
+}
+
 test("settings store saves and loads presets round-trip", () => {
   settingsStore.resetToDefaults({ apply: false, save: false });
   storageMock.clear();
@@ -248,6 +255,75 @@ test("settings store imports and exports preset JSON", () => {
   );
   assert.strictEqual(settingsStore.loadPreset("Imported Preset"), true);
   assert.strictEqual(dom.flowSelect.value, "descendingWholeSteps");
+});
+
+test("settings store applies hostile numeric preset fields safely", () => {
+  storageMock.clear();
+  settingsStore.resetToDefaults({ apply: true, save: false });
+  const hostile = hostileObject();
+
+  assert.strictEqual(
+    settingsStore.applyPresetSettings(
+      {
+        mode: "tabProgressions",
+        display: {
+          highlightDelay: hostile,
+        },
+        spacedRep: {
+          threshold: hostile,
+        },
+        progression: {
+          selection: hostile,
+          custom: hostile,
+          randomCount: hostile,
+        },
+        metronome: {
+          tempo: hostile,
+          beatsPerMeasure: hostile,
+          xMeasures: hostile,
+          yMeasures: hostile,
+          countInMeasures: hostile,
+          syncToSongs: hostile,
+        },
+        songs: {
+          finishAction: hostile,
+          repeatCount: hostile,
+          countChordsTowardGoals: false,
+          displayRomanNumerals: true,
+        },
+        statsGoals: {
+          chords: {
+            correct: hostile,
+            total: hostile,
+          },
+          progressions: {
+            correct: "1000",
+            total: "5",
+          },
+        },
+      },
+      { preservePreferences: false },
+    ),
+    true,
+  );
+
+  assert.strictEqual(dom.highlightDelay.value, "3");
+  assert.strictEqual(dom.spacedRepThreshold.value, "3");
+  assert.strictEqual(dom.progressionSelect.value, "");
+  assert.strictEqual(dom.customProgressionInput.value, "");
+  assert.strictEqual(dom.randomProgressionCount.value, "5");
+  assert.strictEqual(dom.metronomeTempoInput.value, "120");
+  assert.strictEqual(dom.metronomeTempoNumberInput.value, "120");
+  assert.strictEqual(dom.metronomeBeatsInput.value, "4");
+  assert.strictEqual(dom.metronomeXMeasuresInput.value, "4");
+  assert.strictEqual(dom.metronomeYMeasuresInput.value, "8");
+  assert.strictEqual(dom.metronomeCountInMeasuresInput.value, "1");
+  assert.strictEqual(dom.songFinishAction.value, "nothing");
+  assert.strictEqual(dom.songRepeatCount.value, "3");
+  assert.strictEqual(dom.statGoals.chords.correct.value, "0");
+  assert.strictEqual(dom.statGoals.chords.total.value, "0");
+  assert.strictEqual(dom.statGoals.progressions.correct.value, "999");
+  assert.strictEqual(dom.statGoals.progressions.total.value, "5");
 });
 
 run();

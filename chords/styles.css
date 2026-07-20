@@ -28,8 +28,8 @@
   --accent: #2b6683;
   --accent-strong: #153f55;
   --accent-soft: rgba(43, 102, 131, 0.18);
-  --success: #3f6a38;
-  --danger: #9c3429;
+  --success: #387235;
+  --danger: #a83227;
   --warning: #a86f1c;
   --shadow-soft: 0 18px 44px rgba(73, 52, 24, 0.2);
   --shadow-tight: 3px 5px 0 rgba(45, 34, 20, 0.18);
@@ -121,8 +121,8 @@ html[data-theme="darkBook"] {
   --accent: #82b7cf;
   --accent-strong: #b9d8e4;
   --accent-soft: rgba(130, 183, 207, 0.22);
-  --success: #8eaf73;
-  --danger: #e08370;
+  --success: #8dbb68;
+  --danger: #e97966;
   --warning: #d5a04a;
   --shadow-soft: 0 18px 44px rgba(0, 0, 0, 0.38);
   --shadow-tight: 3px 5px 0 rgba(0, 0, 0, 0.32);
@@ -181,8 +181,8 @@ html[data-theme="classical"] {
   --accent: #b78c35;
   --accent-strong: #080808;
   --accent-soft: rgba(183, 140, 53, 0.24);
-  --success: #2f6e4d;
-  --danger: #8d2924;
+  --success: #28764a;
+  --danger: #9a2822;
   --warning: #a9791f;
   --shadow-soft: 0 18px 46px rgba(0, 0, 0, 0.3);
   --shadow-tight: 3px 5px 0 rgba(0, 0, 0, 0.28);
@@ -258,8 +258,8 @@ html[data-theme="darkClassical"] {
   --accent: #d1ab5c;
   --accent-strong: #fffaf0;
   --accent-soft: rgba(209, 171, 92, 0.24);
-  --success: #9bc58d;
-  --danger: #e38379;
+  --success: #97cd84;
+  --danger: #eb796f;
   --warning: #d1ab5c;
   --shadow-soft: 0 18px 48px rgba(0, 0, 0, 0.5);
   --shadow-tight: 3px 5px 0 rgba(0, 0, 0, 0.34);
@@ -811,7 +811,7 @@ html[data-theme="darkClassical"] .surfaceCard {
   line-height: 1.05;
 }
 
-#panelHeader span {
+#panelHeader > span {
   display: inline-flex;
   align-items: baseline;
 }
@@ -826,8 +826,22 @@ html[data-theme="darkClassical"] .surfaceCard {
   color: var(--text-primary);
 }
 
+#txtChord.correct {
+  color: var(--success);
+}
+
+#txtChord.incorrect {
+  color: var(--danger);
+}
+
 #txtCadence {
   color: var(--danger);
+  font-size: 0.8em;
+  letter-spacing: 0.04em;
+}
+
+#txtProgressionHeadline {
+  color: var(--text-primary);
   font-size: 0.8em;
   letter-spacing: 0.04em;
 }
@@ -836,14 +850,23 @@ html[data-theme="darkClassical"] .surfaceCard {
   text-align: left;
   margin-top: -0.35rem;
   font-family: var(--font-hand);
-  font-size: clamp(0.85rem, 0.7rem + 0.8vw, 1.1rem);
-  letter-spacing: 0.16em;
-  color: var(--text-dim);
+  font-size: clamp(1.35rem, 1rem + 1vw, 1.9rem);
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
   overflow-x: auto;
 }
 
+#txtProgressionHeadline .chord,
 #txtProgression .chord {
   display: inline-flex;
+}
+
+.chord--current {
+  color: var(--accent);
+}
+
+.chord--complete {
+  color: var(--success);
 }
 
 .songChart {

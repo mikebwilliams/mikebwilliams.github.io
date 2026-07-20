@@ -9,7 +9,7 @@ async function openKeyboard(page: Page) {
   }
 }
 
-test("Progression display preserves roman numeral capitalization", async ({
+test("Matching progression name is rendered once as the primary sequence", async ({
   page,
 }) => {
   await page.goto(TEST_URL);
@@ -20,12 +20,41 @@ test("Progression display preserves roman numeral capitalization", async ({
   await page.selectOption("#selectProgression", "ii7-V7-IM7");
 
   const cadence = page.locator("#txtCadence");
-  await expect(cadence).toContainText("ii7-V7-IM7");
-  await expect(cadence).toHaveCSS("text-transform", "none");
+  await expect(cadence).toBeHidden();
 
-  const progression = page.locator("#txtProgression");
+  const progression = page.locator("#txtProgressionHeadline");
+  await expect(progression).toBeVisible();
   await expect(progression).toContainText("iiί - Vί - Iª");
   await expect(progression).toHaveCSS("text-transform", "none");
+  await expect(page.locator("#txtProgression")).toBeHidden();
+
+  const chords = progression.locator(".chord");
+  await expect(chords.nth(0)).toHaveClass(/chord--current/);
+  await page.evaluate(() => nextChord());
+  await expect(chords.nth(0)).toHaveClass(/chord--complete/);
+  await expect(chords.nth(1)).toHaveClass(/chord--current/);
+});
+
+test("Named progression keeps its name and shows a readable chord series", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.click("label[for='tabModeProgressions']");
+  await page.selectOption("#selectProgression", "I-IV-iii-vi-ii-V-I");
+
+  await expect(page.locator("#txtCadence")).toHaveText(" Jazzy Improv");
+  await expect(page.locator("#txtProgressionHeadline")).toBeHidden();
+
+  const progression = page.locator("#txtProgression");
+  await expect(progression).toBeVisible();
+  await expect(progression).toHaveText("I - IV - iii - vi - ii - V - I");
+  const fontSize = await progression.evaluate((element) =>
+    Number.parseFloat(getComputedStyle(element).fontSize),
+  );
+  expect(fontSize).toBeGreaterThan(20);
 });
 
 test("Hide progression chord names keeps non-chord titles visible", async ({
@@ -152,6 +181,112 @@ test("Mouse input clears selected keys and advances after a correct chord", asyn
     });
 });
 
+test("MIDI note-on input advances progressions without waiting for release", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.selectOption("#selectFlow", "random");
+  await page.selectOption("#selectFlowStart", "C");
+  await page.click("label[for='tabModeProgressions']");
+  await openKeyboard(page);
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => ({
+        key: keys[keyIndex],
+        chord: currentChordInternalName,
+        index: currentIndex,
+        notes: currentChordNotes.map((note) => note + 48),
+      })),
+    )
+    .toEqual({ key: "C", chord: "C", index: 0, notes: [48, 52, 55] });
+
+  await page.evaluate(() => {
+    [48, 52, 55].forEach((note) => {
+      handleMidiMessage({ data: [144, note, 100] });
+    });
+  });
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => ({
+        index: currentIndex,
+        chord: currentChordInternalName,
+        activeKeys: activeKeys.slice(),
+        markedKeys: document.querySelectorAll(".key.correct, .key.incorrect")
+          .length,
+      })),
+    )
+    .toEqual({
+      index: 1,
+      chord: "F",
+      activeKeys: [],
+      markedKeys: 0,
+    });
+});
+
+test("Jazz bricks advance immediately without judging held notes against the next chord", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.selectOption("#selectFlow", "random");
+  await page.selectOption("#selectFlowStart", "C");
+  await page.evaluate(() => {
+    jazzCadences.forEach((cadence) => {
+      cadence.enabled = cadence.name === "Regular";
+      cadence.element.checked = cadence.enabled;
+    });
+  });
+  await page.click("label[for='tabModeJazz']");
+
+  const firstChordNotes = await page.evaluate(() =>
+    currentChordNotes.map((note) => note + 48),
+  );
+  await page.evaluate((notes) => {
+    notes.forEach((note) => handleMidiMessage({ data: [144, note, 100] }));
+  }, firstChordNotes);
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => ({
+        index: currentIndex,
+        activeKeys: activeKeys.slice(),
+        awaitingKeyRelease,
+        isIncorrect,
+      })),
+    )
+    .toEqual({
+      index: 1,
+      activeKeys: [],
+      awaitingKeyRelease: false,
+      isIncorrect: false,
+    });
+
+  const progressionChords = page.locator("#txtProgression .chord");
+  await expect(progressionChords.nth(0)).toHaveClass(/chord--complete/);
+  await expect(progressionChords.nth(1)).toHaveClass(/chord--current/);
+
+  await page.evaluate((notes) => {
+    notes.forEach((note) => handleMidiMessage({ data: [128, note, 0] }));
+  }, firstChordNotes);
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => ({
+        index: currentIndex,
+        activeKeys: activeKeys.slice(),
+        isIncorrect,
+      })),
+    )
+    .toEqual({ index: 1, activeKeys: [], isIncorrect: false });
+});
+
 test("Progression Type B accepts the Ab ii7 upper voicing", async ({
   page,
 }) => {
@@ -188,7 +323,21 @@ test("Progression Type B accepts the Ab ii7 upper voicing", async ({
     );
   });
 
-  await expect(page.locator("#txtChord")).toHaveClass(/correct/);
+  await expect
+    .poll(() =>
+      page.evaluate(() => ({
+        key: keys[keyIndex],
+        chord: currentChordInternalName,
+        index: currentIndex,
+        activeKeys: activeKeys.slice(),
+      })),
+    )
+    .toEqual({
+      key: "Ab",
+      chord: "Eb7",
+      index: 1,
+      activeKeys: [],
+    });
 });
 
 test("Progression Type A/B accepts the highlighted Ab ii7 voicing", async ({
@@ -228,7 +377,21 @@ test("Progression Type A/B accepts the highlighted Ab ii7 voicing", async ({
     });
   });
 
-  await expect(page.locator("#txtChord")).toHaveClass(/correct/);
+  await expect
+    .poll(() =>
+      page.evaluate(() => ({
+        key: keys[keyIndex],
+        chord: currentChordInternalName,
+        index: currentIndex,
+        activeKeys: activeKeys.slice(),
+      })),
+    )
+    .toEqual({
+      key: "Ab",
+      chord: "Eb7",
+      index: 1,
+      activeKeys: [],
+    });
 });
 
 test("Progression Type A/B accepts Ab ii7 after advancing from Eb", async ({
@@ -343,5 +506,19 @@ test("Progression Type A/B accepts Ab ii7 after advancing from Eb", async ({
     });
   });
 
-  await expect(page.locator("#txtChord")).toHaveClass(/correct/);
+  await expect
+    .poll(() =>
+      page.evaluate(() => ({
+        key: keys[keyIndex],
+        chord: currentChordInternalName,
+        index: currentIndex,
+        activeKeys: activeKeys.slice(),
+      })),
+    )
+    .toEqual({
+      key: "Ab",
+      chord: "Eb7",
+      index: 1,
+      activeKeys: [],
+    });
 });

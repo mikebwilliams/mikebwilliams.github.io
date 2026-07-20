@@ -8,6 +8,13 @@ function test(name, fn) {
   tests.push({ name, fn });
 }
 
+function hostileObject() {
+  return {
+    toString: "not callable",
+    valueOf: "not callable",
+  };
+}
+
 test("normalizeDailyStats carries forward provided values", () => {
   const sample = {
     date: "2025-10-11",
@@ -45,6 +52,26 @@ test("normalizeDailyStats falls back to fresh date and sanitizes values", () => 
     "2026-02-03",
   );
   assert.strictEqual(normalized.date, "2026-02-03");
+  assert.deepStrictEqual(normalized.counts.chords, {
+    correct: 0,
+    incorrect: 0,
+  });
+});
+
+test("normalizeDailyStats handles hostile counter values", () => {
+  const normalized = normalizeDailyStats(
+    {
+      date: "2026-04-05",
+      counts: {
+        chords: {
+          correct: hostileObject(),
+          incorrect: hostileObject(),
+        },
+      },
+    },
+    "2026-02-03",
+  );
+  assert.strictEqual(normalized.date, "2026-04-05");
   assert.deepStrictEqual(normalized.counts.chords, {
     correct: 0,
     incorrect: 0,

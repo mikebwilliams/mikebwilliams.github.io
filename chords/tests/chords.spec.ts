@@ -113,6 +113,44 @@ test("Book themes display chord symbols with Realbook glyph codepoints", async (
   await expect(page.locator("#txtChord")).toHaveText("Cm7");
 });
 
+test("Chord title visibly reports incorrect and correct answers", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.evaluate(() => {
+    keys = ["C"];
+    keyIndex = 0;
+    currentChordName = "C";
+    currentChordInternalName = "C";
+    currentChordNotes = [0, 4, 7];
+    activeKeys = [];
+    isIncorrect = false;
+    awaitingKeyRelease = false;
+    clearChordFeedbackState();
+    updateDisplay();
+    handleKeyPressed(49);
+  });
+
+  const chord = page.locator("#txtChord");
+  await expect(chord).toHaveClass(/incorrect/);
+  await expect(chord).toHaveCSS("color", "rgb(168, 50, 39)");
+
+  await page.evaluate(() => {
+    handleKeyReleased(49);
+    isIncorrect = false;
+    clearChordFeedbackState();
+    [48, 52, 55].forEach((note) =>
+      handleMidiMessage({ data: [144, note, 100] }),
+    );
+  });
+
+  await expect(chord).toHaveClass(/correct/);
+  await expect(chord).toHaveCSS("color", "rgb(56, 114, 53)");
+});
+
 test("Chord type group controls cycle and reflect partial selections", async ({
   page,
 }) => {

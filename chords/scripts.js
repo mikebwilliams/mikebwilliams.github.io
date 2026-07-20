@@ -534,7 +534,12 @@ function formatDateKey(sourceDate) {
 }
 
 function sanitizeStatCounterValue(value) {
-  const parsed = Number(value);
+  let parsed = 0;
+  try {
+    parsed = Number(value);
+  } catch (_) {
+    return 0;
+  }
   if (!Number.isFinite(parsed) || parsed < 0) return 0;
   if (parsed > 1000000) return 1000000;
   return Math.floor(parsed);
@@ -2568,7 +2573,9 @@ function shouldAllowLegatoChordOverlap() {
 
 function handleSuccessfulChordMatch(options = {}) {
   const advanceOnMatch = !!options.advanceOnMatch;
-  const waitForRelease = !modeIsSongs() && !advanceOnMatch;
+  const advanceImmediately =
+    advanceOnMatch || modeIsProgressions() || modeIsJazz();
+  const waitForRelease = !modeIsSongs() && !advanceImmediately;
   awaitingKeyRelease = waitForRelease;
   dom.chordDisplay.classList.remove("incorrect");
   dom.chordDisplay.classList.add("correct");
@@ -2588,7 +2595,7 @@ function handleSuccessfulChordMatch(options = {}) {
   clearTimeout(highlightTimer);
   highlightCorrectKeys();
 
-  if (advanceOnMatch) {
+  if (advanceImmediately) {
     clearActiveKeys();
   }
 
@@ -3417,9 +3424,54 @@ function shouldHideCurrentProgressionName(hideChordName) {
   return hideChordName && progressionNameIsChordList(currentProgressionName);
 }
 
+function getProgressionEntryLabel(entry) {
+  if (typeof entry === "string") return entry;
+  if (entry && typeof entry.label === "string") return entry.label;
+  return "";
+}
+
+function normalizeProgressionTitle(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[‐‑‒–—−]/g, "-")
+    .replace(/\s+/g, "");
+}
+
+function progressionNameMatchesChordSeries(name, progression) {
+  if (!Array.isArray(progression) || !progression.length) return false;
+  const chordSeries = progression.map(getProgressionEntryLabel).join("-");
+  return (
+    normalizeProgressionTitle(name) === normalizeProgressionTitle(chordSeries)
+  );
+}
+
+function buildProgressionSequenceHtml(progression, hideNumerals) {
+  return progression
+    .map((entry, index) => {
+      const label = getProgressionEntryLabel(entry);
+      const stateClass =
+        currentIndex === index
+          ? " chord--current"
+          : currentIndex > index
+            ? " chord--complete"
+            : "";
+      const title = hideNumerals ? ` title="${escapeHtml(label)}"` : "";
+      const text = hideNumerals ? "?" : formatChordDisplayText(label);
+      return `<span class="chord${stateClass}"${title}>${escapeHtml(text)}</span>`;
+    })
+    .join(" - ");
+}
+
 function updateDisplay() {
   let hideChordName = dom.hideProgressionChordNames.checked;
   let hideNumerals = dom.hideProgressionChordNumerals.checked;
+  const showProgressionHeadline =
+    !modeIsChords() &&
+    !modeIsSongs() &&
+    progressionNameMatchesChordSeries(
+      currentProgressionName,
+      currentProgression,
+    );
 
   if (modeIsChords()) {
     // When we are in chord mode with hidden chords we are probably doing ear training
@@ -3431,13 +3483,21 @@ function updateDisplay() {
       dom.currentKey.style.display = "none";
       dom.chordDisplay.style.display = "block";
     }
+    dom.progressionHeadline.style.display = "none";
     dom.progressionDisplay.style.display = "none";
     dom.cadenceDisplay.style.display = "none";
   } else {
     dom.chordDisplay.style.display = "none";
     dom.currentKey.style.display = "inline";
-    dom.cadenceDisplay.style.display = "inline";
-    dom.progressionDisplay.style.display = "block";
+    dom.cadenceDisplay.style.display = showProgressionHeadline
+      ? "none"
+      : "inline";
+    dom.progressionHeadline.style.display = showProgressionHeadline
+      ? "inline"
+      : "none";
+    dom.progressionDisplay.style.display = showProgressionHeadline
+      ? "none"
+      : "block";
   }
 
   let text = formatChordDisplayText(currentChordName);
@@ -3458,15 +3518,8 @@ function updateDisplay() {
   dom.currentKey.textContent = formatChordDisplayText(currentKeyText);
 
   if (Array.isArray(currentProgression)) {
-    const progressionLabel = (entry) =>
-      typeof entry === "string"
-        ? entry
-        : entry && typeof entry.label === "string"
-          ? entry.label
-          : "";
-    const progressionDisplayLabel = (entry) =>
-      formatChordDisplayText(progressionLabel(entry));
     if (modeIsSongs() && currentSong) {
+      dom.progressionHeadline.innerHTML = "";
       dom.progressionDisplay.innerHTML = buildSongChartHtml(
         currentSong,
         currentProgression[currentIndex],
@@ -3474,22 +3527,20 @@ function updateDisplay() {
         hideNumerals,
         isSongMetronomeSyncActive() ? songMetronomeState : null,
       );
-    } else if (hideNumerals) {
-      dom.progressionDisplay.innerHTML = currentProgression
-        .map((chord) => {
-          const label = progressionLabel(chord);
-          return `<span class="chord" title="${escapeHtml(label)}">?</span>`;
-        })
-        .join(" - ");
     } else {
-      dom.progressionDisplay.innerHTML = currentProgression
-        .map(
-          (chord) =>
-            `<span class="chord">${escapeHtml(progressionDisplayLabel(chord))}</span>`,
-        )
-        .join(" - ");
+      const sequenceHtml = buildProgressionSequenceHtml(
+        currentProgression,
+        hideNumerals,
+      );
+      dom.progressionHeadline.innerHTML = showProgressionHeadline
+        ? sequenceHtml
+        : "";
+      dom.progressionDisplay.innerHTML = showProgressionHeadline
+        ? ""
+        : sequenceHtml;
     }
   } else {
+    dom.progressionHeadline.innerHTML = "";
     dom.progressionDisplay.innerHTML = "";
   }
 
@@ -3498,18 +3549,6 @@ function updateDisplay() {
   } else {
     dom.cadenceDisplay.textContent = " " + currentProgressionName;
   }
-
-  // Add event listeners to chords to track user input
-  document.querySelectorAll(".chord").forEach((chordSpan, index) => {
-    chordSpan.style.color = "";
-    if (!modeIsSongs()) {
-      if (currentIndex == index) {
-        chordSpan.style.color = "#0077ff";
-      } else if (currentIndex > index) {
-        chordSpan.style.color = "green";
-      }
-    }
-  });
 }
 
 function refreshDisplayForThemeChange() {
@@ -3668,7 +3707,11 @@ function generateProgression() {
       currentProgression = dom.progressionSelect.value.split("-");
     }
 
-    currentProgressionName = dom.progressionSelect.value;
+    const selectedOption =
+      dom.progressionSelect.options[dom.progressionSelect.selectedIndex];
+    currentProgressionName = selectedOption
+      ? selectedOption.textContent.trim()
+      : dom.progressionSelect.value;
   } else if (modeIsScales()) {
     // Get list of all enabled scales
     enabledScales = {};

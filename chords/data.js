@@ -607,6 +607,7 @@ const domElements = {
   flowResetButton: requireElement("btnFlowReset"),
   flowStartSelect: requireElement("selectFlowStart"),
   currentKey: requireElement("txtCurrentKey"),
+  progressionHeadline: requireElement("txtProgressionHeadline"),
   progressionDisplay: requireElement("txtProgression"),
   cadenceDisplay: requireElement("txtCadence"),
   chordDisplay: requireElement("txtChord"),
@@ -1948,7 +1949,12 @@ function sanitizeSongKeySettings(source) {
 }
 
 function sanitizeSongRepeatCount(value) {
-  const parsed = parseInt(value, 10);
+  let parsed = 0;
+  try {
+    parsed = parseInt(value, 10);
+  } catch (_) {
+    return DEFAULT_SONG_REPEAT_COUNT;
+  }
   if (!Number.isFinite(parsed) || parsed < 1) return DEFAULT_SONG_REPEAT_COUNT;
   if (parsed > 99) return 99;
   return parsed;
@@ -1982,7 +1988,12 @@ function sanitizeSongsPracticeSettings(source) {
 }
 
 function sanitizeMetronomeInteger(value, min, max, fallback) {
-  const parsed = parseInt(value, 10);
+  let parsed = 0;
+  try {
+    parsed = parseInt(value, 10);
+  } catch (_) {
+    return fallback;
+  }
   if (!Number.isFinite(parsed)) return fallback;
   if (parsed < min) return min;
   if (parsed > max) return max;
@@ -3637,7 +3648,12 @@ function sanitizeWorkoutName(name) {
 }
 
 function sanitizeWorkoutGoal(value) {
-  const parsed = parseInt(value, 10);
+  let parsed = 0;
+  try {
+    parsed = parseInt(value, 10);
+  } catch (_) {
+    return 0;
+  }
   if (!Number.isFinite(parsed) || parsed < 0) return 0;
   if (parsed > 999) return 999;
   return parsed;
@@ -4063,10 +4079,37 @@ function applyScaleState(state) {
 }
 
 function sanitizeStatsGoalValue(raw) {
-  const parsed = parseInt(raw, 10);
+  let parsed = 0;
+  try {
+    parsed = parseInt(raw, 10);
+  } catch (_) {
+    return 0;
+  }
   if (!Number.isFinite(parsed) || parsed < 0) return 0;
   if (parsed > 999) return 999;
   return parsed;
+}
+
+function sanitizePositiveIntegerValue(raw, fallback, min = 1, max = 999) {
+  let parsed = 0;
+  try {
+    parsed = parseInt(raw, 10);
+  } catch (_) {
+    return fallback;
+  }
+  if (!Number.isFinite(parsed) || parsed < min) return fallback;
+  if (parsed > max) return max;
+  return parsed;
+}
+
+function sanitizePositiveNumberValue(raw, fallback) {
+  let parsed = 0;
+  try {
+    parsed = parseFloat(raw);
+  } catch (_) {
+    return fallback;
+  }
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
 function sanitizeStatsGoalPair(source) {
@@ -4506,7 +4549,9 @@ function applySimpleSettings(settings) {
       }
     }
     domElements.highlightCorrectKeys.checked = !!display.highlightKeys;
-    domElements.highlightDelay.value = String(display.highlightDelay);
+    domElements.highlightDelay.value = String(
+      sanitizePositiveNumberValue(display.highlightDelay, 3),
+    );
     domElements.hideProgressionChordNames.checked =
       !!display.hideProgressionNames;
     domElements.hideProgressionChordNumerals.checked =
@@ -4515,16 +4560,22 @@ function applySimpleSettings(settings) {
   }
   if (settings.spacedRep) {
     domElements.enableSpacedRepetition.checked = !!settings.spacedRep.enabled;
-    domElements.spacedRepThreshold.value = String(settings.spacedRep.threshold);
+    domElements.spacedRepThreshold.value = String(
+      sanitizePositiveIntegerValue(settings.spacedRep.threshold, 3),
+    );
   }
   if (settings.midi) {
     domElements.sendMidiNotes.checked = !!settings.midi.sendNotes;
   }
   if (settings.progression) {
-    domElements.progressionSelect.value = settings.progression.selection;
-    domElements.customProgressionInput.value = settings.progression.custom;
+    domElements.progressionSelect.value = normalizeTextValue(
+      settings.progression.selection,
+    );
+    domElements.customProgressionInput.value = normalizeTextValue(
+      settings.progression.custom,
+    );
     domElements.randomProgressionCount.value = String(
-      settings.progression.randomCount,
+      sanitizePositiveIntegerValue(settings.progression.randomCount, 5),
     );
   }
   if (settings.metronome) {
@@ -4980,6 +5031,7 @@ const dataExports = {
   jazzCadencesMetabricks,
   jazzCadencesDropbacks,
   voicingUtils,
+  generateNotesFromChordName,
   parseIRealProChart,
   parseIRealProSong,
   parseIRealProPlaylist,
@@ -4989,6 +5041,7 @@ const dataExports = {
   buildSongDisplayRows,
   formatIRealProChordDisplay,
   formatKeyDisplay,
+  transposeNoteName,
   sanitizeMetronomeSettings,
   getMetronomeTickType,
   getSongSyncMetronomeTickType,
