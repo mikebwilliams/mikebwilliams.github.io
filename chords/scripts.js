@@ -2467,15 +2467,13 @@ function handleMidiMessage(midiMessage) {
   let pressedNotes = midiMessage.data;
   let velocity = pressedNotes[2];
   let keyEvent = false;
+  const status = pressedNotes[0] & 0xf0;
 
   // Check for MIDI message type to determine if the key is pressed or released.
-  if (pressedNotes[0] === 144 && velocity > 0) {
+  if (status === 0x90 && velocity > 0) {
     handleKeyPressed(pressedNotes[1]);
     keyEvent = true;
-  } else if (
-    pressedNotes[0] === 128 ||
-    (pressedNotes[0] === 144 && velocity === 0)
-  ) {
+  } else if (status === 0x80 || (status === 0x90 && velocity === 0)) {
     handleKeyReleased(pressedNotes[1]);
     keyEvent = true;
   }

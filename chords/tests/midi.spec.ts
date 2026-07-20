@@ -66,6 +66,28 @@ async function installMidiStateChangeMock(page, inputId, inputName) {
   );
 }
 
+test("MIDI note messages work on channels other than channel one", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+
+  const state = await page.evaluate(() => {
+    activeKeys = [];
+    handleMidiMessage({ data: [0x91, 49, 100] });
+    const afterNoteOn = activeKeys.slice();
+    handleMidiMessage({ data: [0x81, 49, 0] });
+    return {
+      afterNoteOn,
+      afterNoteOff: activeKeys.slice(),
+    };
+  });
+
+  expect(state).toEqual({
+    afterNoteOn: [49],
+    afterNoteOff: [],
+  });
+});
+
 test("MIDI panel can manually refresh the device list", async ({ page }) => {
   await page.addInitScript(() => {
     function createMidiAccess(stage: number) {
