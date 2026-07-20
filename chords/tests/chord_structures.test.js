@@ -68,7 +68,7 @@ tests.forEach(({ name, fn }) => {
 });
 
 if (failed) {
-  process.exitCode = 1;
+  throw new Error(`${failed} test${failed === 1 ? "" : "s"} failed.`);
 } else {
   console.log(`${passed} tests passed.`);
 }
