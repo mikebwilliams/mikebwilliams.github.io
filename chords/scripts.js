@@ -3727,9 +3727,9 @@ function generateProgression() {
 
     // If no scales are enabled, default to major
     if (Object.keys(enabledScales).length === 0) {
-      let major = Scales[0];
-      enabledScales[major.name] = major.steps;
-      enabledNames[major.name] = major.label;
+      const major = scales.scaleIonian;
+      enabledScales.scaleIonian = major.steps;
+      enabledNames.scaleIonian = major.label;
     }
 
     // Select a random cadence from the enabled list
