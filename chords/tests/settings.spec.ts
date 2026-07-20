@@ -225,6 +225,70 @@ test("Collapsed presets and workouts summary elides long names", async ({
   await expect(page.locator("#btnWorkoutNext")).toBeVisible();
 });
 
+test("training setup steppers stay accessible on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  const panel = page.locator("#panelTrainingSetup");
+  const summary = panel.locator(":scope > summary");
+  await expect(panel).not.toHaveAttribute("open", "");
+
+  const bounds = await summary.evaluate((element) => {
+    const summaryRect = element.getBoundingClientRect();
+    const buttonIds = [
+      "btnSettingsPresetPrev",
+      "btnSettingsPresetNext",
+      "btnWorkoutPrev",
+      "btnWorkoutNext",
+    ];
+    return {
+      summary: {
+        left: summaryRect.left,
+        right: summaryRect.right,
+        top: summaryRect.top,
+        bottom: summaryRect.bottom,
+      },
+      buttons: buttonIds.map((id) => {
+        const rect = document.getElementById(id)!.getBoundingClientRect();
+        return {
+          left: rect.left,
+          right: rect.right,
+          top: rect.top,
+          bottom: rect.bottom,
+          width: rect.width,
+        };
+      }),
+    };
+  });
+
+  bounds.buttons.forEach((button) => {
+    expect(button.width).toBeGreaterThan(0);
+    expect(button.left).toBeGreaterThanOrEqual(bounds.summary.left - 1);
+    expect(button.right).toBeLessThanOrEqual(bounds.summary.right + 1);
+    expect(button.top).toBeGreaterThanOrEqual(bounds.summary.top - 1);
+    expect(button.bottom).toBeLessThanOrEqual(bounds.summary.bottom + 1);
+  });
+
+  const presetSelect = page.locator("#selectSettingsPreset");
+  const initialPreset = await presetSelect.inputValue();
+  await page.click("#btnSettingsPresetNext");
+  await expect(presetSelect).not.toHaveValue(initialPreset);
+  const nextPreset = await presetSelect.inputValue();
+  await page.click("#btnSettingsPresetPrev");
+  await expect(presetSelect).not.toHaveValue(nextPreset);
+
+  const workoutSelect = page.locator("#selectWorkout");
+  const initialWorkout = await workoutSelect.inputValue();
+  await page.click("#btnWorkoutNext");
+  await expect(workoutSelect).not.toHaveValue(initialWorkout);
+  const nextWorkout = await workoutSelect.inputValue();
+  await page.click("#btnWorkoutPrev");
+  await expect(workoutSelect).not.toHaveValue(nextWorkout);
+  await expect(panel).not.toHaveAttribute("open", "");
+});
+
 test("Save updates the selected preset and Apply loads it", async ({
   page,
 }) => {

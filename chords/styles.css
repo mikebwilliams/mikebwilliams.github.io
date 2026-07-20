@@ -1385,6 +1385,39 @@ button.summaryStepButton {
   box-shadow: 1px 2px 0 var(--button-shadow);
 }
 
+@media (max-width: 640px) {
+  .trainingSetupPanel > summary {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto;
+    gap: 8px 12px;
+    padding: 16px 18px;
+  }
+
+  .trainingSetupPanel > summary .collapsibleTitle {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .trainingSetupPanel > summary::after {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .trainingSetupPanel > summary .collapsibleStatus {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .trainingSetupPanel > summary .collapsibleSteppers {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    width: 100%;
+    justify-self: stretch;
+    justify-content: space-between;
+  }
+}
+
 details.challengeCollapsible > summary .summaryActions {
   order: 4;
   display: inline-flex;
