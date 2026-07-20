@@ -4104,14 +4104,14 @@ function sanitizePositiveIntegerValue(raw, fallback, min = 1, max = 999) {
   return parsed;
 }
 
-function sanitizePositiveNumberValue(raw, fallback) {
+function sanitizeNonNegativeNumberValue(raw, fallback) {
   let parsed = 0;
   try {
     parsed = parseFloat(raw);
   } catch (_) {
     return fallback;
   }
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
 }
 
 function sanitizeStatsGoalPair(source) {
@@ -4287,7 +4287,10 @@ function captureSimpleSettings() {
         ? !!domElements.trainingSetupDetails.open
         : false,
       highlightKeys: !!domElements.highlightCorrectKeys.checked,
-      highlightDelay: parseFloat(domElements.highlightDelay.value) || 3,
+      highlightDelay: sanitizeNonNegativeNumberValue(
+        domElements.highlightDelay.value,
+        3,
+      ),
       hideProgressionNames: !!domElements.hideProgressionChordNames.checked,
       hideProgressionNumerals:
         !!domElements.hideProgressionChordNumerals.checked,
@@ -4552,7 +4555,7 @@ function applySimpleSettings(settings) {
     }
     domElements.highlightCorrectKeys.checked = !!display.highlightKeys;
     domElements.highlightDelay.value = String(
-      sanitizePositiveNumberValue(display.highlightDelay, 3),
+      sanitizeNonNegativeNumberValue(display.highlightDelay, 3),
     );
     domElements.hideProgressionChordNames.checked =
       !!display.hideProgressionNames;
@@ -4745,10 +4748,19 @@ function settingsStoreFactory() {
       const source = settings
         ? sanitizeSettings(settings, this.defaults)
         : this.current;
+      const flowStartHasOptions =
+        domElements.flowStartSelect.options &&
+        domElements.flowStartSelect.options.length > 0;
+      const pendingFlowStart = flowStartHasOptions
+        ? ""
+        : normalizeTextValue(source.flow && source.flow.startKey);
       this.current = cloneObject(source);
       applyScaleState(source.scales);
       applyJazzCadenceState(source.jazzCadences);
       applySettingsToDom(source);
+      const applied = captureSettingsFromDom();
+      if (pendingFlowStart) applied.flow.startKey = pendingFlowStart;
+      this.current = sanitizeSettings(applied, this.defaults);
     },
     syncFromDom({ save = true } = {}) {
       const snapshot = captureSettingsFromDom();

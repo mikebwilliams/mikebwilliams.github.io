@@ -326,4 +326,35 @@ test("settings store applies hostile numeric preset fields safely", () => {
   assert.strictEqual(dom.statGoals.progressions.total.value, "5");
 });
 
+test("settings store persists the canonical values applied to the DOM", () => {
+  storageMock.clear();
+  settingsStore.resetToDefaults({ apply: true, save: false });
+
+  assert.strictEqual(
+    settingsStore.applyPresetSettings(
+      {
+        display: { highlightDelay: 0 },
+        progression: { randomCount: 0 },
+        metronome: { tempo: 999 },
+      },
+      { preservePreferences: false },
+    ),
+    true,
+  );
+
+  assert.strictEqual(dom.highlightDelay.value, "0");
+  assert.strictEqual(dom.randomProgressionCount.value, "5");
+  assert.strictEqual(dom.metronomeTempoInput.value, "240");
+
+  const snapshot = settingsStore.getCurrentSnapshot();
+  assert.strictEqual(snapshot.display.highlightDelay, 0);
+  assert.strictEqual(snapshot.progression.randomCount, 5);
+  assert.strictEqual(snapshot.metronome.tempo, 240);
+
+  const persisted = JSON.parse(storageMock.getItem(settingsStore.storageKey));
+  assert.strictEqual(persisted.display.highlightDelay, 0);
+  assert.strictEqual(persisted.progression.randomCount, 5);
+  assert.strictEqual(persisted.metronome.tempo, 240);
+});
+
 run();
