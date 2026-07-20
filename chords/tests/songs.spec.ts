@@ -776,9 +776,9 @@ test("Songs tab sync updates keyboard hints and answer-note output for the activ
   });
 
   await page.click("#panelMetronome > summary");
-  await page.fill("#inputMetronomeTempoNumber", "240");
+  await page.fill("#inputMetronomeTempoNumber", "60");
   await page.locator("#inputMetronomeTempoNumber").blur();
-  await page.fill("#inputMetronomeCountInMeasures", "1");
+  await page.fill("#inputMetronomeCountInMeasures", "0");
   await page.locator("#inputMetronomeCountInMeasures").blur();
   await page.check("#chkMetronomeSyncSongs");
 
@@ -788,17 +788,17 @@ test("Songs tab sync updates keyboard hints and answer-note output for the activ
   const bKey = page.locator('.key[data-note="59"]');
 
   await page.click("#btnMetronomeToggle");
-  await page.waitForTimeout(900);
   await expect(firstChord).toHaveClass(/songMeasureChord--current/);
-
-  await page.waitForTimeout(250);
   await expect(eKey).toHaveClass(/highlight/);
-  let firstAnswerNotes = await page.evaluate(() =>
-    window.__sentMidiMessages
-      .filter((message) => message[0] === 144)
-      .map((message) => message[1]),
-  );
-  expect(firstAnswerNotes).toEqual(expect.arrayContaining([48, 52, 55, 58]));
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        window.__sentMidiMessages
+          .filter((message) => message[0] === 144)
+          .map((message) => message[1]),
+      ),
+    )
+    .toEqual(expect.arrayContaining([48, 52, 55, 58]));
 
   await page.evaluate(() => {
     window.__sentMidiMessages = [];
@@ -809,16 +809,17 @@ test("Songs tab sync updates keyboard hints and answer-note output for the activ
   });
 
   await expect(secondChord).toHaveClass(/songMeasureChord--current/);
-  await page.waitForTimeout(250);
   await expect(eKey).not.toHaveClass(/highlight/);
   await expect(bKey).toHaveClass(/highlight/);
-
-  const secondAnswerNotes = await page.evaluate(() =>
-    window.__sentMidiMessages
-      .filter((message) => message[0] === 144)
-      .map((message) => message[1]),
-  );
-  expect(secondAnswerNotes).toEqual(expect.arrayContaining([55, 59, 62, 65]));
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        window.__sentMidiMessages
+          .filter((message) => message[0] === 144)
+          .map((message) => message[1]),
+      ),
+    )
+    .toEqual(expect.arrayContaining([55, 59, 62, 65]));
 
   await page.click("#btnMetronomeToggle");
 });
