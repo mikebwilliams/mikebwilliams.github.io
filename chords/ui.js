@@ -272,7 +272,10 @@ function optionsChange() {
   { key: "black", handler: blackKeys },
   { key: "white", handler: whiteKeys },
 ].forEach(({ key, handler }) => {
-  dom.keyPresetButtons[key].addEventListener("click", handler);
+  dom.keyPresetButtons[key].addEventListener("click", () => {
+    handler();
+    syncSettingsStore();
+  });
 });
 
 // Handler functions for preset buttons

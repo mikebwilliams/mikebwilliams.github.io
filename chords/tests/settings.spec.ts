@@ -86,6 +86,28 @@ test("settings controls are split into independent sections", async ({
   await expect(page.locator("#panelOptionsWorkouts")).toBeVisible();
 });
 
+test("key preset selections persist after reload", async ({ page }) => {
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await openTrainingSetup(page);
+  await page.click("label[for='tabOptionsKeys']");
+
+  await page.click("#btnKeysWhite");
+  await expect(page.locator("#C")).toBeChecked();
+  await expect(page.locator("#Db")).not.toBeChecked();
+  const storedKeyToggles = await page.evaluate(() => {
+    const stored = localStorage.getItem("chordChallenge.settings");
+    return stored ? JSON.parse(stored).keyToggles : null;
+  });
+  expect(storedKeyToggles.C).toBe(true);
+  expect(storedKeyToggles.Db).toBe(false);
+
+  await page.reload();
+  await expect(page.locator("#C")).toBeChecked();
+  await expect(page.locator("#Db")).not.toBeChecked();
+});
+
 test("Presets and workouts summary and arrows track current selections", async ({
   page,
 }) => {

@@ -3952,7 +3952,7 @@ function captureCheckboxState(collection) {
   if (!collection) return state;
   Object.keys(collection).forEach((key) => {
     const el = collection[key];
-    if (el && Object.prototype.hasOwnProperty.call(el, "checked")) {
+    if (el && "checked" in el) {
       state[key] = !!el.checked;
     }
   });
@@ -3963,7 +3963,7 @@ function applyCheckboxState(collection, state) {
   if (!collection || !state) return;
   Object.keys(state).forEach((key) => {
     const el = collection[key];
-    if (el && Object.prototype.hasOwnProperty.call(el, "checked")) {
+    if (el && "checked" in el) {
       el.checked = !!state[key];
     }
   });
