@@ -50,6 +50,36 @@ test("Interval chords normalize roots across octave boundaries", async ({
   });
 });
 
+test("Random progression count stays within the supported range", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await page.click("label[for='tabModeProgressions']");
+  await page.selectOption("#selectProgression", "random");
+
+  const oversized = await page.evaluate(() => {
+    dom.randomProgressionCount.value = "999";
+    generateProgression();
+    return {
+      count: dom.randomProgressionCount.value,
+      length: currentProgression.length,
+    };
+  });
+  expect(oversized).toEqual({ count: "10", length: 10 });
+
+  const undersized = await page.evaluate(() => {
+    dom.randomProgressionCount.value = "0";
+    generateProgression();
+    return {
+      count: dom.randomProgressionCount.value,
+      length: currentProgression.length,
+    };
+  });
+  expect(undersized).toEqual({ count: "1", length: 1 });
+});
+
 test("Matching progression name is rendered once as the primary sequence", async ({
   page,
 }) => {

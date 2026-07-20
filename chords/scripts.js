@@ -3679,7 +3679,10 @@ function generateProgression() {
       currentProgression = dom.customProgressionInput.value.split("-");
     } else if (dom.progressionSelect.value === "random") {
       // Get count from randomProgression input
-      let count = dom.randomProgressionCount.value;
+      const count = sanitizeRandomProgressionCount(
+        dom.randomProgressionCount.value,
+      );
+      dom.randomProgressionCount.value = String(count);
 
       enabledNumerals = {};
       if (modeIsDegrees()) {

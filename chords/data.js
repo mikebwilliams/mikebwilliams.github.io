@@ -4104,6 +4104,17 @@ function sanitizePositiveIntegerValue(raw, fallback, min = 1, max = 999) {
   return parsed;
 }
 
+function sanitizeRandomProgressionCount(raw) {
+  let parsed = 0;
+  try {
+    parsed = parseInt(raw, 10);
+  } catch (_) {
+    return 5;
+  }
+  if (!Number.isFinite(parsed)) return 5;
+  return Math.min(10, Math.max(1, parsed));
+}
+
 function sanitizeNonNegativeNumberValue(raw, fallback) {
   let parsed = 0;
   try {
@@ -4307,7 +4318,9 @@ function captureSimpleSettings() {
       selection: domElements.progressionSelect.value || "random",
       custom:
         domElements.customProgressionInput.value || "I-II-iii-IV-V-vi-viio-I",
-      randomCount: parseInt(domElements.randomProgressionCount.value, 10) || 5,
+      randomCount: sanitizeRandomProgressionCount(
+        domElements.randomProgressionCount.value,
+      ),
     },
     metronome: sanitizeMetronomeSettings({
       tempo: domElements.metronomeTempoInput.value,
@@ -4580,7 +4593,7 @@ function applySimpleSettings(settings) {
       settings.progression.custom,
     );
     domElements.randomProgressionCount.value = String(
-      sanitizePositiveIntegerValue(settings.progression.randomCount, 5),
+      sanitizeRandomProgressionCount(settings.progression.randomCount),
     );
   }
   if (settings.metronome) {
