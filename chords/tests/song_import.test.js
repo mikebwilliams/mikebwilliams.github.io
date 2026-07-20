@@ -83,6 +83,25 @@ test("buildPlayableSongEntries normalizes iReal qualities and repeats", () => {
   );
 });
 
+test("repeated multi-chord measures keep unique target positions", () => {
+  const source =
+    "irealb://Repeat Study=Doe John==Medium Swing=C==[*AT44C7,F7 |x Z==0=0";
+  const parsed = parseIRealProSource(source);
+  const entries = buildPlayableSongEntries(parsed.songs[0]);
+  const timeline = buildSongPracticeTimeline(parsed.songs[0]);
+
+  assert.deepStrictEqual(
+    entries.map((entry) => `${entry.measureIndex}:${entry.chordIndex}`),
+    ["0:0", "0:1", "1:0", "1:1"],
+  );
+  assert.deepStrictEqual(
+    timeline[1].chordTargets.map(
+      (target) => `${target.measureIndex}:${target.chordIndex}`,
+    ),
+    ["1:0", "1:1"],
+  );
+});
+
 test("buildPlayableSongEntries preserves altered fifths and ninths", () => {
   const source =
     "irealb://Altered Study=Doe John==Medium Swing=Bb==[*AT44Bb7alt |Bb7b5 |Bb9b5 |Bb7#9b5 |Bb7b9b5 |Bb^7b5 |Bb13b9 |Bb13#9 Z==0=0";

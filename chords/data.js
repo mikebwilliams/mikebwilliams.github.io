@@ -3187,10 +3187,11 @@ function buildPlayableSongEntries(song, options = {}) {
       measureEntries = resolvedMeasures
         .slice(-2)
         .flat()
-        .map((entry) => ({
+        .map((entry, repeatedChordIndex) => ({
           ...cloneSongChordEntry(entry),
           measureIndex,
-          chordIndex: repeatChordIndex >= 0 ? repeatChordIndex : 0,
+          chordIndex:
+            (repeatChordIndex >= 0 ? repeatChordIndex : 0) + repeatedChordIndex,
         }));
     } else if (
       !measureEntries.length &&
@@ -3198,10 +3199,11 @@ function buildPlayableSongEntries(song, options = {}) {
       resolvedMeasures.length
     ) {
       measureEntries = resolvedMeasures[resolvedMeasures.length - 1].map(
-        (entry) => ({
+        (entry, repeatedChordIndex) => ({
           ...cloneSongChordEntry(entry),
           measureIndex,
-          chordIndex: repeatChordIndex >= 0 ? repeatChordIndex : 0,
+          chordIndex:
+            (repeatChordIndex >= 0 ? repeatChordIndex : 0) + repeatedChordIndex,
         }),
       );
     }
