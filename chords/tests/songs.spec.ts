@@ -60,6 +60,22 @@ test("Songs tab imports an iReal URL and loads it for practice", async ({
   );
   await expect(page.locator("#txtCurrentKey")).toHaveText("Bь");
 
+  const fontSizes = await page
+    .locator("#txtProgression")
+    .evaluate((display) => {
+      const chart = display.querySelector(".songChart");
+      const chord = display.querySelector(".songMeasureChord");
+      if (!chart || !chord) return null;
+      return {
+        display: Number.parseFloat(getComputedStyle(display).fontSize),
+        chart: Number.parseFloat(getComputedStyle(chart).fontSize),
+        chord: Number.parseFloat(getComputedStyle(chord).fontSize),
+      };
+    });
+  expect(fontSizes).not.toBeNull();
+  expect(fontSizes!.chart).toBeLessThan(fontSizes!.display);
+  expect(fontSizes!.chord / fontSizes!.chart).toBeCloseTo(2.06, 1);
+
   if (errors.length) {
     console.error("=== JavaScript Errors Detected ===");
     for (const e of errors) console.error(e);

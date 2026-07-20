@@ -875,6 +875,7 @@ html[data-theme="darkClassical"] .surfaceCard {
   border-collapse: separate;
   border-spacing: 4px;
   table-layout: fixed;
+  font-size: clamp(0.85rem, 0.7rem + 0.8vw, 1.1rem);
   letter-spacing: normal;
   text-transform: none;
 }
