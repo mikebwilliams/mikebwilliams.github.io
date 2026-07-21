@@ -257,6 +257,125 @@ test("settings store imports and exports preset JSON", () => {
   assert.strictEqual(dom.flowSelect.value, "descendingWholeSteps");
 });
 
+test("settings store tracks active and modified preset state", () => {
+  storageMock.clear();
+  settingsStore.resetToDefaults({ apply: true, save: true });
+
+  dom.flowSelect.value = "ascendingWholeSteps";
+  settingsStore.syncFromDom();
+  assert.strictEqual(settingsStore.savePreset("Active Spec"), true);
+  assert.strictEqual(settingsStore.loadPreset("Active Spec"), true);
+  assert.deepStrictEqual(settingsStore.getActivePresetState(), {
+    name: "Active Spec",
+    modified: false,
+  });
+  assert.strictEqual(
+    storageMock.getItem(settingsStore.activePresetKey),
+    "Active Spec",
+  );
+
+  dom.highlightCorrectKeys.checked = !dom.highlightCorrectKeys.checked;
+  settingsStore.syncFromDom();
+  assert.strictEqual(
+    settingsStore.getActivePresetState().modified,
+    false,
+    "display preferences should not mark a preset as modified",
+  );
+
+  dom.flowSelect.value = "random";
+  settingsStore.syncFromDom();
+  assert.deepStrictEqual(settingsStore.getActivePresetState(), {
+    name: "Active Spec",
+    modified: true,
+  });
+
+  settingsStore.activePresetName = "";
+  settingsStore.initialize();
+  assert.deepStrictEqual(
+    settingsStore.getActivePresetState(),
+    { name: "Active Spec", modified: true },
+    "active preset identity should survive initialization",
+  );
+
+  assert.strictEqual(settingsStore.loadPreset("Active Spec"), true);
+  assert.strictEqual(settingsStore.getActivePresetState().modified, false);
+  assert.strictEqual(settingsStore.deletePreset("Active Spec"), true);
+  assert.deepStrictEqual(settingsStore.getActivePresetState(), {
+    name: "",
+    modified: true,
+  });
+  assert.strictEqual(storageMock.getItem(settingsStore.activePresetKey), null);
+});
+
+test("active random-flow presets ignore the runtime resume key", () => {
+  storageMock.clear();
+  settingsStore.resetToDefaults({ apply: true, save: true });
+
+  dom.flowSelect.value = "random";
+  dom.flowStartSelect.value = "C";
+  settingsStore.syncFromDom();
+  assert.strictEqual(settingsStore.savePreset("Random Spec"), true);
+  assert.strictEqual(settingsStore.loadPreset("Random Spec"), true);
+
+  dom.flowStartSelect.value = "F#";
+  settingsStore.syncFromDom();
+  assert.deepStrictEqual(settingsStore.getActivePresetState(), {
+    name: "Random Spec",
+    modified: false,
+  });
+});
+
+test("activating an imported preset stores its canonical settings", () => {
+  storageMock.clear();
+  settingsStore.resetToDefaults({ apply: true, save: true });
+  const imported = settingsStore.getCurrentSnapshot();
+  imported.mode = "not-a-mode";
+  imported.progression.randomCount = 999;
+  imported.metronome.tempo = 999;
+
+  assert.strictEqual(
+    settingsStore.importPresets({ presets: { "Imported Spec": imported } }),
+    1,
+  );
+  assert.strictEqual(settingsStore.loadPreset("Imported Spec"), true);
+  assert.strictEqual(dom.modeRadios.tabChords.checked, true);
+  assert.strictEqual(dom.randomProgressionCount.value, "10");
+  assert.strictEqual(dom.metronomeTempoInput.value, "240");
+  assert.deepStrictEqual(settingsStore.getActivePresetState(), {
+    name: "Imported Spec",
+    modified: false,
+  });
+
+  const canonical = settingsStore.loadPresets()["Imported Spec"];
+  assert.strictEqual(canonical.mode, "tabChords");
+  assert.strictEqual(canonical.progression.randomCount, 10);
+  assert.strictEqual(canonical.metronome.tempo, 240);
+});
+
+test("preset mutations report storage failures", () => {
+  const originalStorage = settingsStore.storage;
+  const existingPreset = settingsStore.getCurrentSnapshot();
+  settingsStore.storage = {
+    getItem(key) {
+      if (key === settingsStore.presetsKey) {
+        return JSON.stringify({ Existing: existingPreset });
+      }
+      return null;
+    },
+    setItem() {
+      throw new Error("storage unavailable");
+    },
+    removeItem() {},
+  };
+
+  try {
+    assert.strictEqual(settingsStore.savePreset("New Preset"), false);
+    assert.strictEqual(settingsStore.deletePreset("Existing"), false);
+  } finally {
+    settingsStore.storage = originalStorage;
+  }
+});
+
 test("settings store applies hostile numeric preset fields safely", () => {
   storageMock.clear();
   settingsStore.resetToDefaults({ apply: true, save: false });

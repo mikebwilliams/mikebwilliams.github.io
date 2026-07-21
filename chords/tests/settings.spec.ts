@@ -143,7 +143,7 @@ test("malformed radio and flow settings fall back consistently", async ({
   expect(settings.persisted.voicing.mode).toBe("default");
 });
 
-test("Presets and workouts summary and arrows track current selections", async ({
+test("Presets and workouts summary and arrows track active selections", async ({
   page,
 }) => {
   const presetA = `Preset A ${Date.now()}`;
@@ -161,10 +161,14 @@ test("Presets and workouts summary and arrows track current selections", async (
   await expect(summary).toHaveText("Preset: None · Workout: None");
 
   await page.fill("#inputSettingsPresetName", presetA);
-  await page.click("#btnSettingsSave");
+  await page.click("#btnSettingsCreate");
   await page.fill("#inputSettingsPresetName", presetB);
-  await page.click("#btnSettingsSave");
+  await page.click("#btnSettingsCreate");
 
+  await expect(summary).toHaveText("Preset: None · Workout: None");
+  await page.click("#btnSettingsActivate");
+  await expect(summary).toHaveText(`Preset: ${presetB} · Workout: None`);
+  await page.selectOption("#selectSettingsPreset", "Major & Minor Chords");
   await expect(summary).toHaveText(`Preset: ${presetB} · Workout: None`);
   await page.click("#panelTrainingSetup > summary .collapsibleTitle");
   await expect(panel).not.toHaveAttribute("open", "");
@@ -202,6 +206,102 @@ test("Presets and workouts summary and arrows track current selections", async (
   await expect(page.locator("#selectWorkout")).toHaveValue(workoutB);
   await expect(summary).toHaveText(`Preset: ${presetB} · Workout: ${workoutB}`);
   await expect(panel).not.toHaveAttribute("open", "");
+});
+
+test("Preset management preserves drafts and requires explicit actions", async ({
+  page,
+}) => {
+  const presetName = `Managed Preset ${Date.now()}`;
+  const draftName = "Draft still in progress";
+  const summary = page.locator("#txtTrainingSetupSummary");
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await openTrainingSetup(page);
+  await page.click("label[for='tabOptionsPresets']");
+
+  await expect(page.locator("#btnSettingsActivate")).toBeDisabled();
+  await expect(page.locator("#btnSettingsUpdate")).toBeDisabled();
+  await expect(page.locator("#btnSettingsDelete")).toBeDisabled();
+  await expect(page.locator("#btnSettingsCreate")).toBeDisabled();
+  await page.fill("#inputSettingsPresetName", "   ");
+  await expect(page.locator("#btnSettingsCreate")).toBeDisabled();
+
+  await page.click("label[for='tabOptionsKeys']");
+  await page.selectOption("#selectFlow", "ascendingWholeSteps");
+  await page.click("label[for='tabOptionsPresets']");
+  await page.fill("#inputSettingsPresetName", presetName);
+  await page.click("#btnSettingsCreate");
+
+  await expect(page.locator("#inputSettingsPresetName")).toHaveValue("");
+  await expect(page.locator("#selectSettingsPreset")).toHaveValue(presetName);
+  await expect(page.locator("#btnSettingsActivate")).toBeEnabled();
+  await expect(summary).toHaveText("Preset: Custom · Workout: None");
+
+  await page.click("label[for='tabOptionsKeys']");
+  await page.selectOption("#selectFlow", "descendingMinorThirds");
+  await page.click("label[for='tabOptionsPresets']");
+  await page.fill("#inputSettingsPresetName", draftName);
+  await page.selectOption("#selectSettingsPreset", "Major & Minor Chords");
+  await page.selectOption("#selectSettingsPreset", presetName);
+  await expect(page.locator("#inputSettingsPresetName")).toHaveValue(draftName);
+
+  await page.click("label[for='tabOptionsKeys']");
+  await expect(page.locator("#selectFlow")).toHaveValue(
+    "descendingMinorThirds",
+  );
+  await page.click("label[for='tabOptionsPresets']");
+  await page.fill("#inputSettingsPresetName", presetName);
+  await page.click("#btnSettingsCreate");
+  await expect(page.locator("#inputSettingsPresetName")).toHaveValue(
+    presetName,
+  );
+  await expect(page.locator("#txtSettingsFileStatus")).toContainText(
+    "already exists",
+  );
+
+  await page.click("#btnSettingsActivate");
+  await page.click("label[for='tabModeProgressions']");
+  await expect(summary).toHaveText(
+    `Preset: ${presetName} (modified) · Workout: None`,
+  );
+  await page.click("label[for='tabModeChords']");
+  await expect(summary).toHaveText(`Preset: ${presetName} · Workout: None`);
+  await page.click("label[for='tabOptionsKeys']");
+  await expect(page.locator("#selectFlow")).toHaveValue("ascendingWholeSteps");
+  await page.selectOption("#selectFlow", "random");
+  await expect(summary).toHaveText(
+    `Preset: ${presetName} (modified) · Workout: None`,
+  );
+  await page.selectOption("#selectFlow", "ascendingWholeSteps");
+  await expect(summary).toHaveText(`Preset: ${presetName} · Workout: None`);
+  await page.selectOption("#selectFlow", "random");
+  await expect(summary).toHaveText(
+    `Preset: ${presetName} (modified) · Workout: None`,
+  );
+
+  await page.reload();
+  await expect(summary).toHaveText(
+    `Preset: ${presetName} (modified) · Workout: None`,
+  );
+  await openTrainingSetup(page);
+  await page.click("label[for='tabOptionsPresets']");
+  await page.selectOption("#selectSettingsPreset", presetName);
+  await page.click("#btnSettingsActivate");
+  await expect(summary).toHaveText(`Preset: ${presetName} · Workout: None`);
+
+  page.once("dialog", (dialog) => dialog.dismiss());
+  await page.click("#btnSettingsDelete");
+  await expect(page.locator("#selectSettingsPreset")).toContainText(presetName);
+
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.click("#btnSettingsDelete");
+  await expect(page.locator("#selectSettingsPreset")).not.toContainText(
+    presetName,
+  );
+  await expect(page.locator("#btnSettingsActivate")).toBeDisabled();
+  await expect(summary).toHaveText("Preset: Custom · Workout: None");
 });
 
 test("Collapsed presets and workouts summary elides long names", async ({
@@ -324,7 +424,7 @@ test("training setup steppers stay accessible on mobile", async ({ page }) => {
   await expect(panel).not.toHaveAttribute("open", "");
 });
 
-test("Save updates the selected preset and Apply loads it", async ({
+test("Create, Update, and Activate have distinct preset behavior", async ({
   page,
 }) => {
   const errors: string[] = [];
@@ -354,14 +454,28 @@ test("Save updates the selected preset and Apply loads it", async ({
 
   await selectTab("tabOptionsPresets");
   await page.fill("#inputSettingsPresetName", presetName);
-  await page.click("#btnSettingsSave");
+  await page.click("#btnSettingsCreate");
+  await expect(page.locator("#txtTrainingSetupSummary")).toHaveText(
+    "Preset: Custom · Workout: None",
+  );
+  await page.click("#btnSettingsActivate");
+  await expect(page.locator("#txtTrainingSetupSummary")).toHaveText(
+    `Preset: ${presetName} · Workout: None`,
+  );
 
   await selectTab("tabOptionsKeys");
   await page.selectOption("#selectFlow", "descendingMinorThirds");
+  await expect(page.locator("#txtTrainingSetupSummary")).toHaveText(
+    `Preset: ${presetName} (modified) · Workout: None`,
+  );
 
   await selectTab("tabOptionsPresets");
   await page.selectOption("#selectSettingsPreset", presetName);
-  await page.click("#btnSettingsSave");
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.click("#btnSettingsUpdate");
+  await expect(page.locator("#txtTrainingSetupSummary")).toHaveText(
+    `Preset: ${presetName} · Workout: None`,
+  );
 
   await selectTab("tabOptionsKeys");
   await page.selectOption("#selectFlow", "random");
@@ -373,7 +487,10 @@ test("Save updates the selected preset and Apply loads it", async ({
 
   await selectTab("tabOptionsPresets");
   await page.selectOption("#selectSettingsPreset", presetName);
-  await page.click("#btnSettingsLoad");
+  await page.click("#btnSettingsActivate");
+  await expect(page.locator("#txtTrainingSetupSummary")).toHaveText(
+    `Preset: ${presetName} · Workout: None`,
+  );
 
   await selectTab("tabOptionsKeys");
   await expect(page.locator("#selectFlow")).toHaveValue(
@@ -603,7 +720,9 @@ test("Collapsed daily stats summary reflects loaded workout goals", async ({
   await openTrainingSetup(page);
   await page.click("label[for='tabOptionsPresets']");
   await page.fill("#inputSettingsPresetName", presetName);
-  await page.click("#btnSettingsSave");
+  await page.click("#btnSettingsCreate");
+  await page.selectOption("#selectSettingsPreset", "");
+  await expect(page.locator("#btnSettingsActivate")).toBeDisabled();
 
   await page.click("label[for='tabOptionsWorkouts']");
   await page.fill("#inputWorkoutName", "Goal Summary Workout");
@@ -616,6 +735,12 @@ test("Collapsed daily stats summary reflects loaded workout goals", async ({
     .filter({ hasText: presetName })
     .getByRole("button", { name: "Apply" })
     .click();
+
+  await page.click("label[for='tabOptionsPresets']");
+  await expect(page.locator("#selectSettingsPreset")).toHaveValue(presetName);
+  await expect(page.locator("#btnSettingsActivate")).toBeEnabled();
+  await expect(page.locator("#btnSettingsUpdate")).toBeEnabled();
+  await expect(page.locator("#btnSettingsDelete")).toBeEnabled();
 
   await expect(statsSummary).toHaveText(
     "Chords: 0 / 0, Goals: 3 correct / 5 total",
@@ -638,7 +763,7 @@ test("Workout entries apply embedded settings after preset deletion", async ({
 
   await page.click("label[for='tabOptionsPresets']");
   await page.fill("#inputSettingsPresetName", presetName);
-  await page.click("#btnSettingsSave");
+  await page.click("#btnSettingsCreate");
 
   await page.click("label[for='tabOptionsWorkouts']");
   await page.fill("#inputWorkoutName", workoutName);

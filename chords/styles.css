@@ -2002,6 +2002,26 @@ label {
   min-width: min(100%, 220px);
 }
 
+.presetGroup + .presetGroup {
+  border-top: 1px solid var(--border-soft);
+  margin-top: 16px;
+  padding-top: 16px;
+}
+
+.presetGroupTitle {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+}
+
+.presetManagementActions {
+  margin-bottom: 16px;
+}
+
+.presetCreateRow input {
+  flex: 1 1 220px;
+  min-width: min(100%, 220px);
+}
+
 .compactButtonGroup {
   display: flex;
   flex-wrap: wrap;
@@ -2010,6 +2030,12 @@ label {
 
 .compactButtonGroup button {
   padding: 0.48rem 0.78rem;
+}
+
+@media (max-width: 640px) {
+  .presetCreateRow > button {
+    flex: 1 1 100%;
+  }
 }
 
 .settingsFileStatus {

@@ -214,7 +214,7 @@ test("loading a workout entry preserves the current theme", async ({
   await openTrainingSetup(page);
   await page.click("label[for='tabOptionsPresets']");
   await page.fill("#inputSettingsPresetName", presetName);
-  await page.click("#btnSettingsSave");
+  await page.click("#btnSettingsCreate");
 
   await page.locator("#panelThemePicker summary").click();
   await page.getByLabel("DarkBook", { exact: true }).check();

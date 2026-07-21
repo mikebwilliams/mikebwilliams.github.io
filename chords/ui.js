@@ -397,10 +397,52 @@ function stepSelectValue(select, direction) {
   select.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
+function updatePresetActionButtons() {
+  const selectedName = dom.settingsPresetSelect
+    ? dom.settingsPresetSelect.value
+    : "";
+  const hasSelection = !!selectedName;
+  [
+    dom.settingsActivateButton,
+    dom.settingsUpdateButton,
+    dom.settingsDeleteButton,
+  ].forEach((button) => {
+    if (button) button.disabled = !hasSelection;
+  });
+  if (dom.settingsCreateButton) {
+    const draftName = dom.settingsPresetName
+      ? dom.settingsPresetName.value.trim()
+      : "";
+    dom.settingsCreateButton.disabled = !draftName;
+  }
+}
+
+function stepActiveSettingsPreset(direction) {
+  const select = dom.settingsPresetSelect;
+  const presetNames = getSelectableOptionValues(select);
+  if (!select || !presetNames.length) return;
+  const activeState =
+    uiSettingsStore &&
+    typeof uiSettingsStore.getActivePresetState === "function"
+      ? uiSettingsStore.getActivePresetState()
+      : null;
+  if (activeState && presetNames.includes(activeState.name)) {
+    select.value = activeState.name;
+  }
+  stepSelectValue(select, direction);
+  handleSettingsActivate();
+}
+
 function updateTrainingSetupSummary() {
-  const preset =
-    dom.settingsPresetSelect && dom.settingsPresetSelect.value
-      ? dom.settingsPresetSelect.value
+  const presetState =
+    uiSettingsStore &&
+    typeof uiSettingsStore.getActivePresetState === "function"
+      ? uiSettingsStore.getActivePresetState()
+      : { name: "", modified: false };
+  const preset = presetState.name
+    ? `${presetState.name}${presetState.modified ? " (modified)" : ""}`
+    : presetState.modified
+      ? "Custom"
       : "None";
   const workout =
     workoutState.draftName ||
@@ -899,10 +941,11 @@ dom.jazzBrickButtons.dropbacks.addEventListener("click", () => {
   syncSettingsStore();
 });
 
-function refreshSettingsPresetOptions() {
+function refreshSettingsPresetOptions(preferredValue) {
   if (!uiSettingsStore) return;
   const select = dom.settingsPresetSelect;
-  const currentValue = select.value;
+  const currentValue =
+    typeof preferredValue === "string" ? preferredValue : select.value;
   while (select.firstChild) {
     select.removeChild(select.firstChild);
   }
@@ -927,6 +970,7 @@ function refreshSettingsPresetOptions() {
     select.value = "";
   }
   refreshWorkoutPresetOptions();
+  updatePresetActionButtons();
   updateTrainingSetupSummary();
 }
 
@@ -971,63 +1015,75 @@ function readJsonFileInput(input, onText, onError) {
 }
 
 function handleSettingsPresetSelectChange() {
-  if (dom.settingsPresetName && dom.settingsPresetSelect) {
-    dom.settingsPresetName.value = dom.settingsPresetSelect.value || "";
-  }
-  updateTrainingSetupSummary();
-}
-
-function handleSettingsNew() {
-  if (dom.settingsPresetSelect) dom.settingsPresetSelect.value = "";
-  if (dom.settingsPresetName) dom.settingsPresetName.value = "";
   setFileStatus(dom.settingsFileStatus, "");
-  updateTrainingSetupSummary();
+  updatePresetActionButtons();
 }
 
-function handleSettingsSave() {
+function handleSettingsPresetNameInput() {
+  setFileStatus(dom.settingsFileStatus, "");
+  updatePresetActionButtons();
+}
+
+function handleSettingsCreate() {
   if (!uiSettingsStore) return;
-  const selectedName = dom.settingsPresetSelect
-    ? dom.settingsPresetSelect.value
-    : "";
-  const name = dom.settingsPresetName.value.trim() || selectedName;
+  const name = dom.settingsPresetName.value.trim();
   if (!name) {
-    alert("Please enter a preset name before saving.");
+    setFileStatus(dom.settingsFileStatus, "Enter a name for the new preset.");
     return;
   }
-  const existing =
+  const existingNames =
     typeof uiSettingsStore.listPresets === "function" &&
-    uiSettingsStore.listPresets().includes(name);
-  if (existing && selectedName !== name) {
-    const confirmed = confirm(`Overwrite existing preset "${name}"?`);
-    if (!confirmed) return;
+    uiSettingsStore.listPresets();
+  if (existingNames && existingNames.includes(name)) {
+    setFileStatus(
+      dom.settingsFileStatus,
+      `Preset "${name}" already exists. Select it and use Update instead.`,
+    );
+    return;
   }
   uiSettingsStore.syncFromDom();
-  uiSettingsStore.savePreset(name);
-  refreshSettingsPresetOptions();
-  dom.settingsPresetSelect.value = name;
-  dom.settingsPresetName.value = name;
-  setFileStatus(dom.settingsFileStatus, `Saved preset "${name}".`);
-  updateTrainingSetupSummary();
+  if (!uiSettingsStore.savePreset(name)) {
+    setFileStatus(dom.settingsFileStatus, "Preset could not be created.");
+    return;
+  }
+  refreshSettingsPresetOptions(name);
+  dom.settingsPresetName.value = "";
+  updatePresetActionButtons();
+  setFileStatus(dom.settingsFileStatus, `Created preset "${name}".`);
 }
 
-function handleSettingsLoad() {
+function handleSettingsUpdate() {
   if (!uiSettingsStore) return;
   const name = dom.settingsPresetSelect.value;
   if (!name) {
-    alert("Select a preset to apply.");
+    alert("Select a preset to update.");
+    return;
+  }
+  if (!confirm(`Replace preset "${name}" with the current settings?`)) return;
+  uiSettingsStore.syncFromDom();
+  if (!uiSettingsStore.savePreset(name)) {
+    alert("Preset could not be updated.");
+    return;
+  }
+  refreshSettingsPresetOptions(name);
+  setFileStatus(dom.settingsFileStatus, `Updated preset "${name}".`);
+}
+
+function handleSettingsActivate() {
+  if (!uiSettingsStore) return;
+  const name = dom.settingsPresetSelect.value;
+  if (!name) {
+    alert("Select a preset to activate.");
     return;
   }
   const loaded = uiSettingsStore.loadPreset(name);
   if (!loaded) {
-    alert("Preset could not be applied.");
+    alert("Preset could not be activated.");
     return;
   }
   syncProgressionParameterControls();
-  refreshSettingsPresetOptions();
-  dom.settingsPresetSelect.value = name;
-  dom.settingsPresetName.value = name;
-  setFileStatus(dom.settingsFileStatus, `Applied preset "${name}".`);
-  updateTrainingSetupSummary();
+  refreshSettingsPresetOptions(name);
+  setFileStatus(dom.settingsFileStatus, `Activated preset "${name}".`);
 }
 
 function handleSettingsDelete() {
@@ -1038,24 +1094,22 @@ function handleSettingsDelete() {
     return;
   }
   if (!confirm(`Delete preset "${name}"?`)) return;
-  uiSettingsStore.deletePreset(name);
+  if (!uiSettingsStore.deletePreset(name)) {
+    setFileStatus(dom.settingsFileStatus, "Preset could not be deleted.");
+    return;
+  }
   refreshSettingsPresetOptions();
-  dom.settingsPresetSelect.value = "";
-  dom.settingsPresetName.value = "";
   setFileStatus(dom.settingsFileStatus, `Deleted preset "${name}".`);
-  updateTrainingSetupSummary();
 }
 
 function handleSettingsReset() {
   if (!uiSettingsStore) return;
   if (!confirm("Reset all settings to their default values?")) return;
+  const selectedName = dom.settingsPresetSelect.value;
   uiSettingsStore.resetToDefaults();
   syncProgressionParameterControls();
-  refreshSettingsPresetOptions();
-  dom.settingsPresetSelect.value = "";
-  dom.settingsPresetName.value = "";
+  refreshSettingsPresetOptions(selectedName);
   setFileStatus(dom.settingsFileStatus, "Reset current settings to defaults.");
-  updateTrainingSetupSummary();
 }
 
 function handleSettingsDownload() {
@@ -1787,6 +1841,7 @@ function applyWorkoutEntry(index) {
   ) {
     dom.settingsPresetSelect.value = presetName;
   }
+  updatePresetActionButtons();
   syncProgressionParameterControls();
   let category = resolveEntryCategory(entry, presetSnapshot);
   if (!category && typeof uiSettingsStore.getCurrentSnapshot === "function") {
@@ -1893,7 +1948,7 @@ if (
   dom.settingsPresetPrevButton.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
-    stepSelectValue(dom.settingsPresetSelect, -1);
+    stepActiveSettingsPreset(-1);
   });
 }
 
@@ -1904,7 +1959,7 @@ if (
   dom.settingsPresetNextButton.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
-    stepSelectValue(dom.settingsPresetSelect, 1);
+    stepActiveSettingsPreset(1);
   });
 }
 
@@ -1996,6 +2051,9 @@ if (
 document.addEventListener("DOMContentLoaded", () => {
   initJazzBricks();
   initScales();
+  if (uiSettingsStore && typeof uiSettingsStore.subscribe === "function") {
+    uiSettingsStore.subscribe(updateTrainingSetupSummary);
+  }
   if (uiSettingsStore && typeof uiSettingsStore.applyToDom === "function") {
     uiSettingsStore.applyToDom(uiSettingsStore.current);
   }
@@ -2028,9 +2086,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   refreshSettingsPresetOptions();
   initWorkoutsPanel();
-  dom.settingsNewButton.addEventListener("click", handleSettingsNew);
-  dom.settingsSaveButton.addEventListener("click", handleSettingsSave);
-  dom.settingsLoadButton.addEventListener("click", handleSettingsLoad);
+  dom.settingsPresetName.addEventListener(
+    "input",
+    handleSettingsPresetNameInput,
+  );
+  dom.settingsCreateButton.addEventListener("click", handleSettingsCreate);
+  dom.settingsUpdateButton.addEventListener("click", handleSettingsUpdate);
+  dom.settingsActivateButton.addEventListener("click", handleSettingsActivate);
   dom.settingsDeleteButton.addEventListener("click", handleSettingsDelete);
   dom.settingsResetButton.addEventListener("click", handleSettingsReset);
   dom.settingsDownloadButton.addEventListener("click", handleSettingsDownload);

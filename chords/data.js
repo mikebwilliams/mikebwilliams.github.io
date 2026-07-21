@@ -684,9 +684,9 @@ const domElements = {
   settingsPresetPrevButton: requireElement("btnSettingsPresetPrev"),
   settingsPresetNextButton: requireElement("btnSettingsPresetNext"),
   settingsPresetName: requireElement("inputSettingsPresetName"),
-  settingsNewButton: requireElement("btnSettingsNew"),
-  settingsSaveButton: requireElement("btnSettingsSave"),
-  settingsLoadButton: requireElement("btnSettingsLoad"),
+  settingsCreateButton: requireElement("btnSettingsCreate"),
+  settingsUpdateButton: requireElement("btnSettingsUpdate"),
+  settingsActivateButton: requireElement("btnSettingsActivate"),
   settingsDeleteButton: requireElement("btnSettingsDelete"),
   settingsResetButton: requireElement("btnSettingsReset"),
   settingsDownloadButton: requireElement("btnSettingsDownload"),
@@ -1687,6 +1687,7 @@ const jazzCadencesDropbacks = [
 
 const SETTINGS_STORAGE_KEY = "chordChallenge.settings";
 const SETTINGS_PRESETS_KEY = "chordChallenge.settings.presets";
+const SETTINGS_ACTIVE_PRESET_KEY = "chordChallenge.settings.activePreset";
 const SETTINGS_PRESET_SEED_VERSION_KEY =
   "chordChallenge.settings.presets.seedVersion";
 const WORKOUTS_STORAGE_KEY = "chordChallenge.workouts";
@@ -4677,6 +4678,38 @@ function sanitizeSettings(settings, defaults) {
 
 const presetIndependentSettingKeys = ["display", "spacedRep", "midi"];
 
+function settingsValuesEqual(left, right) {
+  if (left === right) return true;
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right)) return false;
+    return (
+      left.length === right.length &&
+      left.every((value, index) => settingsValuesEqual(value, right[index]))
+    );
+  }
+  if (left && right && typeof left === "object" && typeof right === "object") {
+    const leftKeys = Object.keys(left);
+    const rightKeys = Object.keys(right);
+    return (
+      leftKeys.length === rightKeys.length &&
+      leftKeys.every(
+        (key) =>
+          Object.prototype.hasOwnProperty.call(right, key) &&
+          settingsValuesEqual(left[key], right[key]),
+      )
+    );
+  }
+  return false;
+}
+
+function getPresetComparisonValue(settings, key) {
+  const value = settings[key];
+  if (key === "flow" && value && value.mode === "random") {
+    return { ...value, startKey: "" };
+  }
+  return value;
+}
+
 function mergePresetWithCurrentPreferences(presetSettings, currentSettings) {
   const next = cloneObject(presetSettings || {});
   const current = currentSettings || {};
@@ -4728,14 +4761,91 @@ function settingsStoreFactory() {
     storage,
     storageKey: SETTINGS_STORAGE_KEY,
     presetsKey: SETTINGS_PRESETS_KEY,
+    activePresetKey: SETTINGS_ACTIVE_PRESET_KEY,
     presetSeedVersionKey: SETTINGS_PRESET_SEED_VERSION_KEY,
+    activePresetName: "",
     initialized: false,
     attachedElements: new Set(),
+    changeListeners: new Set(),
     resolveStorage() {
       if (this.storage) return this.storage;
       const handle = getStorageHandle();
       if (handle) this.storage = handle;
       return this.storage;
+    },
+    subscribe(listener) {
+      if (typeof listener !== "function") return () => {};
+      this.changeListeners.add(listener);
+      return () => this.changeListeners.delete(listener);
+    },
+    notifyChange() {
+      this.changeListeners.forEach((listener) => {
+        try {
+          listener(this.getActivePresetState());
+        } catch (_) {}
+      });
+    },
+    readActivePresetName() {
+      const activeStorage = this.resolveStorage();
+      if (!activeStorage) return "";
+      try {
+        const name = sanitizeNamedCollectionName(
+          activeStorage.getItem(this.activePresetKey),
+        );
+        const presets = this.loadPresets();
+        if (name && Object.prototype.hasOwnProperty.call(presets, name)) {
+          return name;
+        }
+        if (name) activeStorage.removeItem(this.activePresetKey);
+      } catch (_) {}
+      return "";
+    },
+    setActivePresetName(name, { notify = true } = {}) {
+      const cleanName = sanitizeNamedCollectionName(name);
+      const presets = this.loadPresets();
+      const nextName =
+        cleanName && Object.prototype.hasOwnProperty.call(presets, cleanName)
+          ? cleanName
+          : "";
+      this.activePresetName = nextName;
+      const activeStorage = this.resolveStorage();
+      if (activeStorage) {
+        try {
+          if (nextName) {
+            activeStorage.setItem(this.activePresetKey, nextName);
+          } else {
+            activeStorage.removeItem(this.activePresetKey);
+          }
+        } catch (_) {}
+      }
+      if (notify) this.notifyChange();
+      return nextName;
+    },
+    getActivePresetState() {
+      const presets = this.loadPresets();
+      if (
+        this.activePresetName &&
+        !Object.prototype.hasOwnProperty.call(presets, this.activePresetName)
+      ) {
+        this.setActivePresetName("", { notify: false });
+      }
+      const name = this.activePresetName;
+      const baseline = name ? presets[name] : this.defaults;
+      const current = sanitizeSettings(this.current, this.defaults);
+      const expected = sanitizeSettings(baseline, this.defaults);
+      const controlledKeys = Object.keys(this.defaults).filter(
+        (key) => !presetIndependentSettingKeys.includes(key),
+      );
+      return {
+        name,
+        modified: controlledKeys.some(
+          (key) =>
+            !settingsValuesEqual(
+              getPresetComparisonValue(current, key),
+              getPresetComparisonValue(expected, key),
+            ),
+        ),
+      };
     },
     load() {
       const activeStorage = this.resolveStorage();
@@ -4772,17 +4882,21 @@ function settingsStoreFactory() {
     },
     savePresets(presets) {
       const activeStorage = this.resolveStorage();
-      if (!activeStorage) return;
+      if (!activeStorage) return false;
       const sanitized = sanitizeSettingsPresetMap(presets, this.defaults);
       try {
         activeStorage.setItem(this.presetsKey, JSON.stringify(sanitized));
-      } catch (_) {}
+        return true;
+      } catch (_) {
+        return false;
+      }
     },
     initialize() {
       const loaded = this.load();
       this.current = sanitizeSettings(loaded, this.defaults);
       this.initialized = true;
       this.seedStarterPresets();
+      this.activePresetName = this.readActivePresetName();
     },
     applyToDom(settings) {
       const source = settings
@@ -4809,39 +4923,61 @@ function settingsStoreFactory() {
       applyJazzCadenceState(this.current.jazzCadences);
       notifyStatGoalsChange();
       if (save) this.save();
+      this.notifyChange();
     },
     savePreset(name) {
-      if (!name) return;
+      if (!name) return false;
       const presets = this.loadPresets();
       const cleanName = sanitizeNamedCollectionName(name);
-      if (!cleanName) return;
+      if (!cleanName) return false;
       presets[cleanName] = cloneObject(this.current);
-      this.savePresets(presets);
+      if (!this.savePresets(presets)) return false;
+      this.notifyChange();
+      return true;
     },
-    applyPresetSettings(settings, { preservePreferences = true } = {}) {
+    applyPresetSettings(
+      settings,
+      { preservePreferences = true, activePresetName = "" } = {},
+    ) {
       if (!settings || typeof settings !== "object") return false;
       const source = preservePreferences
         ? mergePresetWithCurrentPreferences(settings, captureSettingsFromDom())
         : settings;
       this.applyToDom(source);
       this.save();
+      this.setActivePresetName(activePresetName, { notify: false });
+      this.notifyChange();
       return true;
     },
     loadPreset(name, { preservePreferences = true } = {}) {
       if (!name) return false;
       const presets = this.loadPresets();
       if (!presets[name]) return false;
-      return this.applyPresetSettings(presets[name], {
+      const loaded = this.applyPresetSettings(presets[name], {
         preservePreferences,
+        activePresetName: name,
       });
+      if (!loaded) return false;
+      const canonicalPreset = cloneObject(this.current);
+      presetIndependentSettingKeys.forEach((key) => {
+        canonicalPreset[key] = cloneObject(presets[name][key]);
+      });
+      presets[name] = canonicalPreset;
+      this.savePresets(presets);
+      this.notifyChange();
+      return true;
     },
     deletePreset(name) {
-      if (!name) return;
+      if (!name) return false;
       const presets = this.loadPresets();
-      if (presets[name]) {
-        delete presets[name];
-        this.savePresets(presets);
+      if (!presets[name]) return false;
+      delete presets[name];
+      if (!this.savePresets(presets)) return false;
+      if (this.activePresetName === name) {
+        this.setActivePresetName("", { notify: false });
       }
+      this.notifyChange();
+      return true;
     },
     listPresets() {
       const presets = this.loadPresets();
@@ -4871,7 +5007,14 @@ function settingsStoreFactory() {
       names.forEach((name) => {
         next[name] = imported[name];
       });
-      this.savePresets(next);
+      if (!this.savePresets(next)) return 0;
+      if (
+        this.activePresetName &&
+        !Object.prototype.hasOwnProperty.call(next, this.activePresetName)
+      ) {
+        this.setActivePresetName("", { notify: false });
+      }
+      this.notifyChange();
       return names.length;
     },
     seedStarterPresets() {
@@ -4891,7 +5034,7 @@ function settingsStoreFactory() {
             presets[name] = starterPresets[name];
           }
         });
-        this.savePresets(presets);
+        if (!this.savePresets(presets)) return;
         activeStorage.setItem(
           this.presetSeedVersionKey,
           STARTER_CONTENT_VERSION,
@@ -4902,6 +5045,8 @@ function settingsStoreFactory() {
       this.current = cloneObject(this.defaults);
       if (apply) this.applyToDom(this.current);
       if (save) this.save();
+      this.setActivePresetName("", { notify: false });
+      this.notifyChange();
     },
     getCurrentSnapshot() {
       return cloneObject(this.current);
@@ -4972,6 +5117,9 @@ function settingsStoreFactory() {
       });
       Object.values(domElements.jazzBrickButtons || {}).forEach((el) => {
         this.watchElement(el, "click");
+      });
+      Object.values(domElements.modeRadios || {}).forEach((el) => {
+        this.watchElement(el);
       });
 
       Object.values(domElements.themeRadios || {}).forEach((radio) => {

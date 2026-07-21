@@ -771,8 +771,8 @@
                     class="summaryStepButton"
                     id="btnSettingsPresetPrev"
                     type="button"
-                    aria-label="Previous preset"
-                    title="Previous preset"
+                    aria-label="Activate previous preset"
+                    title="Activate previous preset"
                   >
                     &lt;
                   </button>
@@ -781,8 +781,8 @@
                     class="summaryStepButton"
                     id="btnSettingsPresetNext"
                     type="button"
-                    aria-label="Next preset"
-                    title="Next preset"
+                    aria-label="Activate next preset"
+                    title="Activate next preset"
                   >
                     &gt;
                   </button>
@@ -833,24 +833,42 @@
               </div>
 
               <div class="tabContent" id="panelOptionsPresets">
-                <div class="settingsRow settingsSelectRow">
-                  <label for="selectSettingsPreset">Preset:</label>
-                  <select id="selectSettingsPreset"></select>
-                  <div class="compactButtonGroup">
-                    <button id="btnSettingsNew" type="button">New</button>
-                    <button id="btnSettingsLoad" type="button">Apply</button>
-                    <button id="btnSettingsSave" type="button">Save</button>
-                    <button id="btnSettingsDelete" type="button">Delete</button>
+                <section class="presetGroup" aria-labelledby="savedPresetTitle">
+                  <h4 id="savedPresetTitle" class="presetGroupTitle">
+                    Saved preset
+                  </h4>
+                  <div class="settingsRow settingsSelectRow">
+                    <label for="selectSettingsPreset">Preset:</label>
+                    <select id="selectSettingsPreset"></select>
+                    <button id="btnSettingsActivate" type="button" disabled>
+                      Activate
+                    </button>
                   </div>
-                </div>
-                <div class="settingsRow">
-                  <label for="inputSettingsPresetName">Name:</label>
-                  <input
-                    type="text"
-                    id="inputSettingsPresetName"
-                    placeholder="Preset name"
-                  />
-                </div>
+                  <div class="compactButtonGroup presetManagementActions">
+                    <button id="btnSettingsUpdate" type="button" disabled>
+                      Update from Current Settings
+                    </button>
+                    <button id="btnSettingsDelete" type="button" disabled>
+                      Delete
+                    </button>
+                  </div>
+                </section>
+                <section class="presetGroup" aria-labelledby="newPresetTitle">
+                  <h4 id="newPresetTitle" class="presetGroupTitle">
+                    Create a new preset
+                  </h4>
+                  <div class="settingsRow presetCreateRow">
+                    <label for="inputSettingsPresetName">Name:</label>
+                    <input
+                      type="text"
+                      id="inputSettingsPresetName"
+                      placeholder="Preset name"
+                    />
+                    <button id="btnSettingsCreate" type="button" disabled>
+                      Create from Current Settings
+                    </button>
+                  </div>
+                </section>
                 <div class="settingsRow">
                   <button id="btnSettingsReset" type="button">
                     Reset to Defaults
@@ -864,7 +882,13 @@
                     accept=".presets"
                   />
                 </div>
-                <p id="txtSettingsFileStatus" class="settingsFileStatus"></p>
+                <p
+                  id="txtSettingsFileStatus"
+                  class="settingsFileStatus"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                ></p>
               </div>
 
               <div class="tabContent" id="panelOptionsWorkouts">
