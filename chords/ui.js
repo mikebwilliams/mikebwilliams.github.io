@@ -1122,21 +1122,114 @@ function handleSettingsUpload() {
   if (dom.settingsUploadInput) dom.settingsUploadInput.click();
 }
 
+function requestSettingsPresetImportConflict(name) {
+  const dialog = dom.settingsImportConflictDialog;
+  if (!dialog || typeof dialog.showModal !== "function") {
+    return Promise.resolve("cancel");
+  }
+
+  dom.settingsImportConflictMessage.textContent =
+    `A preset named "${name}" already exists. Choose OK to overwrite it, ` +
+    "Skip to keep the existing preset and continue, or Cancel to stop the import.";
+  dialog.returnValue = "";
+
+  return new Promise((resolve) => {
+    const handleClose = () => {
+      dialog.removeEventListener("cancel", handleCancel);
+      const choice = ["overwrite", "skip"].includes(dialog.returnValue)
+        ? dialog.returnValue
+        : "cancel";
+      resolve(choice);
+    };
+    const handleCancel = (event) => {
+      event.preventDefault();
+      dialog.close("cancel");
+    };
+
+    dialog.addEventListener("close", handleClose, { once: true });
+    dialog.addEventListener("cancel", handleCancel);
+    dialog.showModal();
+    if (dom.settingsImportConflictSkipButton) {
+      dom.settingsImportConflictSkipButton.focus();
+    }
+  });
+}
+
+function formatPresetImportCount(count) {
+  return `${count} preset${count === 1 ? "" : "s"}`;
+}
+
+async function importSettingsPresets(text) {
+  const candidates = uiSettingsStore.parsePresetImport(text);
+  const names = Object.keys(candidates);
+  if (!names.length) {
+    setFileStatus(dom.settingsFileStatus, "No presets found in file.");
+    return;
+  }
+
+  const existingNames = new Set(uiSettingsStore.listPresets());
+  const accepted = {};
+  let overwritten = 0;
+  let skipped = 0;
+
+  for (const name of names) {
+    if (existingNames.has(name)) {
+      const choice = await requestSettingsPresetImportConflict(name);
+      if (choice === "cancel") {
+        setFileStatus(
+          dom.settingsFileStatus,
+          "Import canceled. No presets were changed.",
+        );
+        return;
+      }
+      if (choice === "skip") {
+        skipped += 1;
+        continue;
+      }
+      overwritten += 1;
+    }
+    accepted[name] = candidates[name];
+  }
+
+  const acceptedCount = Object.keys(accepted).length;
+  if (!acceptedCount) {
+    setFileStatus(
+      dom.settingsFileStatus,
+      `No presets imported. Skipped ${skipped} existing preset${
+        skipped === 1 ? "" : "s"
+      }.`,
+    );
+    return;
+  }
+
+  const imported = uiSettingsStore.importPresets({ presets: accepted });
+  if (!imported) {
+    setFileStatus(dom.settingsFileStatus, "Presets could not be imported.");
+    return;
+  }
+
+  refreshSettingsPresetOptions();
+  const details = [];
+  if (overwritten) details.push(`${overwritten} overwritten`);
+  if (skipped) details.push(`${skipped} skipped`);
+  setFileStatus(
+    dom.settingsFileStatus,
+    `Imported ${formatPresetImportCount(imported)}${
+      details.length ? ` (${details.join(", ")})` : ""
+    }.`,
+  );
+}
+
 function handleSettingsUploadFile(event) {
   if (!uiSettingsStore) return;
   readJsonFileInput(
     event.target,
-    (text) => {
-      const imported = uiSettingsStore.importPresets(text);
-      if (!imported) {
-        setFileStatus(dom.settingsFileStatus, "No presets found in file.");
-        return;
+    async (text) => {
+      try {
+        await importSettingsPresets(text);
+      } finally {
+        if (dom.settingsUploadButton) dom.settingsUploadButton.focus();
       }
-      refreshSettingsPresetOptions();
-      setFileStatus(
-        dom.settingsFileStatus,
-        `Imported ${imported} preset${imported === 1 ? "" : "s"}.`,
-      );
     },
     () => {
       setFileStatus(dom.settingsFileStatus, "Preset file could not be read.");

@@ -692,6 +692,15 @@ const domElements = {
   settingsDownloadButton: requireElement("btnSettingsDownload"),
   settingsUploadButton: requireElement("btnSettingsUpload"),
   settingsUploadInput: requireElement("inputSettingsUpload"),
+  settingsImportConflictDialog: requireElement(
+    "dialogSettingsPresetImportConflict",
+  ),
+  settingsImportConflictMessage: requireElement(
+    "txtSettingsPresetImportConflict",
+  ),
+  settingsImportConflictSkipButton: requireElement(
+    "btnSettingsPresetImportSkip",
+  ),
   settingsFileStatus: requireElement("txtSettingsFileStatus"),
   trainingSetupSummary: requireElement("txtTrainingSetupSummary"),
   workoutPanel: requireElement("panelOptionsWorkouts"),
@@ -4996,11 +5005,14 @@ function settingsStoreFactory() {
         return '{"presets":{}}';
       }
     },
-    importPresets(payload, { merge = true } = {}) {
-      const imported = sanitizeSettingsPresetMap(
+    parsePresetImport(payload) {
+      return sanitizeSettingsPresetMap(
         extractSettingsPresetPayload(payload),
         this.defaults,
       );
+    },
+    importPresets(payload, { merge = true } = {}) {
+      const imported = this.parsePresetImport(payload);
       const names = Object.keys(imported);
       if (!names.length) return 0;
       const next = merge ? this.loadPresets() : {};

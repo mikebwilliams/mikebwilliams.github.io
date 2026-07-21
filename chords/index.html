@@ -869,6 +869,7 @@
                     </button>
                   </div>
                 </section>
+                <hr class="presetUtilityDivider" />
                 <div class="settingsRow">
                   <button id="btnSettingsReset" type="button">
                     Reset to Defaults
@@ -1842,6 +1843,43 @@
         </section>
       </div>
     </main>
+
+    <dialog
+      id="dialogSettingsPresetImportConflict"
+      class="presetImportDialog"
+      aria-labelledby="settingsPresetImportConflictTitle"
+      aria-describedby="txtSettingsPresetImportConflict"
+    >
+      <form method="dialog">
+        <h4 id="settingsPresetImportConflictTitle">Preset already exists</h4>
+        <p id="txtSettingsPresetImportConflict"></p>
+        <div class="compactButtonGroup presetImportDialogActions">
+          <button
+            id="btnSettingsPresetImportOverwrite"
+            type="submit"
+            value="overwrite"
+            aria-label="OK, overwrite existing preset"
+          >
+            OK
+          </button>
+          <button
+            id="btnSettingsPresetImportSkip"
+            type="submit"
+            value="skip"
+            autofocus
+          >
+            Skip
+          </button>
+          <button
+            id="btnSettingsPresetImportCancel"
+            type="submit"
+            value="cancel"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </dialog>
 
     <script src="data.js"></script>
     <script src="ui.js"></script>

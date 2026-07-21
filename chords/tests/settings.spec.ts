@@ -63,6 +63,9 @@ test("settings controls are split into independent sections", async ({
   await openTrainingSetup(page);
 
   await expect(page.locator("#panelOptionsPresets")).toBeVisible();
+  await expect(
+    page.locator("#panelOptionsPresets .presetUtilityDivider"),
+  ).toBeVisible();
   await expect(page.locator("#panelOptionsKeys")).toBeVisible();
   await expect(page.locator("#panelOptionsDisplay")).toBeVisible();
 
@@ -545,6 +548,9 @@ test("Presets and workouts can import and export files", async ({ page }) => {
 
   await expect(page.locator("#btnSettingsDownload")).toHaveText("Export");
   await expect(page.locator("#btnSettingsUpload")).toHaveText("Import");
+  await expect(
+    page.locator("#dialogSettingsPresetImportConflict"),
+  ).not.toBeVisible();
 
   await page.setInputFiles("#inputSettingsUpload", {
     name: "test.presets",
@@ -565,6 +571,9 @@ test("Presets and workouts can import and export files", async ({ page }) => {
   await expect(page.locator("#selectSettingsPreset")).toContainText(
     "Imported Test Preset",
   );
+  await expect(
+    page.locator("#dialogSettingsPresetImportConflict"),
+  ).not.toBeVisible();
 
   const presetDownload = page.waitForEvent("download");
   await page.click("#btnSettingsDownload");
@@ -609,6 +618,186 @@ test("Presets and workouts can import and export files", async ({ page }) => {
     "Exported workouts.",
   );
   expect((await workoutDownload).suggestedFilename()).toBe("chord.workouts");
+});
+
+test("Preset import can overwrite and skip same-name presets", async ({
+  page,
+}) => {
+  test.slow();
+  const overwriteName = "Import Overwrite Conflict";
+  const skipName = "Import Skip Conflict";
+  const newName = "Import Fresh Preset";
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  const payload = await page.evaluate(
+    ({ overwriteName, skipName, newName }) => {
+      const store = (window as any).appGlobals.settingsStore;
+      const snapshot = store.getCurrentSnapshot();
+      store.importPresets({
+        presets: {
+          [overwriteName]: {
+            ...snapshot,
+            flow: { mode: "ascendingWholeSteps", startKey: "C" },
+          },
+          [skipName]: {
+            ...snapshot,
+            flow: { mode: "circleOfFourths", startKey: "D" },
+          },
+        },
+      });
+      return {
+        presets: {
+          [`  ${overwriteName}  `]: {
+            ...snapshot,
+            flow: { mode: "descendingWholeSteps", startKey: "F" },
+          },
+          [skipName]: {
+            ...snapshot,
+            flow: { mode: "ascendingHalfSteps", startKey: "E" },
+          },
+          [newName]: {
+            ...snapshot,
+            flow: { mode: "descendingMinorThirds", startKey: "A" },
+          },
+        },
+      };
+    },
+    { overwriteName, skipName, newName },
+  );
+
+  await page.reload();
+  await openTrainingSetup(page);
+  await page.setInputFiles("#inputSettingsUpload", {
+    name: "conflicts.presets",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(payload)),
+  });
+
+  const dialog = page.locator("#dialogSettingsPresetImportConflict");
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText(overwriteName);
+  await expect(page.locator("#btnSettingsPresetImportOverwrite")).toHaveText(
+    "OK",
+  );
+  await expect(page.locator("#btnSettingsPresetImportSkip")).toBeFocused();
+  await page.click("#btnSettingsPresetImportOverwrite");
+
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText(skipName);
+  await page.click("#btnSettingsPresetImportSkip");
+
+  await expect(dialog).not.toBeVisible();
+  await expect(page.locator("#txtSettingsFileStatus")).toHaveText(
+    "Imported 2 presets (1 overwritten, 1 skipped).",
+  );
+  await expect(page.locator("#inputSettingsUpload")).toHaveValue("");
+  const result = await page.evaluate(
+    ({ overwriteName, skipName, newName }) => {
+      const store = (window as any).appGlobals.settingsStore;
+      const presets = store.loadPresets();
+      return {
+        overwrite: presets[overwriteName].flow.mode,
+        skipped: presets[skipName].flow.mode,
+        fresh: presets[newName].flow.mode,
+        current: store.getCurrentSnapshot().flow.mode,
+      };
+    },
+    { overwriteName, skipName, newName },
+  );
+  expect(result).toEqual({
+    overwrite: "descendingWholeSteps",
+    skipped: "circleOfFourths",
+    fresh: "descendingMinorThirds",
+    current: "random",
+  });
+});
+
+test("Canceling a preset conflict leaves the entire import unchanged", async ({
+  page,
+}) => {
+  test.slow();
+  const firstName = "Import Cancel First";
+  const secondName = "Import Cancel Second";
+  const newName = "Import Cancel Fresh";
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  const payload = await page.evaluate(
+    ({ firstName, secondName, newName }) => {
+      const store = (window as any).appGlobals.settingsStore;
+      const snapshot = store.getCurrentSnapshot();
+      store.importPresets({
+        presets: {
+          [firstName]: {
+            ...snapshot,
+            flow: { mode: "ascendingWholeSteps", startKey: "C" },
+          },
+          [secondName]: {
+            ...snapshot,
+            flow: { mode: "circleOfFifths", startKey: "D" },
+          },
+        },
+      });
+      return {
+        presets: {
+          [firstName]: {
+            ...snapshot,
+            flow: { mode: "descendingWholeSteps", startKey: "F" },
+          },
+          [secondName]: {
+            ...snapshot,
+            flow: { mode: "ascendingHalfSteps", startKey: "E" },
+          },
+          [newName]: {
+            ...snapshot,
+            flow: { mode: "descendingMinorThirds", startKey: "A" },
+          },
+        },
+      };
+    },
+    { firstName, secondName, newName },
+  );
+
+  await page.reload();
+  await openTrainingSetup(page);
+  await page.setInputFiles("#inputSettingsUpload", {
+    name: "cancel-conflicts.presets",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(payload)),
+  });
+
+  const dialog = page.locator("#dialogSettingsPresetImportConflict");
+  await expect(dialog).toContainText(firstName);
+  await page.click("#btnSettingsPresetImportOverwrite");
+  await expect(dialog).toContainText(secondName);
+  await page.click("#btnSettingsPresetImportCancel");
+
+  await expect(dialog).not.toBeVisible();
+  await expect(page.locator("#txtSettingsFileStatus")).toHaveText(
+    "Import canceled. No presets were changed.",
+  );
+  await expect(page.locator("#inputSettingsUpload")).toHaveValue("");
+  const result = await page.evaluate(
+    ({ firstName, secondName, newName }) => {
+      const presets = (window as any).appGlobals.settingsStore.loadPresets();
+      return {
+        first: presets[firstName].flow.mode,
+        second: presets[secondName].flow.mode,
+        hasFresh: Object.prototype.hasOwnProperty.call(presets, newName),
+      };
+    },
+    { firstName, secondName, newName },
+  );
+  expect(result).toEqual({
+    first: "ascendingWholeSteps",
+    second: "circleOfFifths",
+    hasFresh: false,
+  });
 });
 
 test("Metronome panel persists its open state and settings", async ({

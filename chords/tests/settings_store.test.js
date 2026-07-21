@@ -239,6 +239,20 @@ test("settings store imports and exports preset JSON", () => {
     "export should include saved preset",
   );
 
+  const parsedImport = settingsStore.parsePresetImport({
+    presets: {
+      "  Trimmed Preset  ": {
+        ...settingsStore.getCurrentSnapshot(),
+        flow: { mode: "ascendingHalfSteps", startKey: "D" },
+      },
+    },
+  });
+  assert.deepStrictEqual(Object.keys(parsedImport), ["Trimmed Preset"]);
+  assert.strictEqual(
+    parsedImport["Trimmed Preset"].flow.mode,
+    "ascendingHalfSteps",
+  );
+
   const importedCount = settingsStore.importPresets({
     presets: {
       "Imported Preset": {
