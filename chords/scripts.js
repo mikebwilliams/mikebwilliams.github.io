@@ -600,10 +600,13 @@ function loadDailyStatsFromStorage() {
 
 function saveDailyStatsState(state = dailyStatsState) {
   const storage = resolveStatsStorageHandle();
-  if (!storage || !state) return;
+  if (!storage || !state) return false;
   try {
     storage.setItem(STATS_STORAGE_KEY, JSON.stringify(state));
-  } catch (_) {}
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
 
 function applyDailyStatsToDom(state) {
@@ -663,9 +666,11 @@ function resetDailyStats({ keepDate = true } = {}) {
     keepDate && dailyStatsState && dailyStatsState.date
       ? dailyStatsState.date
       : formatDateKey();
-  dailyStatsState = createDefaultDailyStats(targetDate);
-  saveDailyStatsState();
+  const nextState = createDefaultDailyStats(targetDate);
+  if (!saveDailyStatsState(nextState)) return false;
+  dailyStatsState = nextState;
   applyDailyStatsToDom(dailyStatsState);
+  return true;
 }
 
 function initializeDailyStats() {

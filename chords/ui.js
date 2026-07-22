@@ -582,7 +582,6 @@ function refreshSongSelect(selectedId = "") {
       dom.songFavoriteToggle.disabled = true;
     }
     if (dom.songDeleteButton) dom.songDeleteButton.disabled = true;
-    if (dom.songClearButton) dom.songClearButton.disabled = true;
     return;
   }
 
@@ -601,7 +600,6 @@ function refreshSongSelect(selectedId = "") {
   }
 
   if (dom.songDeleteButton) dom.songDeleteButton.disabled = false;
-  if (dom.songClearButton) dom.songClearButton.disabled = false;
   syncSongFavoriteToggle();
 }
 
@@ -647,24 +645,11 @@ function handleSongDelete() {
   }
 }
 
-function handleSongClear() {
-  if (!uiSongsStore) return;
-  uiSongsStore.clearAll();
-  refreshSongSelect();
-  setSongsStatus("Cleared imported songs.");
-  if (modeIsSongs()) {
-    resetFlow();
-  }
-}
-
 if (dom.songImportButton) {
   dom.songImportButton.addEventListener("click", handleSongImport);
 }
 if (dom.songDeleteButton) {
   dom.songDeleteButton.addEventListener("click", handleSongDelete);
-}
-if (dom.songClearButton) {
-  dom.songClearButton.addEventListener("click", handleSongClear);
 }
 if (dom.songSelect) {
   dom.songSelect.addEventListener("change", () => {
@@ -1102,14 +1087,229 @@ function handleSettingsDelete() {
   setFileStatus(dom.settingsFileStatus, `Deleted preset "${name}".`);
 }
 
-function handleSettingsReset() {
-  if (!uiSettingsStore) return;
-  if (!confirm("Reset all settings to their default values?")) return;
-  const selectedName = dom.settingsPresetSelect.value;
-  uiSettingsStore.resetToDefaults();
+function requestDataResetConfirmation({
+  title,
+  message,
+  confirmLabel,
+  launcher,
+}) {
+  const dialog = dom.dataResetDialog;
+  if (!dialog || typeof dialog.showModal !== "function") {
+    return Promise.resolve(false);
+  }
+
+  dom.dataResetDialogTitle.textContent = title;
+  dom.dataResetDialogMessage.textContent = message;
+  dom.dataResetConfirmButton.textContent = confirmLabel;
+  dialog.returnValue = "";
+
+  return new Promise((resolve) => {
+    const handleClose = () => {
+      dialog.removeEventListener("cancel", handleCancel);
+      const confirmed = dialog.returnValue === "confirm";
+      if (launcher && typeof launcher.focus === "function") launcher.focus();
+      resolve(confirmed);
+    };
+    const handleCancel = (event) => {
+      event.preventDefault();
+      dialog.close("cancel");
+    };
+
+    dialog.addEventListener("close", handleClose, { once: true });
+    dialog.addEventListener("cancel", handleCancel);
+    dialog.showModal();
+    if (dom.dataResetCancelButton) dom.dataResetCancelButton.focus();
+  });
+}
+
+async function runDataResetAction({
+  launcher,
+  title,
+  message,
+  confirmLabel,
+  successMessage,
+  action,
+}) {
+  setFileStatus(dom.dataResetStatus, "");
+  const confirmed = await requestDataResetConfirmation({
+    title,
+    message,
+    confirmLabel,
+    launcher,
+  });
+  if (!confirmed) {
+    setFileStatus(dom.dataResetStatus, "Canceled. No data was changed.");
+    return;
+  }
+
+  let succeeded = false;
+  try {
+    succeeded = action() !== false;
+  } catch (_) {
+    succeeded = false;
+  }
+  setFileStatus(
+    dom.dataResetStatus,
+    succeeded ? successMessage : "Data could not be reset.",
+  );
+}
+
+function restoreAppDefaults() {
+  if (
+    !uiSettingsStore ||
+    typeof uiSettingsStore.resetToDefaults !== "function"
+  ) {
+    return false;
+  }
+  const reset = uiSettingsStore.resetToDefaults();
+  if (reset === false) return false;
   syncProgressionParameterControls();
-  refreshSettingsPresetOptions(selectedName);
-  setFileStatus(dom.settingsFileStatus, "Reset current settings to defaults.");
+  refreshSettingsPresetOptions("");
+  return true;
+}
+
+function resetTodayStats() {
+  if (typeof uiGlobals.resetDailyStats !== "function") return false;
+  return uiGlobals.resetDailyStats() !== false;
+}
+
+function clearFailedItems() {
+  if (typeof spacedRepClearAll !== "function") return false;
+  spacedRepClearAll();
+  return true;
+}
+
+function deleteAllPresets() {
+  if (
+    !uiSettingsStore ||
+    typeof uiSettingsStore.clearPresets !== "function" ||
+    !uiSettingsStore.clearPresets()
+  ) {
+    return false;
+  }
+  refreshSettingsPresetOptions("");
+  setFileStatus(dom.settingsFileStatus, "Deleted all presets.");
+  return true;
+}
+
+function deleteAllWorkouts() {
+  if (
+    !uiWorkoutStore ||
+    typeof uiWorkoutStore.clearAll !== "function" ||
+    !uiWorkoutStore.clearAll()
+  ) {
+    return false;
+  }
+  resetWorkoutState();
+  refreshWorkoutSelect("");
+  renderWorkoutEditor();
+  resetWorkoutGoalInputs();
+  setFileStatus(dom.workoutFileStatus, "Deleted all workouts.");
+  updateTrainingSetupSummary();
+  return true;
+}
+
+function deleteAllSongs() {
+  if (
+    !uiSongsStore ||
+    typeof uiSongsStore.clearAll !== "function" ||
+    !uiSongsStore.clearAll()
+  ) {
+    return false;
+  }
+  refreshSongSelect();
+  setSongsStatus("Deleted all songs.");
+  if (modeIsSongs() && typeof resetFlow === "function") resetFlow();
+  return true;
+}
+
+function resetAllAppData() {
+  if (
+    !uiSettingsStore ||
+    typeof uiSettingsStore.resetToDefaults !== "function" ||
+    typeof uiGlobals.clearAllAppStorage !== "function" ||
+    !uiGlobals.clearAllAppStorage()
+  ) {
+    return false;
+  }
+  uiSettingsStore.resetToDefaults({ save: false });
+  uiRoot.location.reload();
+  return true;
+}
+
+function initDataResetActions() {
+  const actions = [
+    {
+      launcher: dom.dataResetSettingsButton,
+      title: "Restore app defaults?",
+      message:
+        "This restores the built-in current settings. Presets, workouts, songs, and today's stats will be kept.",
+      confirmLabel: "Restore App Defaults",
+      successMessage: "Restored app defaults. Saved data was kept.",
+      action: restoreAppDefaults,
+    },
+    {
+      launcher: dom.dataResetStatsButton,
+      title: "Reset today's stats?",
+      message:
+        "This clears today's correct and incorrect counts. Settings and saved content will be kept.",
+      confirmLabel: "Reset Daily Stats",
+      successMessage: "Reset today's stats.",
+      action: resetTodayStats,
+    },
+    {
+      launcher: dom.dataClearFailedItemsButton,
+      title: "Clear failed items?",
+      message:
+        "This clears the current spaced-repetition queue. Other settings and saved data will be kept.",
+      confirmLabel: "Clear Failed Items",
+      successMessage: "Cleared failed items.",
+      action: clearFailedItems,
+    },
+    {
+      launcher: dom.dataDeletePresetsButton,
+      title: "Delete all presets?",
+      message:
+        "This deletes every saved preset, including starter presets. Current settings, workouts, songs, and stats will be kept.",
+      confirmLabel: "Delete All Presets",
+      successMessage: "Deleted all presets.",
+      action: deleteAllPresets,
+    },
+    {
+      launcher: dom.dataDeleteWorkoutsButton,
+      title: "Delete all workouts?",
+      message:
+        "This deletes every saved workout, including starter workouts. Presets, songs, settings, and stats will be kept.",
+      confirmLabel: "Delete All Workouts",
+      successMessage: "Deleted all workouts.",
+      action: deleteAllWorkouts,
+    },
+    {
+      launcher: dom.dataDeleteSongsButton,
+      title: "Delete all songs?",
+      message:
+        "This deletes every imported song and its favorite status. Settings, presets, workouts, and stats will be kept.",
+      confirmLabel: "Delete All Songs",
+      successMessage: "Deleted all songs.",
+      action: deleteAllSongs,
+    },
+    {
+      launcher: dom.dataResetAllButton,
+      title: "Reset all Chord Challenge data?",
+      message:
+        "This deletes current settings, presets, workouts, imported songs, favorites, today's stats, and failed items from this browser. Starter presets and workouts will be restored after reload. This cannot be undone.",
+      confirmLabel: "Reset All App Data",
+      successMessage: "Reset all Chord Challenge data.",
+      action: resetAllAppData,
+    },
+  ];
+
+  actions.forEach((config) => {
+    if (!config.launcher) return;
+    config.launcher.addEventListener("click", () => {
+      runDataResetAction(config);
+    });
+  });
 }
 
 function handleSettingsDownload() {
@@ -2169,9 +2369,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  dom.spacedRepClearButton.addEventListener("click", () => {
-    if (typeof spacedRepClearAll === "function") spacedRepClearAll();
-  });
   if (typeof spacedRepRenderList === "function") spacedRepRenderList();
 
   dom.optionsTabKeys.checked = true;
@@ -2187,41 +2384,10 @@ document.addEventListener("DOMContentLoaded", () => {
   dom.settingsUpdateButton.addEventListener("click", handleSettingsUpdate);
   dom.settingsActivateButton.addEventListener("click", handleSettingsActivate);
   dom.settingsDeleteButton.addEventListener("click", handleSettingsDelete);
-  dom.settingsResetButton.addEventListener("click", handleSettingsReset);
   dom.settingsDownloadButton.addEventListener("click", handleSettingsDownload);
   dom.settingsUploadButton.addEventListener("click", handleSettingsUpload);
   dom.settingsUploadInput.addEventListener("change", handleSettingsUploadFile);
-});
-
-dom.resetStatsButton.addEventListener("click", () => {
-  if (typeof uiGlobals.resetDailyStats === "function") {
-    uiGlobals.resetDailyStats();
-    return;
-  }
-  dom.cntChordsCorrect.textContent = "0";
-  dom.cntProgsCorrect.textContent = "0";
-  dom.cntSongsCorrect.textContent = "0";
-  dom.cntScalesCorrect.textContent = "0";
-  dom.cntDegreesCorrect.textContent = "0";
-  dom.cntBricksCorrect.textContent = "0";
-  dom.cntChordsIncorrect.textContent = "0";
-  dom.cntProgsIncorrect.textContent = "0";
-  dom.cntSongsIncorrect.textContent = "0";
-  dom.cntScalesIncorrect.textContent = "0";
-  dom.cntDegreesIncorrect.textContent = "0";
-  dom.cntBricksIncorrect.textContent = "0";
-  dom.cntChordsTotal.textContent = "0";
-  dom.cntProgsTotal.textContent = "0";
-  dom.cntSongsTotal.textContent = "0";
-  dom.cntScalesTotal.textContent = "0";
-  dom.cntDegreesTotal.textContent = "0";
-  dom.cntBricksTotal.textContent = "0";
-  if (typeof uiGlobals.updateStatTotals === "function") {
-    uiGlobals.updateStatTotals();
-  }
-  if (typeof uiGlobals.updateStatGoalStatuses === "function") {
-    uiGlobals.updateStatGoalStatuses();
-  }
+  initDataResetActions();
 });
 
 Object.entries(dom.statGoals || {}).forEach(([category, inputs]) => {

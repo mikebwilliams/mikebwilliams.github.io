@@ -16,6 +16,99 @@ async function openKeyboard(page: Page) {
   }
 }
 
+async function openDataPreferences(page: Page) {
+  await page.click("label[for='tabOptionsData']");
+  await expect(page.locator("#panelOptionsData")).toBeVisible();
+}
+
+async function seedResettableData(page: Page) {
+  return page.evaluate(() => {
+    const globals = (window as any).appGlobals;
+    const settingsStore = globals.settingsStore;
+    const workoutStore = globals.workoutStore;
+    const songsStore = globals.songsStore;
+    const presetName = "Data Reset Test Preset";
+    const workoutName = "Data Reset Test Workout";
+    const current = settingsStore.getCurrentSnapshot();
+
+    settingsStore.applyPresetSettings(
+      {
+        ...current,
+        flow: { mode: "descendingMinorThirds", startKey: "F" },
+      },
+      { preservePreferences: false },
+    );
+    settingsStore.savePreset(presetName);
+    settingsStore.loadPreset(presetName, { preservePreferences: false });
+
+    workoutStore.saveWorkout(workoutName, [
+      {
+        preset: presetName,
+        goals: { correct: 3, total: 5 },
+        category: "chords",
+      },
+    ]);
+    workoutStore.setLastSelection(workoutName, 0);
+
+    songsStore.importSource(
+      "irealbook://Data Reset Song=Doe Jane=Medium Swing=C=n=[*AT44C7 |F7 Z",
+    );
+
+    const now = new Date();
+    const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
+      2,
+      "0",
+    )}-${String(now.getDate()).padStart(2, "0")}`;
+    localStorage.setItem(
+      "chordChallenge.dailyStats",
+      JSON.stringify({
+        date,
+        counts: {
+          chords: { correct: 4, incorrect: 2 },
+        },
+      }),
+    );
+    localStorage.setItem("unrelated.dataResetSentinel", "keep me");
+
+    return { presetName, workoutName };
+  });
+}
+
+async function readResetStorage(page: Page) {
+  return page.evaluate(() => {
+    const keys = [
+      "chordChallenge.settings",
+      "chordChallenge.settings.presets",
+      "chordChallenge.settings.activePreset",
+      "chordChallenge.settings.presets.seedVersion",
+      "chordChallenge.workouts",
+      "chordChallenge.workouts.selected",
+      "chordChallenge.workouts.seedVersion",
+      "chordChallenge.songs",
+      "chordChallenge.songs.selected",
+      "chordChallenge.dailyStats",
+      "unrelated.dataResetSentinel",
+    ];
+    return Object.fromEntries(
+      keys.map((key) => [key, localStorage.getItem(key)]),
+    );
+  });
+}
+
+async function openDataResetDialog(page: Page, trigger: string) {
+  await page.click(trigger);
+  const dialog = page.locator("#dialogDataReset");
+  await expect(dialog).toBeVisible();
+  await expect(page.locator("#btnDataResetCancel")).toBeFocused();
+  return dialog;
+}
+
+async function confirmDataReset(page: Page, trigger: string) {
+  const dialog = await openDataResetDialog(page, trigger);
+  await page.click("#btnDataResetConfirm");
+  await expect(dialog).not.toBeVisible();
+}
+
 test("Presets tab renders (and no console errors)", async ({ page }) => {
   const errors: string[] = [];
 
@@ -538,6 +631,411 @@ test("Starter presets and workouts are available after first load", async ({
     (await page.locator("#selectWorkout").textContent()) || "";
   expect(workoutOptionText).toContain("Beginner Jazz Start");
   expect(workoutOptionText).toContain("Beginner Warmup");
+});
+
+test("Restoring app defaults preserves saved data and practice progress", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  const { presetName, workoutName } = await seedResettableData(page);
+  await page.reload();
+  const before = await readResetStorage(page);
+
+  await expect(page.locator("#selectFlow")).toHaveValue(
+    "descendingMinorThirds",
+  );
+  await expect(page.locator("#txtTrainingSetupSummary")).toContainText(
+    presetName,
+  );
+  await expect(page.locator("#txtChordsCorrect")).toHaveText("4");
+  await expect(page.locator("#txtChordsIncorrect")).toHaveText("2");
+
+  await openDataPreferences(page);
+  await confirmDataReset(page, "#btnDataResetSettings");
+  await expect(page.locator("#txtDataResetStatus")).toContainText(/default/i);
+
+  const result = await page.evaluate(
+    ({ presetName, workoutName }) => {
+      const globals = (window as any).appGlobals;
+      const settingsStore = globals.settingsStore;
+      return {
+        current: settingsStore.getCurrentSnapshot(),
+        defaults: settingsStore.defaults,
+        activePreset: settingsStore.getActivePresetState().name,
+        hasPreset: settingsStore.listPresets().includes(presetName),
+        hasWorkout: globals.workoutStore.listWorkouts().includes(workoutName),
+        songTitles: globals.songsStore
+          .listSongs()
+          .map((song: any) => song.title),
+      };
+    },
+    { presetName, workoutName },
+  );
+
+  expect(result.current).toEqual(result.defaults);
+  expect(result.activePreset).toBe("");
+  expect(result.hasPreset).toBe(true);
+  expect(result.hasWorkout).toBe(true);
+  expect(result.songTitles).toContain("Data Reset Song");
+  await expect(page.locator("#selectFlow")).toHaveValue("random");
+  await expect(page.locator("#txtChordsCorrect")).toHaveText("4");
+  await expect(page.locator("#txtChordsIncorrect")).toHaveText("2");
+
+  const after = await readResetStorage(page);
+  expect(after["chordChallenge.settings"]).not.toBe(
+    before["chordChallenge.settings"],
+  );
+  expect(after["chordChallenge.settings.activePreset"]).toBeNull();
+  [
+    "chordChallenge.settings.presets",
+    "chordChallenge.settings.presets.seedVersion",
+    "chordChallenge.workouts",
+    "chordChallenge.workouts.selected",
+    "chordChallenge.workouts.seedVersion",
+    "chordChallenge.songs",
+    "chordChallenge.songs.selected",
+    "chordChallenge.dailyStats",
+    "unrelated.dataResetSentinel",
+  ].forEach((key) => expect(after[key]).toBe(before[key]));
+
+  await page.reload();
+  const persisted = await page.evaluate(
+    ({ presetName, workoutName }) => {
+      const globals = (window as any).appGlobals;
+      const settingsStore = globals.settingsStore;
+      return {
+        current: settingsStore.getCurrentSnapshot(),
+        defaults: settingsStore.defaults,
+        activePreset: settingsStore.getActivePresetState().name,
+        hasPreset: settingsStore.listPresets().includes(presetName),
+        hasWorkout: globals.workoutStore.listWorkouts().includes(workoutName),
+        hasSong: globals.songsStore
+          .listSongs()
+          .some((song: any) => song.title === "Data Reset Song"),
+      };
+    },
+    { presetName, workoutName },
+  );
+  expect(persisted.current).toEqual(persisted.defaults);
+  expect(persisted.activePreset).toBe("");
+  expect(persisted.hasPreset).toBe(true);
+  expect(persisted.hasWorkout).toBe(true);
+  expect(persisted.hasSong).toBe(true);
+  await expect(page.locator("#txtChordsCorrect")).toHaveText("4");
+  await expect(page.locator("#txtChordsIncorrect")).toHaveText("2");
+});
+
+test("Failed daily-stat persistence leaves the visible and saved counts intact", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+  await page.evaluate(() => {
+    localStorage.clear();
+    const now = new Date();
+    const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
+      2,
+      "0",
+    )}-${String(now.getDate()).padStart(2, "0")}`;
+    localStorage.setItem(
+      "chordChallenge.dailyStats",
+      JSON.stringify({
+        date,
+        counts: { chords: { correct: 4, incorrect: 2 } },
+      }),
+    );
+  });
+  await page.reload();
+  await expect(page.locator("#txtChordsCorrect")).toHaveText("4");
+  await expect(page.locator("#txtChordsIncorrect")).toHaveText("2");
+  const storedBefore = await page.evaluate(() =>
+    localStorage.getItem("chordChallenge.dailyStats"),
+  );
+
+  await openDataPreferences(page);
+  await page.evaluate(() => {
+    const storagePrototype = Storage.prototype as any;
+    const originalSetItem = storagePrototype.setItem;
+    storagePrototype.setItem = function (key: string, value: string) {
+      if (key === "chordChallenge.dailyStats") {
+        throw new Error("daily stats storage unavailable");
+      }
+      return originalSetItem.call(this, key, value);
+    };
+    (window as any).__restoreDataResetSetItem = () => {
+      storagePrototype.setItem = originalSetItem;
+      delete (window as any).__restoreDataResetSetItem;
+    };
+  });
+
+  await confirmDataReset(page, "#btnDataResetStats");
+  await expect(page.locator("#txtDataResetStatus")).toContainText(
+    /could not be reset/i,
+  );
+  await expect(page.locator("#txtChordsCorrect")).toHaveText("4");
+  await expect(page.locator("#txtChordsIncorrect")).toHaveText("2");
+  expect(
+    await page.evaluate(() =>
+      localStorage.getItem("chordChallenge.dailyStats"),
+    ),
+  ).toBe(storedBefore);
+  await page.evaluate(() => (window as any).__restoreDataResetSetItem());
+});
+
+test("Partial data resets are confirmed and isolated by category", async ({
+  page,
+}) => {
+  test.slow();
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  const { presetName, workoutName } = await seedResettableData(page);
+  await page.reload();
+  await page.evaluate(() => {
+    (window as any).spacedRepHandleResult(
+      "chord",
+      "Data Reset Failed Chord",
+      true,
+    );
+  });
+  await expect(page.locator("#panelSpacedRepList")).toContainText(
+    "Data Reset Failed Chord",
+  );
+
+  await openDataPreferences(page);
+  for (const selector of [
+    "#btnDataResetSettings",
+    "#btnDataResetStats",
+    "#btnDataClearFailedItems",
+    "#btnDataDeletePresets",
+    "#btnDataDeleteWorkouts",
+    "#btnDataDeleteSongs",
+    "#btnDataResetAll",
+  ]) {
+    await expect(page.locator(selector)).toBeVisible();
+  }
+
+  const before = await readResetStorage(page);
+  const dialog = await openDataResetDialog(page, "#btnDataDeletePresets");
+  await expect(page.locator("#btnDataResetConfirm")).toContainText(
+    /delete all presets/i,
+  );
+  await page.keyboard.press("Escape");
+  await expect(dialog).not.toBeVisible();
+  await expect(page.locator("#btnDataDeletePresets")).toBeFocused();
+  expect(await readResetStorage(page)).toEqual(before);
+  expect(
+    await page.evaluate(
+      (name) =>
+        (window as any).appGlobals.settingsStore.listPresets().includes(name),
+      presetName,
+    ),
+  ).toBe(true);
+
+  await confirmDataReset(page, "#btnDataDeletePresets");
+  await expect(page.locator("#txtDataResetStatus")).toContainText(/preset/i);
+  let state = await page.evaluate(() => {
+    const globals = (window as any).appGlobals;
+    return {
+      presets: globals.settingsStore.listPresets(),
+      activePreset: globals.settingsStore.getActivePresetState().name,
+      workouts: globals.workoutStore.listWorkouts(),
+      songs: globals.songsStore.listSongs().length,
+    };
+  });
+  expect(state.presets).toEqual([]);
+  expect(state.activePreset).toBe("");
+  expect(state.workouts).toContain(workoutName);
+  expect(state.songs).toBeGreaterThan(0);
+  let storage = await readResetStorage(page);
+  for (const key of [
+    "chordChallenge.settings",
+    "chordChallenge.settings.presets.seedVersion",
+    "chordChallenge.workouts",
+    "chordChallenge.workouts.selected",
+    "chordChallenge.workouts.seedVersion",
+    "chordChallenge.songs",
+    "chordChallenge.songs.selected",
+    "chordChallenge.dailyStats",
+    "unrelated.dataResetSentinel",
+  ]) {
+    expect(storage[key]).toBe(before[key]);
+  }
+
+  await confirmDataReset(page, "#btnDataDeleteWorkouts");
+  await expect(page.locator("#txtDataResetStatus")).toContainText(/workout/i);
+  state = await page.evaluate(() => {
+    const globals = (window as any).appGlobals;
+    return {
+      presets: globals.settingsStore.listPresets(),
+      workouts: globals.workoutStore.listWorkouts(),
+      selection: globals.workoutStore.getLastSelection(),
+      songs: globals.songsStore.listSongs().length,
+    };
+  });
+  expect(state.presets).toEqual([]);
+  expect(state.workouts).toEqual([]);
+  expect(state.selection).toBeNull();
+  expect(state.songs).toBeGreaterThan(0);
+
+  await confirmDataReset(page, "#btnDataDeleteSongs");
+  await expect(page.locator("#txtDataResetStatus")).toContainText(/song/i);
+  expect(
+    await page.evaluate(() =>
+      (window as any).appGlobals.songsStore.listSongs(),
+    ),
+  ).toEqual([]);
+  await expect(page.locator("#txtChordsCorrect")).toHaveText("4");
+  await expect(page.locator("#txtChordsIncorrect")).toHaveText("2");
+
+  await confirmDataReset(page, "#btnDataResetStats");
+  await expect(page.locator("#txtDataResetStatus")).toContainText(/stat/i);
+  await expect(page.locator("#txtChordsCorrect")).toHaveText("0");
+  await expect(page.locator("#txtChordsIncorrect")).toHaveText("0");
+
+  await confirmDataReset(page, "#btnDataClearFailedItems");
+  await expect(page.locator("#txtDataResetStatus")).toContainText(
+    /failed item/i,
+  );
+  await expect(page.locator("#panelSpacedRepList")).toContainText(
+    "No failed items scheduled.",
+  );
+
+  storage = await readResetStorage(page);
+  expect(storage["chordChallenge.settings"]).toBe(
+    before["chordChallenge.settings"],
+  );
+  expect(storage["chordChallenge.settings.presets.seedVersion"]).toBe(
+    before["chordChallenge.settings.presets.seedVersion"],
+  );
+  expect(storage["chordChallenge.workouts.seedVersion"]).toBe(
+    before["chordChallenge.workouts.seedVersion"],
+  );
+  expect(storage["unrelated.dataResetSentinel"]).toBe("keep me");
+
+  await page.reload();
+  const afterReload = await page.evaluate(() => {
+    const globals = (window as any).appGlobals;
+    return {
+      presets: globals.settingsStore.listPresets(),
+      workouts: globals.workoutStore.listWorkouts(),
+      songs: globals.songsStore.listSongs(),
+      activePreset: globals.settingsStore.getActivePresetState().name,
+      sentinel: localStorage.getItem("unrelated.dataResetSentinel"),
+    };
+  });
+  expect(afterReload.presets).toEqual([]);
+  expect(afterReload.workouts).toEqual([]);
+  expect(afterReload.songs).toEqual([]);
+  expect(afterReload.activePreset).toBe("");
+  expect(afterReload.sentinel).toBe("keep me");
+  await expect(page.locator("#txtChordsCorrect")).toHaveText("0");
+  await expect(page.locator("#txtChordsIncorrect")).toHaveText("0");
+});
+
+test("Reset all data preserves unrelated storage and returns to starter content", async ({
+  page,
+}) => {
+  test.slow();
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  const { presetName, workoutName } = await seedResettableData(page);
+  await page.reload();
+  await page.evaluate(() => {
+    (window as any).spacedRepHandleResult(
+      "chord",
+      "Full Reset Failed Chord",
+      true,
+    );
+    (window as any).__dataResetReloadMarker = true;
+  });
+  const before = await readResetStorage(page);
+
+  await openDataPreferences(page);
+  const dialog = await openDataResetDialog(page, "#btnDataResetAll");
+  await expect(page.locator("#btnDataResetConfirm")).toContainText(
+    /reset all/i,
+  );
+  await page.click("#btnDataResetCancel");
+  await expect(dialog).not.toBeVisible();
+  expect(await readResetStorage(page)).toEqual(before);
+  expect(
+    await page.evaluate(
+      ({ presetName, workoutName }) => {
+        const globals = (window as any).appGlobals;
+        return (
+          globals.settingsStore.listPresets().includes(presetName) &&
+          globals.workoutStore.listWorkouts().includes(workoutName) &&
+          globals.songsStore.listSongs().length > 0 &&
+          Boolean((window as any).__dataResetReloadMarker)
+        );
+      },
+      { presetName, workoutName },
+    ),
+  ).toBe(true);
+
+  await openDataResetDialog(page, "#btnDataResetAll");
+  await page.click("#btnDataResetConfirm");
+  await expect
+    .poll(async () =>
+      page.evaluate(() => Boolean((window as any).__dataResetReloadMarker)),
+    )
+    .toBe(false);
+
+  const result = await page.evaluate(
+    ({ presetName, workoutName }) => {
+      const globals = (window as any).appGlobals;
+      const settingsStore = globals.settingsStore;
+      const presets = settingsStore.listPresets();
+      const workouts = globals.workoutStore.listWorkouts();
+      return {
+        current: settingsStore.getCurrentSnapshot(),
+        defaults: settingsStore.defaults,
+        activePreset: settingsStore.getActivePresetState().name,
+        presets,
+        workouts,
+        hasOldPreset: presets.includes(presetName),
+        hasOldWorkout: workouts.includes(workoutName),
+        workoutSelection: globals.workoutStore.getLastSelection(),
+        songs: globals.songsStore.listSongs(),
+        songSelection: globals.songsStore.getLastSelection(),
+        sentinel: localStorage.getItem("unrelated.dataResetSentinel"),
+      };
+    },
+    { presetName, workoutName },
+  );
+
+  expect(result.current).toEqual(result.defaults);
+  expect(result.activePreset).toBe("");
+  expect(result.hasOldPreset).toBe(false);
+  expect(result.hasOldWorkout).toBe(false);
+  expect(result.presets).toEqual(
+    expect.arrayContaining([
+      "Major & Minor Chords",
+      "I-IV-V Progressions",
+      "Scale Degrees",
+      "Major & Minor Scales",
+      "Jazz ii-V-I",
+    ]),
+  );
+  expect(result.workouts).toEqual(
+    expect.arrayContaining(["Beginner Jazz Start", "Beginner Warmup"]),
+  );
+  expect(result.workoutSelection).toBeNull();
+  expect(result.songs).toEqual([]);
+  expect(result.songSelection).toBe("");
+  expect(result.sentinel).toBe("keep me");
+  await expect(page.locator("#selectFlow")).toHaveValue("random");
+  await expect(page.locator("#txtChordsCorrect")).toHaveText("0");
+  await expect(page.locator("#txtChordsIncorrect")).toHaveText("0");
+  await expect(page.locator("#panelSpacedRepList")).toContainText(
+    "No failed items scheduled.",
+  );
 });
 
 test("Presets and workouts can import and export files", async ({ page }) => {

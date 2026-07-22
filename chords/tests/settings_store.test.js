@@ -366,6 +366,89 @@ test("activating an imported preset stores its canonical settings", () => {
   assert.strictEqual(canonical.metronome.tempo, 240);
 });
 
+test("clearing presets removes presets and active selection in isolation", () => {
+  storageMock.clear();
+  settingsStore.resetToDefaults({ apply: true, save: true });
+  settingsStore.savePreset("Temporary Preset");
+  settingsStore.setActivePresetName("Temporary Preset");
+  storageMock.setItem(settingsStore.presetSeedVersionKey, "seed-version");
+  storageMock.setItem("unrelated.storage", "keep");
+
+  const settingsBefore = storageMock.getItem(settingsStore.storageKey);
+  assert.strictEqual(settingsStore.clearPresets(), true);
+  assert.deepStrictEqual(settingsStore.loadPresets(), {});
+  assert.strictEqual(settingsStore.activePresetName, "");
+  assert.strictEqual(storageMock.getItem(settingsStore.presetsKey), null);
+  assert.strictEqual(storageMock.getItem(settingsStore.activePresetKey), null);
+  assert.strictEqual(
+    storageMock.getItem(settingsStore.presetSeedVersionKey),
+    "seed-version",
+  );
+  assert.strictEqual(
+    storageMock.getItem(settingsStore.storageKey),
+    settingsBefore,
+  );
+  assert.strictEqual(storageMock.getItem("unrelated.storage"), "keep");
+});
+
+test("clearing all app storage preserves unrelated origin data", () => {
+  storageMock.clear();
+  const appKeys = [
+    "chordChallenge.settings",
+    "chordChallenge.settings.presets",
+    "chordChallenge.settings.activePreset",
+    "chordChallenge.settings.presets.seedVersion",
+    "chordChallenge.workouts",
+    "chordChallenge.workouts.selected",
+    "chordChallenge.workouts.seedVersion",
+    "chordChallenge.songs",
+    "chordChallenge.songs.selected",
+    "chordChallenge.dailyStats",
+    "chordsDebugVoicing",
+  ];
+  appKeys.forEach((key) => storageMock.setItem(key, `value:${key}`));
+  storageMock.setItem("unrelated.storage", "keep");
+
+  assert.strictEqual(data.clearAllAppStorage(), true);
+  appKeys.forEach((key) => assert.strictEqual(storageMock.getItem(key), null));
+  assert.strictEqual(storageMock.getItem("unrelated.storage"), "keep");
+});
+
+test("clearing all app storage rolls back an interrupted reset", () => {
+  const originalStorage = global.localStorage;
+  const stored = new Map([
+    ["chordChallenge.settings", "settings"],
+    ["chordChallenge.settings.presets", "presets"],
+    ["unrelated.storage", "keep"],
+  ]);
+  let removals = 0;
+  global.localStorage = {
+    getItem(key) {
+      return stored.has(key) ? stored.get(key) : null;
+    },
+    setItem(key, value) {
+      stored.set(key, String(value));
+    },
+    removeItem(key) {
+      removals += 1;
+      if (removals === 2) throw new Error("storage interrupted");
+      stored.delete(key);
+    },
+  };
+
+  try {
+    assert.strictEqual(data.clearAllAppStorage(), false);
+    assert.strictEqual(stored.get("chordChallenge.settings"), "settings");
+    assert.strictEqual(
+      stored.get("chordChallenge.settings.presets"),
+      "presets",
+    );
+    assert.strictEqual(stored.get("unrelated.storage"), "keep");
+  } finally {
+    global.localStorage = originalStorage;
+  }
+});
+
 test("preset mutations report storage failures", () => {
   const originalStorage = settingsStore.storage;
   const existingPreset = settingsStore.getCurrentSnapshot();
@@ -379,12 +462,70 @@ test("preset mutations report storage failures", () => {
     setItem() {
       throw new Error("storage unavailable");
     },
-    removeItem() {},
+    removeItem() {
+      throw new Error("storage unavailable");
+    },
   };
 
   try {
     assert.strictEqual(settingsStore.savePreset("New Preset"), false);
     assert.strictEqual(settingsStore.deletePreset("Existing"), false);
+    assert.strictEqual(settingsStore.clearPresets(), false);
+    assert.strictEqual(settingsStore.resetToDefaults(), false);
+  } finally {
+    settingsStore.storage = originalStorage;
+  }
+});
+
+test("settings reset rolls back if clearing the active preset fails", () => {
+  storageMock.clear();
+  settingsStore.resetToDefaults({ apply: true, save: true });
+  const customized = settingsStore.getCurrentSnapshot();
+  customized.flow = { mode: "ascendingWholeSteps", startKey: "D" };
+  settingsStore.applyPresetSettings(customized, {
+    preservePreferences: false,
+  });
+  settingsStore.savePreset("Active Preset");
+  settingsStore.setActivePresetName("Active Preset");
+
+  const originalStorage = settingsStore.storage;
+  const beforeCurrent = settingsStore.getCurrentSnapshot();
+  const beforeFlow = dom.flowSelect.value;
+  const stored = new Map([
+    [settingsStore.storageKey, storageMock.getItem(settingsStore.storageKey)],
+    [
+      settingsStore.activePresetKey,
+      storageMock.getItem(settingsStore.activePresetKey),
+    ],
+  ]);
+  settingsStore.storage = {
+    getItem(key) {
+      return stored.has(key) ? stored.get(key) : null;
+    },
+    setItem(key, value) {
+      stored.set(key, String(value));
+    },
+    removeItem(key) {
+      if (key === settingsStore.activePresetKey) {
+        throw new Error("active preset removal interrupted");
+      }
+      stored.delete(key);
+    },
+  };
+
+  try {
+    assert.strictEqual(settingsStore.resetToDefaults(), false);
+    assert.deepStrictEqual(settingsStore.getCurrentSnapshot(), beforeCurrent);
+    assert.strictEqual(settingsStore.activePresetName, "Active Preset");
+    assert.strictEqual(dom.flowSelect.value, beforeFlow);
+    assert.strictEqual(
+      stored.get(settingsStore.storageKey),
+      JSON.stringify(beforeCurrent),
+    );
+    assert.strictEqual(
+      stored.get(settingsStore.activePresetKey),
+      "Active Preset",
+    );
   } finally {
     settingsStore.storage = originalStorage;
   }

@@ -73,12 +73,43 @@ test("songs store persists last selected song and falls back after delete", () =
     "selection should fall back to first remaining song",
   );
 
-  songsStore.clearAll();
+  storageMock.setItem("unrelated.storage", "keep");
+  assert.strictEqual(songsStore.clearAll(), true);
   assert.strictEqual(
     songsStore.getLastSelection(),
     "",
     "selection should clear when songs are cleared",
   );
+  assert.strictEqual(
+    storageMock.getItem(songsStore.storageKey),
+    null,
+    "song data should be removed",
+  );
+  assert.strictEqual(
+    storageMock.getItem(songsStore.selectedKey),
+    null,
+    "song selection should be removed",
+  );
+  assert.strictEqual(
+    storageMock.getItem("unrelated.storage"),
+    "keep",
+    "clearing songs should not affect unrelated storage",
+  );
+});
+
+test("clearing songs reports storage failures", () => {
+  const originalStorage = songsStore.storage;
+  songsStore.storage = {
+    removeItem() {
+      throw new Error("storage unavailable");
+    },
+  };
+
+  try {
+    assert.strictEqual(songsStore.clearAll(), false);
+  } finally {
+    songsStore.storage = originalStorage;
+  }
 });
 
 test("songs store preserves favorites across re-import and song settings sanitize cleanly", () => {

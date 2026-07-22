@@ -130,6 +130,27 @@ test("workout store tracks last selection and clears when removed", () => {
   );
 });
 
+test("clearing workouts removes workouts and selection in isolation", () => {
+  storageMock.clear();
+  workoutStore.saveWorkout("Temporary Workout", [
+    { preset: "Focus", goals: { correct: 5, total: 0 } },
+  ]);
+  workoutStore.setLastSelection("Temporary Workout", 0);
+  storageMock.setItem(workoutStore.seedVersionKey, "seed-version");
+  storageMock.setItem("unrelated.storage", "keep");
+
+  assert.strictEqual(workoutStore.clearAll(), true);
+  assert.deepStrictEqual(workoutStore.loadAll(), {});
+  assert.strictEqual(workoutStore.getLastSelection(), null);
+  assert.strictEqual(storageMock.getItem(workoutStore.storageKey), null);
+  assert.strictEqual(storageMock.getItem(workoutStore.selectedKey), null);
+  assert.strictEqual(
+    storageMock.getItem(workoutStore.seedVersionKey),
+    "seed-version",
+  );
+  assert.strictEqual(storageMock.getItem("unrelated.storage"), "keep");
+});
+
 test("workout store imports and exports workout JSON", () => {
   storageMock.clear();
   workoutStore.replaceAll({});

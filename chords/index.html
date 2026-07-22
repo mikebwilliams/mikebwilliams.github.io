@@ -366,11 +366,6 @@
               <span class="collapsibleStatus" id="txtDailyStatsSummary"
                 >Chords: 0 / 0</span
               >
-              <div class="summaryActions">
-                <button id="btnStatsReset" type="button">
-                  Reset Daily Stats
-                </button>
-              </div>
             </summary>
             <div class="challengeCollapsibleBody">
               <div class="statsGrid">
@@ -871,9 +866,6 @@
                 </section>
                 <hr class="presetUtilityDivider" />
                 <div class="settingsRow">
-                  <button id="btnSettingsReset" type="button">
-                    Reset to Defaults
-                  </button>
                   <button id="btnSettingsDownload" type="button">Export</button>
                   <button id="btnSettingsUpload" type="button">Import</button>
                   <input
@@ -1263,17 +1255,25 @@
         </section>
 
         <section class="surfaceCard settingsSection preferencesSection">
-          <h3 class="sectionTitle">Preferences</h3>
-          <div class="tabs" id="tabsPreferences">
+          <h3 class="sectionTitle" id="preferencesTitle">Preferences</h3>
+          <div
+            class="tabs"
+            id="tabsPreferences"
+            role="radiogroup"
+            aria-labelledby="preferencesTitle"
+          >
             <input
               type="radio"
               id="tabOptionsDisplay"
               name="preferencesOptions"
               value="tabDisplay"
               data-options-tab
+              aria-controls="panelOptionsDisplay"
               checked
             />
-            <label for="tabOptionsDisplay">Display</label>
+            <label id="tabOptionsDisplayLabel" for="tabOptionsDisplay"
+              >Display</label
+            >
 
             <input
               type="radio"
@@ -1281,11 +1281,29 @@
               name="preferencesOptions"
               value="tabSpacedRep"
               data-options-tab
+              aria-controls="panelOptionsSpacedRep"
             />
-            <label for="tabOptionsSpacedRep">Spaced Repetition</label>
+            <label id="tabOptionsSpacedRepLabel" for="tabOptionsSpacedRep"
+              >Spaced Repetition</label
+            >
+
+            <input
+              type="radio"
+              id="tabOptionsData"
+              name="preferencesOptions"
+              value="tabData"
+              data-options-tab
+              aria-controls="panelOptionsData"
+            />
+            <label id="tabOptionsDataLabel" for="tabOptionsData">Data</label>
           </div>
 
-          <div class="tabContent" id="panelOptionsDisplay">
+          <div
+            class="tabContent"
+            id="panelOptionsDisplay"
+            role="region"
+            aria-labelledby="tabOptionsDisplayLabel"
+          >
             <label
               ><input type="checkbox" id="chkDisplayHideProgressionNames" />Hide
               Chord Prompt</label
@@ -1306,7 +1324,12 @@
             ><br />
           </div>
 
-          <div class="tabContent" id="panelOptionsSpacedRep">
+          <div
+            class="tabContent"
+            id="panelOptionsSpacedRep"
+            role="region"
+            aria-labelledby="tabOptionsSpacedRepLabel"
+          >
             <label
               ><input type="checkbox" id="chkSpacedRepEnable" checked /> Enable
               Spaced Repetition for Failed Items</label
@@ -1322,8 +1345,147 @@
             <div id="panelSpacedRepListContainer">
               <h4>Failed Items</h4>
               <div id="panelSpacedRepList"></div>
-              <button id="btnSpacedRepClear">Clear List</button>
             </div>
+          </div>
+
+          <div
+            class="tabContent"
+            id="panelOptionsData"
+            role="region"
+            aria-labelledby="tabOptionsDataLabel"
+          >
+            <p
+              class="dataResetStatus"
+              id="txtDataResetStatus"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            ></p>
+
+            <section
+              class="dataResetGroup"
+              aria-labelledby="dataResetSettingsTitle"
+            >
+              <h4 class="dataResetGroupTitle" id="dataResetSettingsTitle">
+                Current settings
+              </h4>
+              <div class="dataResetRow">
+                <div class="dataResetCopy">
+                  <h5>App defaults</h5>
+                  <p>
+                    Restore the built-in startup settings. Presets, workouts,
+                    songs, daily stats, and failed items are kept.
+                  </p>
+                </div>
+                <button id="btnDataResetSettings" type="button">
+                  Restore App Defaults…
+                </button>
+              </div>
+            </section>
+
+            <section
+              class="dataResetGroup"
+              aria-labelledby="dataResetPracticeTitle"
+            >
+              <h4 class="dataResetGroupTitle" id="dataResetPracticeTitle">
+                Practice data
+              </h4>
+              <div class="dataResetRow">
+                <div class="dataResetCopy">
+                  <h5>Daily stats</h5>
+                  <p>
+                    Clear today’s correct and incorrect counts. Goal settings
+                    are kept.
+                  </p>
+                </div>
+                <button id="btnDataResetStats" type="button">
+                  Reset Daily Stats…
+                </button>
+              </div>
+              <div class="dataResetRow">
+                <div class="dataResetCopy">
+                  <h5>Failed items</h5>
+                  <p>
+                    Clear the current spaced-repetition list. Spaced-repetition
+                    settings are kept.
+                  </p>
+                </div>
+                <button id="btnDataClearFailedItems" type="button">
+                  Clear Failed Items…
+                </button>
+              </div>
+            </section>
+
+            <section
+              class="dataResetGroup"
+              aria-labelledby="dataResetContentTitle"
+            >
+              <h4 class="dataResetGroupTitle" id="dataResetContentTitle">
+                Saved content
+              </h4>
+              <div class="dataResetRow">
+                <div class="dataResetCopy">
+                  <h5>Presets</h5>
+                  <p>
+                    Delete every saved preset. Current settings, workouts, and
+                    songs are kept.
+                  </p>
+                </div>
+                <button id="btnDataDeletePresets" type="button">
+                  Delete All Presets…
+                </button>
+              </div>
+              <div class="dataResetRow">
+                <div class="dataResetCopy">
+                  <h5>Workouts</h5>
+                  <p>
+                    Delete every saved workout. Presets, songs, current
+                    settings, and practice data are kept.
+                  </p>
+                </div>
+                <button id="btnDataDeleteWorkouts" type="button">
+                  Delete All Workouts…
+                </button>
+              </div>
+              <div class="dataResetRow">
+                <div class="dataResetCopy">
+                  <h5>Songs</h5>
+                  <p>
+                    Delete every saved or imported song. Presets, workouts,
+                    current settings, and practice data are kept.
+                  </p>
+                </div>
+                <button id="btnDataDeleteSongs" type="button">
+                  Delete All Songs…
+                </button>
+              </div>
+            </section>
+
+            <section
+              class="dataResetGroup dataResetDangerGroup"
+              aria-labelledby="dataResetAllTitle"
+            >
+              <h4 class="dataResetGroupTitle" id="dataResetAllTitle">
+                All app data
+              </h4>
+              <div class="dataResetRow">
+                <div class="dataResetCopy">
+                  <h5>Fresh start</h5>
+                  <p>
+                    Delete current settings, practice data, presets, workouts,
+                    and songs. Built-in starter content will be restored. This
+                    cannot be undone.
+                  </p>
+                </div>
+                <button
+                  class="dataResetDangerButton"
+                  id="btnDataResetAll"
+                  type="button"
+                >
+                  Reset All App Data…
+                </button>
+              </div>
+            </section>
           </div>
         </section>
 
@@ -1731,7 +1893,6 @@
             </div>
             <div class="songsActions">
               <button id="btnSongsDelete" type="button">Delete Selected</button>
-              <button id="btnSongsClear" type="button">Clear Songs</button>
             </div>
             <div class="songsControlGrid">
               <label class="songsControlField" for="selectSongFinishAction">
@@ -1876,6 +2037,36 @@
             value="cancel"
           >
             Cancel
+          </button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog
+      id="dialogDataReset"
+      class="dataResetDialog"
+      aria-labelledby="dataResetDialogTitle"
+      aria-describedby="txtDataResetDialogMessage"
+    >
+      <form method="dialog">
+        <h4 id="dataResetDialogTitle">Confirm data reset</h4>
+        <p id="txtDataResetDialogMessage"></p>
+        <div class="compactButtonGroup dataResetDialogActions">
+          <button
+            id="btnDataResetCancel"
+            type="submit"
+            value="cancel"
+            autofocus
+          >
+            Cancel
+          </button>
+          <button
+            class="dataResetDangerButton"
+            id="btnDataResetConfirm"
+            type="submit"
+            value="confirm"
+          >
+            Reset Data
           </button>
         </div>
       </form>

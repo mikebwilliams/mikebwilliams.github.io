@@ -416,6 +416,7 @@ const optionsPanels = {
   tabDisplay: requireElement("panelOptionsDisplay"),
   tabVoicings: requireElement("panelOptionsVoicings"),
   tabSpacedRep: requireElement("panelOptionsSpacedRep"),
+  tabData: requireElement("panelOptionsData"),
   tabPresets: requireElement("panelOptionsPresets"),
   tabWorkouts: requireElement("panelOptionsWorkouts"),
 };
@@ -589,7 +590,6 @@ const domElements = {
   songUrlInput: requireElement("inputSongsUrl"),
   songImportButton: requireElement("btnSongsImport"),
   songDeleteButton: requireElement("btnSongsDelete"),
-  songClearButton: requireElement("btnSongsClear"),
   songSelect: requireElement("selectSong"),
   songFavoriteToggle: requireElement("chkSongFavorite"),
   songFinishAction: requireElement("selectSongFinishAction"),
@@ -649,7 +649,6 @@ const domElements = {
   cntScalesTotal: statTotalElements.scales,
   cntDegreesTotal: statTotalElements.degrees,
   cntBricksTotal: statTotalElements.bricks,
-  resetStatsButton: requireElement("btnStatsReset"),
   dailyStatsSummary: requireElement("txtDailyStatsSummary"),
   statGoals: statGoalInputs,
   statCards: statCardElements,
@@ -665,7 +664,6 @@ const domElements = {
   keyboardSummary: requireElement("txtKeyboardSummary"),
   skipButton: requireElement("btnSkip"),
   playAnswerButton: requireElement("btnPlayAnswer"),
-  spacedRepClearButton: requireElement("btnSpacedRepClear"),
   optionsTabKeys: requireElement("tabOptionsKeys"),
   enableSpacedRepetition: requireElement("chkSpacedRepEnable"),
   spacedRepThreshold: requireElement("inputSpacedRepThreshold"),
@@ -688,7 +686,6 @@ const domElements = {
   settingsUpdateButton: requireElement("btnSettingsUpdate"),
   settingsActivateButton: requireElement("btnSettingsActivate"),
   settingsDeleteButton: requireElement("btnSettingsDelete"),
-  settingsResetButton: requireElement("btnSettingsReset"),
   settingsDownloadButton: requireElement("btnSettingsDownload"),
   settingsUploadButton: requireElement("btnSettingsUpload"),
   settingsUploadInput: requireElement("inputSettingsUpload"),
@@ -702,6 +699,19 @@ const domElements = {
     "btnSettingsPresetImportSkip",
   ),
   settingsFileStatus: requireElement("txtSettingsFileStatus"),
+  dataResetSettingsButton: requireElement("btnDataResetSettings"),
+  dataResetStatsButton: requireElement("btnDataResetStats"),
+  dataClearFailedItemsButton: requireElement("btnDataClearFailedItems"),
+  dataDeletePresetsButton: requireElement("btnDataDeletePresets"),
+  dataDeleteWorkoutsButton: requireElement("btnDataDeleteWorkouts"),
+  dataDeleteSongsButton: requireElement("btnDataDeleteSongs"),
+  dataResetAllButton: requireElement("btnDataResetAll"),
+  dataResetStatus: requireElement("txtDataResetStatus"),
+  dataResetDialog: requireElement("dialogDataReset"),
+  dataResetDialogTitle: requireElement("dataResetDialogTitle"),
+  dataResetDialogMessage: requireElement("txtDataResetDialogMessage"),
+  dataResetConfirmButton: requireElement("btnDataResetConfirm"),
+  dataResetCancelButton: requireElement("btnDataResetCancel"),
   trainingSetupSummary: requireElement("txtTrainingSetupSummary"),
   workoutPanel: requireElement("panelOptionsWorkouts"),
   workoutSelect: requireElement("selectWorkout"),
@@ -1704,6 +1714,21 @@ const WORKOUTS_SELECTED_KEY = "chordChallenge.workouts.selected";
 const WORKOUTS_SEED_VERSION_KEY = "chordChallenge.workouts.seedVersion";
 const SONGS_STORAGE_KEY = "chordChallenge.songs";
 const SONGS_SELECTED_KEY = "chordChallenge.songs.selected";
+const DAILY_STATS_STORAGE_KEY = "chordChallenge.dailyStats";
+const VOICING_DEBUG_STORAGE_KEY = "chordsDebugVoicing";
+const APP_STORAGE_KEYS = [
+  SETTINGS_STORAGE_KEY,
+  SETTINGS_PRESETS_KEY,
+  SETTINGS_ACTIVE_PRESET_KEY,
+  SETTINGS_PRESET_SEED_VERSION_KEY,
+  WORKOUTS_STORAGE_KEY,
+  WORKOUTS_SELECTED_KEY,
+  WORKOUTS_SEED_VERSION_KEY,
+  SONGS_STORAGE_KEY,
+  SONGS_SELECTED_KEY,
+  DAILY_STATS_STORAGE_KEY,
+  VOICING_DEBUG_STORAGE_KEY,
+];
 const STARTER_CONTENT_VERSION = "starter-2026-07-07-short-names";
 const STARTER_PRESET_NAMES = {
   chords: "Major & Minor Chords",
@@ -1841,6 +1866,42 @@ function getStorageHandle() {
   } catch (_) {}
   if (globalRoot && globalRoot.localStorage) return globalRoot.localStorage;
   return null;
+}
+
+function updateStorageAtomically(storage, keys, update) {
+  if (!storage) return false;
+  let snapshot;
+  try {
+    snapshot = keys.map((key) => ({
+      key,
+      value: storage.getItem(key),
+    }));
+  } catch (_) {
+    return false;
+  }
+
+  try {
+    update(storage);
+    return true;
+  } catch (_) {
+    snapshot.forEach(({ key, value }) => {
+      try {
+        if (value === null) storage.removeItem(key);
+        else storage.setItem(key, value);
+      } catch (_) {}
+    });
+    return false;
+  }
+}
+
+function removeStorageKeys(storage, keys) {
+  return updateStorageAtomically(storage, keys, (target) => {
+    keys.forEach((key) => target.removeItem(key));
+  });
+}
+
+function clearAllAppStorage() {
+  return removeStorageKeys(getStorageHandle(), APP_STORAGE_KEYS);
 }
 
 function cloneObject(value) {
@@ -3663,11 +3724,11 @@ function songsStoreFactory() {
     },
     clearAll() {
       const activeStorage = this.resolveStorage();
-      if (!activeStorage) return;
-      try {
-        activeStorage.removeItem(this.storageKey);
-        activeStorage.removeItem(this.selectedKey);
-      } catch (_) {}
+      if (!activeStorage) return false;
+      return removeStorageKeys(activeStorage, [
+        this.storageKey,
+        this.selectedKey,
+      ]);
     },
   };
   return store;
@@ -3971,6 +4032,14 @@ function workoutStoreFactory() {
       try {
         activeStorage.removeItem(this.selectedKey);
       } catch (_) {}
+    },
+    clearAll() {
+      const activeStorage = this.resolveStorage();
+      if (!activeStorage) return false;
+      return removeStorageKeys(activeStorage, [
+        this.storageKey,
+        this.selectedKey,
+      ]);
     },
   };
   store.seedStarterWorkouts();
@@ -4881,13 +4950,16 @@ function settingsStoreFactory() {
     },
     save() {
       const activeStorage = this.resolveStorage();
-      if (!activeStorage) return;
+      if (!activeStorage) return false;
       try {
         activeStorage.setItem(
           this.storageKey,
           JSON.stringify(this.current || this.defaults),
         );
-      } catch (_) {}
+        return true;
+      } catch (_) {
+        return false;
+      }
     },
     savePresets(presets) {
       const activeStorage = this.resolveStorage();
@@ -4988,6 +5060,21 @@ function settingsStoreFactory() {
       this.notifyChange();
       return true;
     },
+    clearPresets() {
+      const activeStorage = this.resolveStorage();
+      if (!activeStorage) return false;
+      if (
+        !removeStorageKeys(activeStorage, [
+          this.presetsKey,
+          this.activePresetKey,
+        ])
+      ) {
+        return false;
+      }
+      this.activePresetName = "";
+      this.notifyChange();
+      return true;
+    },
     listPresets() {
       const presets = this.loadPresets();
       return Object.keys(presets).sort((a, b) =>
@@ -5054,11 +5141,27 @@ function settingsStoreFactory() {
       } catch (_) {}
     },
     resetToDefaults({ apply = true, save = true } = {}) {
-      this.current = cloneObject(this.defaults);
+      const nextSettings = cloneObject(this.defaults);
+      if (save) {
+        const activeStorage = this.resolveStorage();
+        if (
+          !updateStorageAtomically(
+            activeStorage,
+            [this.storageKey, this.activePresetKey],
+            (target) => {
+              target.setItem(this.storageKey, JSON.stringify(nextSettings));
+              target.removeItem(this.activePresetKey);
+            },
+          )
+        ) {
+          return false;
+        }
+      }
+      this.current = nextSettings;
       if (apply) this.applyToDom(this.current);
-      if (save) this.save();
-      this.setActivePresetName("", { notify: false });
+      this.activePresetName = "";
       this.notifyChange();
+      return true;
     },
     getCurrentSnapshot() {
       return cloneObject(this.current);
@@ -5184,6 +5287,10 @@ appGlobals.songsStore = songsStore;
 if (appGlobals.root) {
   appGlobals.root.songsStore = songsStore;
 }
+appGlobals.clearAllAppStorage = clearAllAppStorage;
+if (appGlobals.root) {
+  appGlobals.root.clearAllAppStorage = clearAllAppStorage;
+}
 appGlobals.sanitizeMetronomeSettings = sanitizeMetronomeSettings;
 appGlobals.buildSongPracticeTimeline = buildSongPracticeTimeline;
 appGlobals.getMetronomeTickType = getMetronomeTickType;
@@ -5266,6 +5373,7 @@ const dataExports = {
   pickSongIdForSongNavigation,
   pickSongIdForFavoriteNavigation,
   pickSongIdForFinishAction,
+  clearAllAppStorage,
   settingsStore,
   workoutStore,
   songsStore,

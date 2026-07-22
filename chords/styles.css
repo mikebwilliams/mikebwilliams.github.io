@@ -1903,6 +1903,11 @@ details.challengeCollapsible > summary .summaryActions {
   transform: translate(-1px, -1px);
 }
 
+.tabs input[type="radio"]:focus-visible + label {
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 2px;
+}
+
 .tabContent {
   display: none;
   background: var(--panel-bg);
@@ -1940,6 +1945,12 @@ details.challengeCollapsible > summary .summaryActions {
 
   .settingsSection .tabs {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 641px) {
+  #tabsPreferences {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -2026,8 +2037,11 @@ label {
   margin: 16px 0;
 }
 
-.presetImportDialog {
+.presetImportDialog,
+.dataResetDialog {
   width: min(440px, calc(100% - 32px));
+  max-height: calc(100% - 32px);
+  overflow-y: auto;
   padding: 20px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
@@ -2036,21 +2050,25 @@ label {
   box-shadow: var(--shadow-soft);
 }
 
-.presetImportDialog::backdrop {
+.presetImportDialog::backdrop,
+.dataResetDialog::backdrop {
   background: rgba(0, 0, 0, 0.48);
 }
 
-.presetImportDialog h4 {
+.presetImportDialog h4,
+.dataResetDialog h4 {
   margin: 0 0 10px;
 }
 
-.presetImportDialog p {
+.presetImportDialog p,
+.dataResetDialog p {
   margin: 0 0 18px;
   color: var(--text-muted);
   overflow-wrap: anywhere;
 }
 
-.presetImportDialogActions {
+.presetImportDialogActions,
+.dataResetDialogActions {
   justify-content: flex-end;
 }
 
@@ -2075,6 +2093,107 @@ label {
   margin: 4px 0 0;
   color: var(--text-muted);
   font-size: 0.9rem;
+}
+
+.dataResetGroup + .dataResetGroup {
+  border-top: 1px solid var(--border-soft);
+  margin-top: 18px;
+  padding-top: 18px;
+}
+
+.dataResetGroupTitle {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+}
+
+.dataResetRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 12px 0;
+}
+
+.dataResetRow + .dataResetRow {
+  border-top: 1px solid var(--border-soft);
+}
+
+.dataResetCopy {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.dataResetCopy h5 {
+  margin: 0 0 4px;
+  font-size: 0.98rem;
+}
+
+.dataResetCopy p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.dataResetRow > button {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+.dataResetDangerGroup {
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.dataResetGroup + .dataResetDangerGroup {
+  border-top-color: var(--danger);
+}
+
+.dataResetDangerButton {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--surface-900);
+}
+
+.dataResetStatus {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  min-height: 1.2em;
+  margin: 0 0 8px;
+  padding: 6px 0;
+  background: var(--surface-900);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1360px) {
+  #panelOptionsData {
+    overflow: visible;
+  }
+}
+
+@media (max-width: 640px) {
+  .dataResetRow {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .dataResetCopy {
+    flex: 0 1 auto;
+  }
+
+  .dataResetRow > button {
+    width: 100%;
+  }
+
+  .dataResetDialogActions button {
+    flex: 1 1 100%;
+  }
 }
 
 .midiStatusRow {
