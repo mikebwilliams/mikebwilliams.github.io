@@ -366,6 +366,11 @@
               <span class="collapsibleStatus" id="txtDailyStatsSummary"
                 >Chords: 0 / 0</span
               >
+              <div class="summaryActions">
+                <button id="btnStatsReset" type="button">
+                  Reset Daily Stats
+                </button>
+              </div>
             </summary>
             <div class="challengeCollapsibleBody">
               <div class="statsGrid">
@@ -1343,7 +1348,12 @@
                 min="1" /></label
             ><br />
             <div id="panelSpacedRepListContainer">
-              <h4>Failed Items</h4>
+              <div class="spacedRepListHeader">
+                <h4>Failed Items</h4>
+                <button id="btnSpacedRepClear" type="button">
+                  Clear Failed Items
+                </button>
+              </div>
               <div id="panelSpacedRepList"></div>
             </div>
           </div>

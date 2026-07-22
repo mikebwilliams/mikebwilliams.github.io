@@ -1416,6 +1416,39 @@ button.summaryStepButton {
     justify-self: stretch;
     justify-content: space-between;
   }
+
+  .statsPanel > summary {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto;
+    gap: 8px 12px;
+    padding: 16px 18px;
+  }
+
+  .statsPanel > summary .collapsibleTitle {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .statsPanel > summary::after {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .statsPanel > summary .collapsibleStatus {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .statsPanel > summary .summaryActions {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    width: 100%;
+  }
+
+  #btnStatsReset {
+    width: 100%;
+  }
 }
 
 details.challengeCollapsible > summary .summaryActions {
@@ -1427,6 +1460,10 @@ details.challengeCollapsible > summary .summaryActions {
   margin-left: 0;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+#btnStatsReset {
+  padding: 0.48rem 0.78rem;
 }
 
 .metronomePanelGrid {
@@ -2730,14 +2767,33 @@ textarea:focus {
   border: 1px solid var(--border-soft);
 }
 
-#panelSpacedRepListContainer h4 {
-  margin: 0 0 12px;
+.spacedRepListHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.spacedRepListHeader h4 {
+  margin: 0;
+}
+
+.spacedRepListHeader button {
+  flex: 0 0 auto;
 }
 
 #panelSpacedRepList {
   max-height: 200px;
   overflow-y: auto;
   padding-right: 6px;
+}
+
+@media (max-width: 480px) {
+  .spacedRepListHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
 }
 
 .correct {

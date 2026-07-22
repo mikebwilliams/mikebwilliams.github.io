@@ -1190,6 +1190,25 @@ function clearFailedItems() {
   return true;
 }
 
+function initQuickResetActions() {
+  if (
+    dom.resetStatsButton &&
+    typeof dom.resetStatsButton.addEventListener === "function"
+  ) {
+    dom.resetStatsButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      resetTodayStats();
+    });
+  }
+  if (
+    dom.spacedRepClearButton &&
+    typeof dom.spacedRepClearButton.addEventListener === "function"
+  ) {
+    dom.spacedRepClearButton.addEventListener("click", clearFailedItems);
+  }
+}
+
 function deleteAllPresets() {
   if (
     !uiSettingsStore ||
@@ -2398,6 +2417,7 @@ document.addEventListener("DOMContentLoaded", () => {
   dom.settingsDownloadButton.addEventListener("click", handleSettingsDownload);
   dom.settingsUploadButton.addEventListener("click", handleSettingsUpload);
   dom.settingsUploadInput.addEventListener("change", handleSettingsUploadFile);
+  initQuickResetActions();
   initDataResetActions();
 });
 

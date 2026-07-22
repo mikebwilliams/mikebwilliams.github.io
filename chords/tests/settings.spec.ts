@@ -266,6 +266,122 @@ test("Data preference actions use aligned columns and clear hierarchy", async ({
   ).toBe("btnDataResetStats");
 });
 
+test("Daily stats and failed items keep immediate reset shortcuts", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto(TEST_URL);
+  await page.evaluate(() => {
+    localStorage.clear();
+    const now = new Date();
+    const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
+      2,
+      "0",
+    )}-${String(now.getDate()).padStart(2, "0")}`;
+    localStorage.setItem(
+      "chordChallenge.dailyStats",
+      JSON.stringify({
+        date,
+        counts: { chords: { correct: 4, incorrect: 2 } },
+      }),
+    );
+  });
+  await page.reload();
+  await page.evaluate(() => {
+    (window as any).spacedRepHandleResult(
+      "chord",
+      "Quick Reset Failed Chord",
+      true,
+    );
+  });
+
+  await expect(page.locator("#txtChordsCorrect")).toHaveText("4");
+  await expect(page.locator("#txtChordsIncorrect")).toHaveText("2");
+  await expect(page.locator("#panelDailyStats")).not.toHaveAttribute(
+    "open",
+    "",
+  );
+  const statsShortcutBounds = await page.evaluate(() => {
+    const summary = document.querySelector("#panelDailyStats > summary")!;
+    const button = document.querySelector("#btnStatsReset")!;
+    const status = document.querySelector("#txtDailyStatsSummary")!;
+    const summaryRect = summary.getBoundingClientRect();
+    const buttonRect = button.getBoundingClientRect();
+    return {
+      buttonHeight: buttonRect.height,
+      buttonLeft: buttonRect.left,
+      buttonRight: buttonRect.right,
+      documentClientWidth: document.documentElement.clientWidth,
+      documentScrollWidth: document.documentElement.scrollWidth,
+      statusClientWidth: status.clientWidth,
+      statusScrollWidth: status.scrollWidth,
+      summaryLeft: summaryRect.left,
+      summaryRight: summaryRect.right,
+    };
+  });
+  expect(statsShortcutBounds.buttonLeft).toBeGreaterThanOrEqual(
+    statsShortcutBounds.summaryLeft - 1,
+  );
+  expect(statsShortcutBounds.buttonRight).toBeLessThanOrEqual(
+    statsShortcutBounds.summaryRight + 1,
+  );
+  expect(statsShortcutBounds.buttonHeight).toBeLessThan(60);
+  expect(statsShortcutBounds.statusClientWidth).toBeGreaterThan(0);
+  expect(statsShortcutBounds.statusScrollWidth).toBeLessThanOrEqual(
+    statsShortcutBounds.statusClientWidth,
+  );
+  expect(statsShortcutBounds.documentScrollWidth).toBeLessThanOrEqual(
+    statsShortcutBounds.documentClientWidth,
+  );
+  await page.click("#btnStatsReset");
+  await expect(page.locator("#panelDailyStats")).not.toHaveAttribute(
+    "open",
+    "",
+  );
+  await expect(page.locator("#txtChordsCorrect")).toHaveText("0");
+  await expect(page.locator("#txtChordsIncorrect")).toHaveText("0");
+  expect(
+    await page.evaluate(() =>
+      JSON.parse(localStorage.getItem("chordChallenge.dailyStats") || "{}"),
+    ),
+  ).toMatchObject({
+    counts: { chords: { correct: 0, incorrect: 0 } },
+  });
+
+  await page.click("label[for='tabOptionsSpacedRep']");
+  await expect(page.locator("#panelOptionsSpacedRep")).toBeVisible();
+  await expect(page.locator("#panelSpacedRepList")).toContainText(
+    "Quick Reset Failed Chord",
+  );
+  const failedItemsShortcutBounds = await page.evaluate(() => {
+    const header = document.querySelector(".spacedRepListHeader")!;
+    const button = document.querySelector("#btnSpacedRepClear")!;
+    const headerRect = header.getBoundingClientRect();
+    const buttonRect = button.getBoundingClientRect();
+    return {
+      buttonLeft: buttonRect.left,
+      buttonRight: buttonRect.right,
+      headerLeft: headerRect.left,
+      headerRight: headerRect.right,
+    };
+  });
+  expect(failedItemsShortcutBounds.buttonLeft).toBeGreaterThanOrEqual(
+    failedItemsShortcutBounds.headerLeft - 1,
+  );
+  expect(failedItemsShortcutBounds.buttonRight).toBeLessThanOrEqual(
+    failedItemsShortcutBounds.headerRight + 1,
+  );
+  await page.click("#btnSpacedRepClear");
+  await expect(page.locator("#panelSpacedRepList")).toContainText(
+    "No failed items scheduled.",
+  );
+  await expect(page.locator("#dialogDataReset")).not.toBeVisible();
+
+  await openDataPreferences(page);
+  await expect(page.locator("#btnDataResetStats")).toBeVisible();
+  await expect(page.locator("#btnDataClearFailedItems")).toBeVisible();
+});
+
 test("key preset selections persist after reload", async ({ page }) => {
   await page.goto(TEST_URL);
   await page.evaluate(() => localStorage.clear());
