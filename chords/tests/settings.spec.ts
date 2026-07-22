@@ -182,6 +182,90 @@ test("settings controls are split into independent sections", async ({
   await expect(page.locator("#panelOptionsWorkouts")).toBeVisible();
 });
 
+test("Data preference actions use aligned columns and clear hierarchy", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(TEST_URL);
+  await openDataPreferences(page);
+
+  const layout = await page.evaluate(() => {
+    const bounds = (selector: string) =>
+      Array.from(document.querySelectorAll(selector)).map((element) => {
+        const rect = element.getBoundingClientRect();
+        return { height: rect.height, left: rect.left, width: rect.width };
+      });
+    const groupTitle = document.querySelector(".dataResetGroupTitle");
+    const rowTitle = document.querySelector(".dataResetCopy h5");
+    const allDataGroup = document
+      .querySelector("#dataResetAllTitle")
+      ?.closest(".dataResetGroup");
+    const allDataStyle = allDataGroup ? getComputedStyle(allDataGroup) : null;
+    const statusStyle = getComputedStyle(
+      document.querySelector("#txtDataResetStatus")!,
+    );
+
+    return {
+      buttons: bounds(".dataResetRow > button"),
+      copies: bounds(".dataResetCopy"),
+      groupTitles: bounds(".dataResetGroupTitle"),
+      groupTitleSize: groupTitle
+        ? Number.parseFloat(getComputedStyle(groupTitle).fontSize)
+        : 0,
+      rowTitleSize: rowTitle
+        ? Number.parseFloat(getComputedStyle(rowTitle).fontSize)
+        : 0,
+      allDataBorders: allDataStyle
+        ? {
+            bottom: allDataStyle.borderBottomWidth,
+            left: allDataStyle.borderLeftWidth,
+            right: allDataStyle.borderRightWidth,
+          }
+        : null,
+      resetAllIsDanger:
+        document
+          .querySelector("#btnDataResetAll")
+          ?.classList.contains("dataResetDangerButton") || false,
+      statusBackground: statusStyle.backgroundColor,
+      statusPosition: statusStyle.position,
+    };
+  });
+
+  const expectAligned = (values: number[]) => {
+    expect(Math.max(...values) - Math.min(...values)).toBeLessThanOrEqual(1);
+  };
+  expectAligned(layout.buttons.map(({ left }) => left));
+  expectAligned(layout.buttons.map(({ width }) => width));
+  expectAligned(layout.buttons.map(({ height }) => height));
+  expectAligned(layout.copies.map(({ left }) => left));
+  expectAligned(layout.copies.map(({ width }) => width));
+  expectAligned(layout.groupTitles.map(({ left }) => left));
+  expect(layout.groupTitleSize - layout.rowTitleSize).toBeGreaterThanOrEqual(2);
+  expect(layout.allDataBorders).toEqual({
+    bottom: "0px",
+    left: "0px",
+    right: "0px",
+  });
+  expect(layout.resetAllIsDanger).toBe(true);
+  expect(layout.statusPosition).toBe("static");
+  expect(layout.statusBackground).toBe("rgba(0, 0, 0, 0)");
+
+  const dialog = await openDataResetDialog(page, "#btnDataResetStats");
+  await page.click("#btnDataResetCancel");
+  await expect(dialog).not.toBeVisible();
+  await expect(page.locator("#txtDataResetStatus")).toContainText(/canceled/i);
+  expect(
+    await page
+      .locator("#txtDataResetStatus")
+      .evaluate((status) =>
+        status
+          .closest(".dataResetRow")
+          ?.querySelector(":scope > button")
+          ?.getAttribute("id"),
+      ),
+  ).toBe("btnDataResetStats");
+});
+
 test("key preset selections persist after reload", async ({ page }) => {
   await page.goto(TEST_URL);
   await page.evaluate(() => localStorage.clear());

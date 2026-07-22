@@ -2097,20 +2097,22 @@ label {
 
 .dataResetGroup + .dataResetGroup {
   border-top: 1px solid var(--border-soft);
-  margin-top: 18px;
-  padding-top: 18px;
+  margin-top: 20px;
+  padding-top: 20px;
 }
 
 .dataResetGroupTitle {
-  margin: 0 0 4px;
-  font-size: 1.05rem;
+  margin: 0 0 6px;
+  font-size: 1.2rem;
+  line-height: 1.25;
 }
 
 .dataResetRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 232px;
   align-items: center;
-  justify-content: space-between;
-  gap: 18px;
+  column-gap: 24px;
+  row-gap: 8px;
   padding: 12px 0;
 }
 
@@ -2119,13 +2121,12 @@ label {
 }
 
 .dataResetCopy {
-  flex: 1 1 260px;
   min-width: 0;
 }
 
 .dataResetCopy h5 {
   margin: 0 0 4px;
-  font-size: 0.98rem;
+  font-size: 1rem;
 }
 
 .dataResetCopy p {
@@ -2137,18 +2138,8 @@ label {
 }
 
 .dataResetRow > button {
-  flex: 0 0 auto;
-  max-width: 100%;
-}
-
-.dataResetDangerGroup {
-  border: 1px solid var(--danger);
-  border-radius: var(--radius-md);
-  padding: 16px;
-}
-
-.dataResetGroup + .dataResetDangerGroup {
-  border-top-color: var(--danger);
+  width: 100%;
+  max-width: none;
 }
 
 .dataResetDangerButton {
@@ -2158,39 +2149,29 @@ label {
 }
 
 .dataResetStatus {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  min-height: 1.2em;
-  margin: 0 0 8px;
-  padding: 6px 0;
-  background: var(--surface-900);
+  grid-column: 1 / -1;
+  margin: 0;
   color: var(--text-muted);
   font-size: 0.9rem;
   overflow-wrap: anywhere;
 }
 
-@media (max-width: 1360px) {
-  #panelOptionsData {
-    overflow: visible;
-  }
+.dataResetStatus:empty {
+  display: none;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 700px) {
   .dataResetRow {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .dataResetCopy {
-    flex: 0 1 auto;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 10px;
   }
 
   .dataResetRow > button {
     width: 100%;
   }
+}
 
+@media (max-width: 640px) {
   .dataResetDialogActions button {
     flex: 1 1 100%;
   }

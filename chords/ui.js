@@ -1130,6 +1130,17 @@ async function runDataResetAction({
   successMessage,
   action,
 }) {
+  const statusRow =
+    launcher && typeof launcher.closest === "function"
+      ? launcher.closest(".dataResetRow")
+      : null;
+  if (
+    statusRow &&
+    typeof statusRow.appendChild === "function" &&
+    dom.dataResetStatus
+  ) {
+    statusRow.appendChild(dom.dataResetStatus);
+  }
   setFileStatus(dom.dataResetStatus, "");
   const confirmed = await requestDataResetConfirmation({
     title,
