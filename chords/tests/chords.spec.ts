@@ -177,6 +177,43 @@ test("Chord selection returns when only one chord type can repeat", async ({
     .toBe("C");
 });
 
+test("Failed chord repeats wait for their current practice root", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+
+  const result = await page.evaluate(() => {
+    spacedRepClearAll();
+    dom.enableSpacedRepetition.checked = true;
+    Object.values(dom.chordCheckboxes).forEach((checkbox) => {
+      checkbox.checked = checkbox.id === "chkChordMajor";
+    });
+
+    spacedRepHandleResult("chord", "Csus2", true);
+    spacedQueueAll[0].counter = 0;
+    keys = ["C", "F"];
+
+    keyIndex = 1;
+    setRandomChord();
+    const chordInF = currentChordInternalName;
+
+    keyIndex = 0;
+    setRandomChord();
+
+    return {
+      chordInF,
+      chordInC: currentChordInternalName,
+      scheduledRepeat,
+    };
+  });
+
+  expect(result).toEqual({
+    chordInF: "F",
+    chordInC: "Csus2",
+    scheduledRepeat: { kind: "chord", index: 0 },
+  });
+});
+
 test("Chord type group controls cycle and reflect partial selections", async ({
   page,
 }) => {

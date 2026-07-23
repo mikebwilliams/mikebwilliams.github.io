@@ -1951,8 +1951,14 @@ function setRandomChord() {
 
   if (isSpacedRepetitionEnabled() && spacedQueueAll.length) {
     // Find due chord entry with smallest counter
+    const currentRoot = keys[keyIndex];
     let idx = spacedQueueAll.reduce((best, entry, i) => {
       if (entry.kind !== "chord") return best;
+      const rootMatch =
+        typeof entry.chord === "string"
+          ? entry.chord.match(/^[A-G](#|b)?/)
+          : null;
+      if (!rootMatch || rootMatch[0] !== currentRoot) return best;
       if (
         entry.counter <= 0 &&
         (best < 0 || entry.counter < spacedQueueAll[best].counter)
