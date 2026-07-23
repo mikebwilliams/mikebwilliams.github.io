@@ -3342,6 +3342,9 @@ function populateStartingKeyOptions() {
 }
 
 function nextChord(skip = false) {
+  // A skipped failed item stays queued, but the replacement must not grade it.
+  if (skip) scheduledRepeat = null;
+
   if (
     modeIsProgressions() ||
     modeIsScales() ||

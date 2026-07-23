@@ -214,6 +214,65 @@ test("Failed chord repeats wait for their current practice root", async ({
   });
 });
 
+test("Skipping a failed chord repeat does not grade its replacement", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+
+  const beforeSkip = await page.evaluate(() => {
+    spacedRepClearAll();
+    dom.enableSpacedRepetition.checked = true;
+    dom.flowSelect.value = "circleOfFourths";
+    dom.flowStartSelect.value = "C";
+    Object.values(dom.chordCheckboxes).forEach((checkbox) => {
+      checkbox.checked = checkbox.id === "chkChordMajor";
+    });
+
+    updateAvailableKeys();
+    keyIndex = 0;
+    spacedRepHandleResult("chord", "Csus2", true);
+    spacedQueueAll[0].counter = 0;
+    setRandomChord();
+
+    return {
+      target: currentChordInternalName,
+      scheduledRepeat,
+    };
+  });
+
+  expect(beforeSkip).toEqual({
+    target: "Csus2",
+    scheduledRepeat: { kind: "chord", index: 0 },
+  });
+
+  await page.locator("#btnSkip").click();
+
+  const afterSkip = await page.evaluate(() => ({
+    key: keys[keyIndex],
+    target: currentChordInternalName,
+    scheduledRepeat,
+    interval: spacedQueueAll[0].interval,
+    successStreak: spacedQueueAll[0].successStreak,
+  }));
+  expect(afterSkip).toEqual({
+    key: "F",
+    target: "F",
+    scheduledRepeat: null,
+    interval: 1,
+    successStreak: 0,
+  });
+
+  await page.evaluate(() => {
+    isIncorrect = false;
+    recordChordCompletion();
+  });
+  const skippedEntry = await page.evaluate(() => ({
+    interval: spacedQueueAll[0].interval,
+    successStreak: spacedQueueAll[0].successStreak,
+  }));
+  expect(skippedEntry).toEqual({ interval: 1, successStreak: 0 });
+});
+
 test("Chord type group controls cycle and reflect partial selections", async ({
   page,
 }) => {
