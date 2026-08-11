@@ -88,18 +88,18 @@ test("MIDI note messages work on channels other than channel one", async ({
   });
 });
 
-test("MIDI panel can manually refresh the device list", async ({ page }) => {
+test("keyboard and MIDI summaries can refresh the device list", async ({
+  page,
+}) => {
   await page.addInitScript(() => {
     function createMidiAccess(stage: number) {
-      const inputName = stage === 1 ? "Initial Piano" : "Refreshed Piano";
-      const outputName = stage === 1 ? "Initial Synth" : "Refreshed Synth";
       return {
         inputs: new Map([
           [
             `in-${stage}`,
             {
               id: `in-${stage}`,
-              name: inputName,
+              name: `Piano ${stage}`,
               onmidimessage: null,
             },
           ],
@@ -109,7 +109,7 @@ test("MIDI panel can manually refresh the device list", async ({ page }) => {
             `out-${stage}`,
             {
               id: `out-${stage}`,
-              name: outputName,
+              name: `Synth ${stage}`,
               send() {},
             },
           ],
@@ -122,37 +122,86 @@ test("MIDI panel can manually refresh the device list", async ({ page }) => {
       configurable: true,
       value() {
         requestCount += 1;
+        (window as any).__midiRefreshRequestCount = requestCount;
         return Promise.resolve(createMidiAccess(requestCount));
       },
     });
   });
 
   await page.goto(TEST_URL);
-  await openMidiPanel(page);
-
   await expect(page.locator("#txtMidiStatus")).toHaveText("MIDI connected.");
   await expect(page.locator("#txtKeyboardSummary")).toHaveText(
     "MIDI: 1 in / 1 out",
   );
-  await expect(page.locator("#tableMidiInputs")).toContainText("Initial Piano");
-  await expect(page.locator("#tableMidiOutputs")).toContainText(
-    "Initial Synth",
+  await expect(page.locator("#tableMidiInputs")).toContainText("Piano 1");
+  await expect(page.locator("#tableMidiOutputs")).toContainText("Synth 1");
+
+  const keyboardRefresh = page.locator("#btnKeyboardMidiRefresh");
+  const midiRefresh = page.locator("#btnMidiRefresh");
+  await expect(keyboardRefresh).toHaveAttribute(
+    "title",
+    "Refresh the MIDI device list",
+  );
+  await expect(midiRefresh).toHaveAttribute(
+    "title",
+    "Refresh the MIDI device list",
+  );
+  await expect(keyboardRefresh).toHaveAttribute(
+    "aria-label",
+    "Refresh MIDI devices",
   );
 
-  await page.click("#btnMidiRefresh");
+  await keyboardRefresh.click();
 
-  await expect(page.locator("#txtMidiStatus")).toHaveText("MIDI connected.");
-  await expect(page.locator("#txtKeyboardSummary")).toHaveText(
-    "MIDI: 1 in / 1 out",
+  await expect(page.locator("#tableMidiInputs")).toContainText("Piano 2");
+  await expect(page.locator("#tableMidiOutputs")).toContainText("Synth 2");
+  await expect(page.locator("#panelKeyboard")).not.toHaveAttribute("open", "");
+
+  await page.locator("#panelKeyboard").evaluate((element) => {
+    (element as HTMLDetailsElement).open = true;
+  });
+  const refreshAlignment = await page.evaluate(() => {
+    function verticalCenter(selector: string) {
+      const rect = document.querySelector(selector)!.getBoundingClientRect();
+      return rect.top + rect.height / 2;
+    }
+    return {
+      keyboard: Math.abs(
+        verticalCenter("#btnKeyboardMidiRefresh") -
+          verticalCenter("#panelKeyboard > summary"),
+      ),
+      midi: Math.abs(
+        verticalCenter("#btnMidiRefresh") -
+          verticalCenter("#panelKeyboardMidi > summary"),
+      ),
+    };
+  });
+  expect(refreshAlignment.keyboard).toBeLessThanOrEqual(1);
+  expect(refreshAlignment.midi).toBeLessThanOrEqual(1);
+  await expect(page.locator("#panelKeyboardMidi")).not.toHaveAttribute(
+    "open",
+    "",
   );
-  await expect(page.locator("#tableMidiInputs")).toContainText(
-    "Refreshed Piano",
+
+  await midiRefresh.click();
+
+  await expect(page.locator("#tableMidiInputs")).toContainText("Piano 3");
+  await expect(page.locator("#tableMidiOutputs")).toContainText("Synth 3");
+  await expect(page.locator("#panelKeyboardMidi")).not.toHaveAttribute(
+    "open",
+    "",
   );
-  await expect(page.locator("#tableMidiOutputs")).toContainText(
-    "Refreshed Synth",
-  );
-  await expect(page.locator("#tableMidiInputs")).not.toContainText(
-    "Initial Piano",
+
+  await midiRefresh.focus();
+  await page.keyboard.press("Space");
+  await expect(page.locator("#tableMidiInputs")).toContainText("Piano 4");
+  expect(await page.evaluate(() => metronomeState.isRunning)).toBe(false);
+  expect(
+    await page.evaluate(() => (window as any).__midiRefreshRequestCount),
+  ).toBe(4);
+  await expect(page.locator("#panelKeyboardMidi")).not.toHaveAttribute(
+    "open",
+    "",
   );
 });
 

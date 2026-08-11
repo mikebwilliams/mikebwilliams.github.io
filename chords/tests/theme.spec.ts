@@ -9,7 +9,7 @@ async function openTrainingSetup(page: Page) {
   }
 }
 
-test("keyboard shortcut help sits beside the theme picker", async ({
+test("practice transport and utilities share a responsive header toolbar", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 320, height: 720 });
@@ -19,14 +19,40 @@ test("keyboard shortcut help sits beside the theme picker", async ({
     name: "Keyboard shortcuts",
   });
   const themeButton = page.locator("#panelThemePicker > summary");
+  const previousButton = page.locator("#btnPracticePrevious");
+  const playButton = page.locator("#btnMetronomeTransport");
+  const nextButton = page.locator("#btnSkip");
 
   await expect(shortcutButton).toBeVisible();
   await expect(shortcutButton).toHaveText("?");
+  await expect(previousButton).toBeVisible();
+  await expect(playButton).toHaveText("Start");
+  await expect(nextButton).toBeVisible();
+  await expect(page.locator("#panelKeyboard > summary #btnSkip")).toHaveCount(
+    0,
+  );
+  const previousBox = await previousButton.boundingBox();
+  const playBox = await playButton.boundingBox();
+  const nextBox = await nextButton.boundingBox();
   const shortcutBox = await shortcutButton.boundingBox();
   const themeBox = await themeButton.boundingBox();
+  expect(previousBox).not.toBeNull();
+  expect(playBox).not.toBeNull();
+  expect(nextBox).not.toBeNull();
   expect(shortcutBox).not.toBeNull();
   expect(themeBox).not.toBeNull();
+  expect(previousBox!.x).toBeLessThan(playBox!.x);
+  expect(playBox!.x).toBeLessThan(nextBox!.x);
+  expect(nextBox!.x + nextBox!.width).toBeLessThan(shortcutBox!.x);
   expect(shortcutBox!.x + shortcutBox!.width).toBeLessThanOrEqual(themeBox!.x);
+
+  const mobileToolbarBox = await page.locator(".heroToolbar").boundingBox();
+  const mobileHeaderBox = await page.locator("#panelHeader").boundingBox();
+  expect(mobileToolbarBox).not.toBeNull();
+  expect(mobileHeaderBox).not.toBeNull();
+  expect(mobileToolbarBox!.y + mobileToolbarBox!.height).toBeLessThanOrEqual(
+    mobileHeaderBox!.y,
+  );
 
   await shortcutButton.focus();
   await page.keyboard.press("Space");
@@ -55,15 +81,10 @@ test("keyboard shortcut help sits beside the theme picker", async ({
 
   await page.setViewportSize({ width: 900, height: 720 });
   const headerBox = await page.locator("#panelHeader").boundingBox();
-  const mediumShortcutBox = await shortcutButton.boundingBox();
-  const headerPaddingRight = await page
-    .locator("#panelHeader")
-    .evaluate((element) => parseFloat(getComputedStyle(element).paddingRight));
+  const toolbarBox = await page.locator(".heroToolbar").boundingBox();
   expect(headerBox).not.toBeNull();
-  expect(mediumShortcutBox).not.toBeNull();
-  expect(headerBox!.x + headerBox!.width - headerPaddingRight).toBeLessThan(
-    mediumShortcutBox!.x,
-  );
+  expect(toolbarBox).not.toBeNull();
+  expect(headerBox!.x + headerBox!.width).toBeLessThanOrEqual(toolbarBox!.x);
 });
 
 test("Real Book theme uses paper colors and handwritten chart typography", async ({

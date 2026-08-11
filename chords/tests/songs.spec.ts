@@ -441,6 +441,58 @@ test("Songs tab keyboard shortcuts move through the saved song list", async ({
   await expect(page.locator("#txtCadence")).toContainText("Gamma Study");
 });
 
+test("header transport moves through saved songs in both directions", async ({
+  page,
+}) => {
+  const alphaSongUrl =
+    "irealbook://Alpha Study=Doe Jane=Medium Swing=C=n=[*AT44C7 Z";
+  const betaSongUrl =
+    "irealbook://Beta Study=Doe Jane=Medium Swing=F=n=[*AT44F7 Z";
+  const gammaSongUrl =
+    "irealbook://Gamma Study=Doe Jane=Medium Swing=Bb=n=[*AT44Bb^7 Z";
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.click("label[for='tabModeSongs']");
+  for (const songUrl of [alphaSongUrl, betaSongUrl, gammaSongUrl]) {
+    await page.fill("#inputSongsUrl", songUrl);
+    await page.click("#btnSongsImport");
+  }
+
+  await page.selectOption("#selectSongFinishAction", "nothing");
+  await page.selectOption("#selectSong", { label: "Alpha Study - Jane Doe" });
+
+  const previousButton = page.locator("#btnPracticePrevious");
+  const nextButton = page.locator("#btnSkip");
+  await expect(previousButton).toBeEnabled();
+  await expect(previousButton).toHaveAttribute("aria-label", "Previous song");
+  await expect(nextButton).toHaveAttribute("aria-label", "Next song");
+  await expect(page.locator("#txtSongsTotal")).toHaveText("0");
+
+  await nextButton.click();
+  await expect(page.locator("#selectSong")).toHaveValue(/beta-study--jane-doe/);
+  await expect(page.locator("#txtCadence")).toContainText("Beta Study");
+  expect(await page.evaluate(() => currentIndex)).toBe(0);
+
+  await previousButton.click();
+  await expect(page.locator("#selectSong")).toHaveValue(
+    /alpha-study--jane-doe/,
+  );
+
+  await previousButton.click();
+  await expect(page.locator("#selectSong")).toHaveValue(
+    /gamma-study--jane-doe/,
+  );
+
+  await nextButton.click();
+  await expect(page.locator("#selectSong")).toHaveValue(
+    /alpha-study--jane-doe/,
+  );
+  await expect(page.locator("#txtSongsTotal")).toHaveText("0");
+});
+
 test("Songs tab can practice a song in the current key instead of the original key", async ({
   page,
 }) => {

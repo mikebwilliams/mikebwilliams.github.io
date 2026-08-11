@@ -357,6 +357,7 @@ test("Skipping a failed chord repeat does not grade its replacement", async ({
     target: "Csus2",
     scheduledRepeat: { kind: "chord", index: 0 },
   });
+  await expect(page.locator("#btnPracticePrevious")).toBeDisabled();
 
   await page.locator("#btnSkip").click();
 
@@ -374,6 +375,25 @@ test("Skipping a failed chord repeat does not grade its replacement", async ({
     interval: 1,
     successStreak: 0,
   });
+  await expect(page.locator("#btnPracticePrevious")).toBeEnabled();
+
+  await page.locator("#btnPracticePrevious").click();
+
+  const afterPrevious = await page.evaluate(() => ({
+    key: keys[keyIndex],
+    target: currentChordInternalName,
+    scheduledRepeat,
+    interval: spacedQueueAll[0].interval,
+    successStreak: spacedQueueAll[0].successStreak,
+  }));
+  expect(afterPrevious).toEqual({
+    key: "C",
+    target: "Csus2",
+    scheduledRepeat: null,
+    interval: 1,
+    successStreak: 0,
+  });
+  await expect(page.locator("#btnPracticePrevious")).toBeDisabled();
 
   await page.evaluate(() => {
     isIncorrect = false;

@@ -24,6 +24,8 @@ let currentSongId = "";
 let currentSong = null;
 let currentSongCompletedPasses = 0;
 let currentShellVoicingAlternates = null;
+const practiceHistory = [];
+const PRACTICE_HISTORY_LIMIT = 20;
 
 const DEFAULT_START_KEY = "C";
 const runtimeRoot =
@@ -1268,6 +1270,7 @@ async function startMetronome() {
           ? error.message
           : "Unable to start metronome audio.";
     }
+    updateMetronomeToggleButtons();
     return;
   }
 
@@ -1279,10 +1282,38 @@ async function startMetronome() {
     runMetronomeScheduler,
     metronomeState.lookaheadMs,
   );
-  if (dom.metronomeToggleButton) {
-    dom.metronomeToggleButton.textContent = "Stop";
-  }
+  updateMetronomeToggleButtons();
   runMetronomeScheduler();
+}
+
+function updateMetronomeToggleButtons() {
+  const isRunning = !!metronomeState.isRunning;
+  if (dom.metronomeToggleButton) {
+    dom.metronomeToggleButton.textContent = isRunning ? "Stop" : "Start";
+    if (typeof dom.metronomeToggleButton.setAttribute === "function") {
+      dom.metronomeToggleButton.setAttribute(
+        "aria-label",
+        isRunning ? "Stop metronome" : "Start metronome",
+      );
+      dom.metronomeToggleButton.setAttribute("aria-pressed", String(isRunning));
+    }
+  }
+  if (dom.metronomeTransportButton) {
+    dom.metronomeTransportButton.textContent = isRunning ? "Stop" : "Start";
+    if (typeof dom.metronomeTransportButton.setAttribute === "function") {
+      dom.metronomeTransportButton.setAttribute(
+        "aria-label",
+        isRunning ? "Stop metronome" : "Start metronome",
+      );
+      dom.metronomeTransportButton.setAttribute(
+        "aria-pressed",
+        String(isRunning),
+      );
+    }
+    dom.metronomeTransportButton.title = isRunning
+      ? "Stop the metronome"
+      : "Start the metronome";
+  }
 }
 
 function stopMetronome() {
@@ -1294,9 +1325,7 @@ function stopMetronome() {
   }
   clearMetronomeScheduledVisuals();
   clearMetronomePulseHighlights();
-  if (dom.metronomeToggleButton) {
-    dom.metronomeToggleButton.textContent = "Start";
-  }
+  updateMetronomeToggleButtons();
 }
 
 async function toggleMetronome() {
@@ -3257,7 +3286,167 @@ function loadCurrentProgressionChord() {
   setRandomChord();
 }
 
+function clonePracticeState(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => clonePracticeState(item));
+  }
+  if (value && typeof value === "object") {
+    return Object.keys(value).reduce((copy, key) => {
+      copy[key] = clonePracticeState(value[key]);
+      return copy;
+    }, {});
+  }
+  return value;
+}
+
+function updatePracticeNavigationButtons() {
+  const songsMode = typeof modeIsSongs === "function" && modeIsSongs();
+  const songCount =
+    songsMode &&
+    logicSongsStore &&
+    typeof logicSongsStore.listSongs === "function"
+      ? logicSongsStore.listSongs().length
+      : 0;
+  const canNavigateSongs = songCount > 1;
+
+  if (dom.practicePreviousButton) {
+    const canGoPrevious = songsMode
+      ? canNavigateSongs
+      : practiceHistory.length > 0;
+    dom.practicePreviousButton.disabled = !canGoPrevious;
+    dom.practicePreviousButton.title = songsMode
+      ? canNavigateSongs
+        ? "Previous song"
+        : "No previous song"
+      : canGoPrevious
+        ? "Return to the previous skipped challenge"
+        : "No previous skipped challenge";
+    if (typeof dom.practicePreviousButton.setAttribute === "function") {
+      dom.practicePreviousButton.setAttribute(
+        "aria-label",
+        songsMode ? "Previous song" : "Previous skipped challenge",
+      );
+    }
+  }
+
+  if (dom.skipButton) {
+    dom.skipButton.disabled = songsMode && !canNavigateSongs;
+    dom.skipButton.title = songsMode
+      ? canNavigateSongs
+        ? "Next song"
+        : "No next song"
+      : "Skip to the next challenge";
+    if (typeof dom.skipButton.setAttribute === "function") {
+      dom.skipButton.setAttribute(
+        "aria-label",
+        songsMode ? "Next song" : "Skip to next challenge",
+      );
+    }
+  }
+}
+
+function clearPracticeHistory() {
+  practiceHistory.length = 0;
+  updatePracticeNavigationButtons();
+}
+
+function capturePracticeChallenge() {
+  const hasProgression =
+    Array.isArray(currentProgression) && currentProgression.length > 0;
+  if (!currentChordName && !currentChordInternalName && !hasProgression) {
+    return null;
+  }
+
+  return {
+    mode: typeof getSelectedMode === "function" ? getSelectedMode() : "",
+    keys: clonePracticeState(keys),
+    keyIndex,
+    currentChordName,
+    currentChordInternalName,
+    currentChordNotes: clonePracticeState(currentChordNotes),
+    currentProgression: clonePracticeState(currentProgression),
+    currentProgressionName,
+    currentIndex,
+    selectedProgression,
+    currentShellVoicingAlternates: clonePracticeState(
+      currentShellVoicingAlternates,
+    ),
+  };
+}
+
+function skipToNextPracticeChallenge() {
+  if (modeIsSongs()) {
+    const changedSong = selectAdjacentSong("next");
+    updatePracticeNavigationButtons();
+    return changedSong;
+  }
+
+  const snapshot = capturePracticeChallenge();
+  if (snapshot) {
+    practiceHistory.push(snapshot);
+    if (practiceHistory.length > PRACTICE_HISTORY_LIMIT) {
+      practiceHistory.shift();
+    }
+  }
+  nextProgression();
+  updatePracticeNavigationButtons();
+  return true;
+}
+
+function restorePracticeChallenge(snapshot) {
+  if (!snapshot) return false;
+  const mode = typeof getSelectedMode === "function" ? getSelectedMode() : "";
+  if (snapshot.mode !== mode) {
+    clearPracticeHistory();
+    return false;
+  }
+
+  clearTimeout(highlightTimer);
+  highlightTimer = null;
+  clearSongAnswerTimer();
+  clearChordFeedbackState();
+  activeKeys = [];
+  isIncorrect = false;
+  scheduledRepeat = null;
+
+  keys = clonePracticeState(snapshot.keys);
+  keyIndex = snapshot.keyIndex;
+  currentChordName = snapshot.currentChordName;
+  currentChordInternalName = snapshot.currentChordInternalName;
+  currentChordNotes = clonePracticeState(snapshot.currentChordNotes);
+  currentProgression = clonePracticeState(snapshot.currentProgression);
+  currentProgressionName = snapshot.currentProgressionName;
+  currentIndex = snapshot.currentIndex;
+  selectedProgression = snapshot.selectedProgression;
+  currentShellVoicingAlternates = clonePracticeState(
+    snapshot.currentShellVoicingAlternates,
+  );
+
+  syncRandomFlowStartKey();
+  highlightCorrectKeys();
+  updateDisplay();
+  return true;
+}
+
+function previousPracticeChallenge() {
+  if (modeIsSongs()) {
+    const changedSong = selectAdjacentSong("previous");
+    updatePracticeNavigationButtons();
+    return changedSong;
+  }
+
+  const snapshot = practiceHistory.pop();
+  if (!snapshot) {
+    updatePracticeNavigationButtons();
+    return false;
+  }
+  const restored = restorePracticeChallenge(snapshot);
+  updatePracticeNavigationButtons();
+  return restored;
+}
+
 function resetFlow() {
+  clearPracticeHistory();
   clearTimeout(highlightTimer);
   highlightTimer = null;
   clearSongAnswerTimer();
@@ -3889,6 +4078,15 @@ if (
 }
 
 if (
+  dom.metronomeTransportButton &&
+  typeof dom.metronomeTransportButton.addEventListener === "function"
+) {
+  dom.metronomeTransportButton.addEventListener("click", () => {
+    toggleMetronome();
+  });
+}
+
+if (
   dom.metronomeResetButton &&
   typeof dom.metronomeResetButton.addEventListener === "function"
 ) {
@@ -3966,6 +4164,8 @@ if (documentAvailable) {
   modeChange();
 }
 syncMetronomeSettings();
+updateMetronomeToggleButtons();
+updatePracticeNavigationButtons();
 // Apply shell voicing according to selected mode (all chord-based modes)
 function applyShellVoicing(
   notes,

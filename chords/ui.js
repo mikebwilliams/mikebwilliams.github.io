@@ -530,14 +530,19 @@ function openKeyboardShortcutsDialog() {
   }
 }
 
-function handleKeyboardShortcutsLauncherKeydown(event) {
+function handleButtonActivationKeydown(event) {
   if (["Space", "Enter", "NumpadEnter"].includes(event.code)) {
     event.stopPropagation();
   }
 }
 
 // Attach the handlers
-dom.skipButton.addEventListener("click", () => nextProgression());
+dom.practicePreviousButton.addEventListener("click", () => {
+  previousPracticeChallenge();
+});
+dom.skipButton.addEventListener("click", () => {
+  skipToNextPracticeChallenge();
+});
 dom.playAnswerButton.addEventListener("click", () => playAnswerNotes());
 dom.keyboardShortcutsButton.addEventListener(
   "click",
@@ -545,8 +550,19 @@ dom.keyboardShortcutsButton.addEventListener(
 );
 dom.keyboardShortcutsButton.addEventListener(
   "keydown",
-  handleKeyboardShortcutsLauncherKeydown,
+  handleButtonActivationKeydown,
 );
+[
+  dom.practicePreviousButton,
+  dom.metronomeTransportButton,
+  dom.metronomeToggleButton,
+  dom.skipButton,
+  dom.playAnswerButton,
+  dom.keyboardMidiRefreshButton,
+  dom.midiRefreshButton,
+].forEach((button) => {
+  button.addEventListener("keydown", handleButtonActivationKeydown);
+});
 dom.keyboardShortcutsDialog.addEventListener("keydown", (event) => {
   event.stopPropagation();
 });
@@ -556,6 +572,7 @@ dom.keyboardShortcutsDialog.addEventListener("close", () => {
 
 dom.progressionSelect.addEventListener("change", () => {
   syncProgressionParameterControls();
+  clearPracticeHistory();
   nextProgression();
 });
 
@@ -2425,13 +2442,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   syncProgressionParameterControls();
   initMIDI();
-  if (dom.midiRefreshButton) {
-    dom.midiRefreshButton.addEventListener("click", () => {
+  [dom.keyboardMidiRefreshButton, dom.midiRefreshButton].forEach((button) => {
+    if (!button) return;
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       if (typeof refreshMIDIDevices === "function") {
         refreshMIDIDevices();
       }
     });
-  }
+  });
 
   if (typeof spacedRepRenderList === "function") spacedRepRenderList();
 

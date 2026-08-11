@@ -9,67 +9,108 @@
   <body>
     <main class="page">
       <section class="surfaceCard heroCard">
-        <button
-          class="keyboardShortcutsButton"
-          id="btnKeyboardShortcuts"
-          type="button"
-          aria-label="Keyboard shortcuts"
-          aria-haspopup="dialog"
-          aria-controls="dialogKeyboardShortcuts"
-          title="Keyboard shortcuts"
-        >
-          ?
-        </button>
-        <details class="themePicker" id="panelThemePicker">
-          <summary aria-label="Select theme" title="Select theme">
-            <span aria-hidden="true">◐</span>
-          </summary>
-          <fieldset class="themePickerMenu">
-            <legend>Theme</legend>
-            <label>
-              <input
-                type="radio"
-                id="radThemeLightBook"
-                name="theme"
-                value="lightBook"
-                checked
-              />
-              LightBook
-            </label>
-            <label>
-              <input
-                type="radio"
-                id="radThemeDarkBook"
-                name="theme"
-                value="darkBook"
-              />
-              DarkBook
-            </label>
-            <label>
-              <input
-                type="radio"
-                id="radThemeClassical"
-                name="theme"
-                value="classical"
-              />
-              Classical
-            </label>
-            <label>
-              <input
-                type="radio"
-                id="radThemeDarkClassical"
-                name="theme"
-                value="darkClassical"
-              />
-              Dark Classical
-            </label>
-          </fieldset>
-        </details>
-        <h2 id="panelHeader">
-          <span id="txtCurrentKey"></span><span id="txtChord">Chord</span
-          ><span id="txtCadence"></span
-          ><span id="txtProgressionHeadline"></span>
-        </h2>
+        <div class="heroHeaderRow">
+          <h2 id="panelHeader">
+            <span id="txtCurrentKey"></span><span id="txtChord">Chord</span
+            ><span id="txtCadence"></span
+            ><span id="txtProgressionHeadline"></span>
+          </h2>
+          <div class="heroToolbar">
+            <div
+              class="practiceTransport"
+              role="group"
+              aria-label="Practice transport"
+            >
+              <button
+                class="transportButton transportStepButton"
+                id="btnPracticePrevious"
+                type="button"
+                aria-label="Previous skipped challenge"
+                title="Return to the previous skipped challenge"
+                disabled
+              >
+                <span aria-hidden="true">&lt;</span>
+              </button>
+              <button
+                class="transportButton transportToggleButton"
+                id="btnMetronomeTransport"
+                type="button"
+                aria-label="Start metronome"
+                aria-pressed="false"
+                title="Start the metronome"
+              >
+                Start
+              </button>
+              <button
+                class="transportButton transportStepButton"
+                id="btnSkip"
+                type="button"
+                aria-label="Skip to next challenge"
+                title="Skip to the next challenge"
+              >
+                <span aria-hidden="true">&gt;</span>
+              </button>
+            </div>
+            <div class="heroUtilities">
+              <button
+                class="keyboardShortcutsButton"
+                id="btnKeyboardShortcuts"
+                type="button"
+                aria-label="Keyboard shortcuts"
+                aria-haspopup="dialog"
+                aria-controls="dialogKeyboardShortcuts"
+                title="Keyboard shortcuts"
+              >
+                ?
+              </button>
+              <details class="themePicker" id="panelThemePicker">
+                <summary aria-label="Select theme" title="Select theme">
+                  <span aria-hidden="true">◐</span>
+                </summary>
+                <fieldset class="themePickerMenu">
+                  <legend>Theme</legend>
+                  <label>
+                    <input
+                      type="radio"
+                      id="radThemeLightBook"
+                      name="theme"
+                      value="lightBook"
+                      checked
+                    />
+                    LightBook
+                  </label>
+                  <label>
+                    <input
+                      type="radio"
+                      id="radThemeDarkBook"
+                      name="theme"
+                      value="darkBook"
+                    />
+                    DarkBook
+                  </label>
+                  <label>
+                    <input
+                      type="radio"
+                      id="radThemeClassical"
+                      name="theme"
+                      value="classical"
+                    />
+                    Classical
+                  </label>
+                  <label>
+                    <input
+                      type="radio"
+                      id="radThemeDarkClassical"
+                      name="theme"
+                      value="darkClassical"
+                    />
+                    Dark Classical
+                  </label>
+                </fieldset>
+              </details>
+            </div>
+          </div>
+        </div>
         <div id="txtProgression"></div>
         <div class="challengeActiveArea">
           <details class="challengeCollapsible" id="panelKeyboard">
@@ -79,8 +120,16 @@
                 >MIDI: not connected</span
               >
               <div class="summaryActions">
-                <button id="btnSkip" type="button">Skip</button>
                 <button id="btnPlayAnswer" type="button">Play Answer</button>
+                <button
+                  class="summaryIconButton"
+                  id="btnKeyboardMidiRefresh"
+                  type="button"
+                  aria-label="Refresh MIDI devices"
+                  title="Refresh the MIDI device list"
+                >
+                  <span aria-hidden="true">↻</span>
+                </button>
               </div>
             </summary>
             <div class="challengeCollapsibleBody">
@@ -142,6 +191,15 @@
                 <summary>
                   <span class="collapsibleTitle">MIDI</span>
                   <span class="collapsibleStatus">Devices</span>
+                  <button
+                    class="summaryIconButton"
+                    id="btnMidiRefresh"
+                    type="button"
+                    aria-label="Refresh MIDI devices"
+                    title="Refresh the MIDI device list"
+                  >
+                    <span aria-hidden="true">↻</span>
+                  </button>
                 </summary>
                 <div class="keyboardSubCollapsibleBody" id="panelOptionsMidi">
                   <div class="midiStatusRow">
@@ -149,9 +207,6 @@
                       >MIDI Status:
                       <span id="txtMidiStatus">Not Connected</span></label
                     >
-                    <button id="btnMidiRefresh" type="button">
-                      Refresh Devices
-                    </button>
                   </div>
                   <table id="tableMidiInputs"></table>
                   <table id="tableMidiOutputs"></table>
