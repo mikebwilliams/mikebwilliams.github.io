@@ -9,6 +9,17 @@
   <body>
     <main class="page">
       <section class="surfaceCard heroCard">
+        <button
+          class="keyboardShortcutsButton"
+          id="btnKeyboardShortcuts"
+          type="button"
+          aria-label="Keyboard shortcuts"
+          aria-haspopup="dialog"
+          aria-controls="dialogKeyboardShortcuts"
+          title="Keyboard shortcuts"
+        >
+          ?
+        </button>
         <details class="themePicker" id="panelThemePicker">
           <summary aria-label="Select theme" title="Select theme">
             <span aria-hidden="true">◐</span>
@@ -2011,6 +2022,58 @@
         </section>
       </div>
     </main>
+
+    <dialog
+      id="dialogKeyboardShortcuts"
+      class="keyboardShortcutsDialog"
+      aria-labelledby="keyboardShortcutsDialogTitle"
+      aria-describedby="txtKeyboardShortcutsIntro"
+    >
+      <form method="dialog">
+        <h4 id="keyboardShortcutsDialogTitle">Keyboard shortcuts</h4>
+        <p id="txtKeyboardShortcutsIntro">
+          Global shortcuts pause while you are typing in a form field.
+        </p>
+        <dl class="keyboardShortcutsList">
+          <dt><kbd>Space</kbd></dt>
+          <dd>Start or stop the metronome.</dd>
+
+          <dt><kbd>0</kbd>–<kbd>9</kbd></dt>
+          <dd>Type a metronome tempo of up to three digits.</dd>
+
+          <dt><kbd>Enter</kbd></dt>
+          <dd>Apply the typed tempo.</dd>
+
+          <dt><kbd>Backspace</kbd></dt>
+          <dd>Remove the last typed tempo digit.</dd>
+
+          <dt><kbd>Escape</kbd></dt>
+          <dd>Cancel the typed tempo.</dd>
+
+          <dt><kbd>=</kbd> / <kbd>-</kbd></dt>
+          <dd>Change the tempo by 1 BPM.</dd>
+
+          <dt><kbd>Shift</kbd> + <kbd>=</kbd> / <kbd>-</kbd></dt>
+          <dd>Change the tempo by 5 BPM.</dd>
+
+          <dt><kbd>[</kbd> / <kbd>]</kbd></dt>
+          <dd>Choose the previous or next saved song in Songs mode.</dd>
+        </dl>
+        <p class="keyboardShortcutsNote">
+          Number-pad digits, Enter, +, and - work too.
+        </p>
+        <div class="compactButtonGroup keyboardShortcutsDialogActions">
+          <button
+            id="btnKeyboardShortcutsClose"
+            type="submit"
+            value="close"
+            autofocus
+          >
+            Close
+          </button>
+        </div>
+      </form>
+    </dialog>
 
     <dialog
       id="dialogSettingsPresetImportConflict"

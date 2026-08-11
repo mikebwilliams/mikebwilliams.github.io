@@ -570,10 +570,6 @@ html[data-theme="darkClassical"] .surfaceCard {
     text-align: center;
     justify-content: center;
   }
-
-  #panelHeader {
-    padding-right: 48px;
-  }
 }
 
 @media (max-width: 640px) {
@@ -599,6 +595,20 @@ html[data-theme="darkClassical"] .surfaceCard {
   right: 14px;
   z-index: 3;
   text-align: left;
+}
+
+.keyboardShortcutsButton {
+  position: absolute;
+  top: 17px;
+  right: 58px;
+  z-index: 3;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-color: var(--border-strong);
+  border-radius: 50%;
+  font-size: 0.9rem;
+  line-height: 1;
 }
 
 .themePicker > summary {
@@ -803,7 +813,7 @@ html[data-theme="darkClassical"] .surfaceCard {
   flex-wrap: wrap;
   justify-content: flex-start;
   gap: 0.45rem;
-  padding-right: 54px;
+  padding-right: 100px;
   font-size: clamp(2.35rem, 1.2rem + 3.2vw, 4.4rem);
   font-family: var(--font-hand);
   font-weight: var(--display-font-weight);
@@ -2074,6 +2084,7 @@ label {
   margin: 16px 0;
 }
 
+.keyboardShortcutsDialog,
 .presetImportDialog,
 .dataResetDialog {
   width: min(440px, calc(100% - 32px));
@@ -2087,16 +2098,19 @@ label {
   box-shadow: var(--shadow-soft);
 }
 
+.keyboardShortcutsDialog::backdrop,
 .presetImportDialog::backdrop,
 .dataResetDialog::backdrop {
   background: rgba(0, 0, 0, 0.48);
 }
 
+.keyboardShortcutsDialog h4,
 .presetImportDialog h4,
 .dataResetDialog h4 {
   margin: 0 0 10px;
 }
 
+.keyboardShortcutsDialog > form > p,
 .presetImportDialog p,
 .dataResetDialog p {
   margin: 0 0 18px;
@@ -2104,9 +2118,46 @@ label {
   overflow-wrap: anywhere;
 }
 
+.keyboardShortcutsDialogActions,
 .presetImportDialogActions,
 .dataResetDialogActions {
   justify-content: flex-end;
+}
+
+.keyboardShortcutsList {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 9px 14px;
+  margin: 0 0 14px;
+}
+
+.keyboardShortcutsList dt {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.keyboardShortcutsList dd {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.keyboardShortcutsList kbd {
+  display: inline-block;
+  min-width: 1.65em;
+  padding: 0.1em 0.36em;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  background: var(--surface-soft);
+  color: var(--text-primary);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.keyboardShortcutsDialog .keyboardShortcutsNote {
+  margin-bottom: 18px;
+  font-size: 0.86rem;
 }
 
 .compactButtonGroup {

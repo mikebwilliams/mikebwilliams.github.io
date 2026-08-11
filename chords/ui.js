@@ -516,9 +516,43 @@ function syncProgressionParameterControls() {
   }
 }
 
+function openKeyboardShortcutsDialog() {
+  if (
+    !dom.keyboardShortcutsDialog ||
+    typeof dom.keyboardShortcutsDialog.showModal !== "function"
+  ) {
+    return;
+  }
+  if (dom.themePicker) dom.themePicker.open = false;
+  dom.keyboardShortcutsDialog.showModal();
+  if (dom.keyboardShortcutsCloseButton) {
+    dom.keyboardShortcutsCloseButton.focus();
+  }
+}
+
+function handleKeyboardShortcutsLauncherKeydown(event) {
+  if (["Space", "Enter", "NumpadEnter"].includes(event.code)) {
+    event.stopPropagation();
+  }
+}
+
 // Attach the handlers
 dom.skipButton.addEventListener("click", () => nextProgression());
 dom.playAnswerButton.addEventListener("click", () => playAnswerNotes());
+dom.keyboardShortcutsButton.addEventListener(
+  "click",
+  openKeyboardShortcutsDialog,
+);
+dom.keyboardShortcutsButton.addEventListener(
+  "keydown",
+  handleKeyboardShortcutsLauncherKeydown,
+);
+dom.keyboardShortcutsDialog.addEventListener("keydown", (event) => {
+  event.stopPropagation();
+});
+dom.keyboardShortcutsDialog.addEventListener("close", () => {
+  dom.keyboardShortcutsButton.focus();
+});
 
 dom.progressionSelect.addEventListener("change", () => {
   syncProgressionParameterControls();

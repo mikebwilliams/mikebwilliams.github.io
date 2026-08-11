@@ -9,6 +9,63 @@ async function openTrainingSetup(page: Page) {
   }
 }
 
+test("keyboard shortcut help sits beside the theme picker", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 720 });
+  await page.goto(TEST_URL);
+
+  const shortcutButton = page.getByRole("button", {
+    name: "Keyboard shortcuts",
+  });
+  const themeButton = page.locator("#panelThemePicker > summary");
+
+  await expect(shortcutButton).toBeVisible();
+  await expect(shortcutButton).toHaveText("?");
+  const shortcutBox = await shortcutButton.boundingBox();
+  const themeBox = await themeButton.boundingBox();
+  expect(shortcutBox).not.toBeNull();
+  expect(themeBox).not.toBeNull();
+  expect(shortcutBox!.x + shortcutBox!.width).toBeLessThanOrEqual(themeBox!.x);
+
+  await shortcutButton.focus();
+  await page.keyboard.press("Space");
+
+  const dialog = page.getByRole("dialog", { name: "Keyboard shortcuts" });
+  await expect(dialog).toBeVisible();
+  await expect(page.getByRole("button", { name: "Close" })).toBeFocused();
+  await expect(dialog).toContainText("Start or stop the metronome.");
+  await expect(dialog).toContainText("Apply the typed tempo.");
+  await expect(dialog).toContainText(
+    "Choose the previous or next saved song in Songs mode.",
+  );
+
+  const dialogBox = await dialog.boundingBox();
+  expect(dialogBox).not.toBeNull();
+  expect(dialogBox!.x).toBeGreaterThanOrEqual(0);
+  expect(dialogBox!.x + dialogBox!.width).toBeLessThanOrEqual(320);
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).not.toBeVisible();
+  await expect(shortcutButton).toBeFocused();
+
+  await page.keyboard.press("1");
+  expect(await page.evaluate(() => metronomeState.tempoEntryBuffer)).toBe("1");
+  await page.keyboard.press("Escape");
+
+  await page.setViewportSize({ width: 900, height: 720 });
+  const headerBox = await page.locator("#panelHeader").boundingBox();
+  const mediumShortcutBox = await shortcutButton.boundingBox();
+  const headerPaddingRight = await page
+    .locator("#panelHeader")
+    .evaluate((element) => parseFloat(getComputedStyle(element).paddingRight));
+  expect(headerBox).not.toBeNull();
+  expect(mediumShortcutBox).not.toBeNull();
+  expect(headerBox!.x + headerBox!.width - headerPaddingRight).toBeLessThan(
+    mediumShortcutBox!.x,
+  );
+});
+
 test("Real Book theme uses paper colors and handwritten chart typography", async ({
   page,
 }) => {
