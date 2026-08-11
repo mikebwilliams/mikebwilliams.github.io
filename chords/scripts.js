@@ -1946,6 +1946,13 @@ function resolveProgressionEntry(entry, options = {}) {
   return null;
 }
 
+function chordSupportsCurrentVoicing(chordInternalName) {
+  return (
+    !voicingModeRequiresFourNotes() ||
+    generateNotesFromChordName(chordInternalName).length >= 4
+  );
+}
+
 function setRandomChord() {
   let lastChordInternalName = currentChordInternalName;
 
@@ -1959,6 +1966,7 @@ function setRandomChord() {
           ? entry.chord.match(/^[A-G](#|b)?/)
           : null;
       if (!rootMatch || rootMatch[0] !== currentRoot) return best;
+      if (!chordSupportsCurrentVoicing(entry.chord)) return best;
       if (
         entry.counter <= 0 &&
         (best < 0 || entry.counter < spacedQueueAll[best].counter)

@@ -186,11 +186,11 @@ test("settings store saves and loads presets round-trip", () => {
   assert.strictEqual(dom.metronomeSyncSongs.checked, true);
   assert.strictEqual(dom.highlightCorrectKeys.checked, false);
   assert.strictEqual(dom.highlightDelay.value, "3");
-  assert.strictEqual(dom.hideProgressionChordNames.checked, false);
-  assert.strictEqual(dom.hideProgressionChordNumerals.checked, true);
-  assert.strictEqual(dom.randomizeSpellings.checked, true);
-  assert.strictEqual(dom.enableSpacedRepetition.checked, true);
-  assert.strictEqual(dom.spacedRepThreshold.value, "2");
+  assert.strictEqual(dom.hideProgressionChordNames.checked, true);
+  assert.strictEqual(dom.hideProgressionChordNumerals.checked, false);
+  assert.strictEqual(dom.randomizeSpellings.checked, false);
+  assert.strictEqual(dom.enableSpacedRepetition.checked, false);
+  assert.strictEqual(dom.spacedRepThreshold.value, "4");
   assert.strictEqual(dom.sendMidiNotes.checked, false);
   assert.strictEqual(dom.progressionSelect.value, "custom");
   assert.strictEqual(dom.customProgressionInput.value, "I-IV-V-I");
@@ -293,7 +293,16 @@ test("settings store tracks active and modified preset state", () => {
   assert.strictEqual(
     settingsStore.getActivePresetState().modified,
     false,
-    "display preferences should not mark a preset as modified",
+    "keyboard display preferences should not mark a preset as modified",
+  );
+
+  dom.hideProgressionChordNames.checked =
+    !dom.hideProgressionChordNames.checked;
+  settingsStore.syncFromDom();
+  assert.strictEqual(
+    settingsStore.getActivePresetState().modified,
+    true,
+    "Hide Chord Prompt should mark a preset as modified",
   );
 
   dom.flowSelect.value = "random";
@@ -364,6 +373,34 @@ test("activating an imported preset stores its canonical settings", () => {
   assert.strictEqual(canonical.mode, "tabChords");
   assert.strictEqual(canonical.progression.randomCount, 10);
   assert.strictEqual(canonical.metronome.tempo, 240);
+});
+
+test("malformed preset display data cannot replace independent preferences", () => {
+  storageMock.clear();
+  settingsStore.resetToDefaults({ apply: true, save: true });
+
+  setRadioGroupValue(dom.themeRadios, "darkClassical");
+  dom.keyboardDetails.open = true;
+  dom.highlightCorrectKeys.checked = true;
+  dom.highlightDelay.value = "7";
+  settingsStore.syncFromDom();
+
+  const malformed = settingsStore.getCurrentSnapshot();
+  malformed.display = [];
+  assert.strictEqual(
+    settingsStore.importPresets({ presets: { Malformed: malformed } }),
+    1,
+  );
+  assert.strictEqual(settingsStore.loadPreset("Malformed"), true);
+
+  assert.strictEqual(dom.themeRadios.darkClassical.checked, true);
+  assert.strictEqual(dom.keyboardDetails.open, true);
+  assert.strictEqual(dom.highlightCorrectKeys.checked, true);
+  assert.strictEqual(dom.highlightDelay.value, "7");
+  assert.strictEqual(
+    Array.isArray(settingsStore.loadPresets().Malformed.display),
+    false,
+  );
 });
 
 test("clearing presets removes presets and active selection in isolation", () => {

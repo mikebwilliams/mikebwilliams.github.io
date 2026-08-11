@@ -720,6 +720,42 @@ test("training setup steppers stay accessible on mobile", async ({ page }) => {
   await expect(panel).not.toHaveAttribute("open", "");
 });
 
+test("Preset activation restores chord display preferences", async ({
+  page,
+}) => {
+  const presetName = `Display Preset ${Date.now()}`;
+  const hidePrompt = page.locator("#chkDisplayHideProgressionNames");
+  const hideSymbols = page.locator("#chkDisplayHideProgressionNumerals");
+  const alternateSpellings = page.locator("#chkDisplayRandomizeSpellings");
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await hidePrompt.check();
+  await hideSymbols.check();
+  await alternateSpellings.uncheck();
+  await expect(page.locator("#txtChord")).toBeHidden();
+
+  await openTrainingSetup(page);
+  await page.click("label[for='tabOptionsPresets']");
+  await page.fill("#inputSettingsPresetName", presetName);
+  await page.click("#btnSettingsCreate");
+
+  await hidePrompt.uncheck();
+  await hideSymbols.uncheck();
+  await alternateSpellings.check();
+  await expect(page.locator("#txtChord")).toBeVisible();
+
+  await page.selectOption("#selectSettingsPreset", presetName);
+  await page.click("#btnSettingsActivate");
+
+  await expect(hidePrompt).toBeChecked();
+  await expect(hideSymbols).toBeChecked();
+  await expect(alternateSpellings).not.toBeChecked();
+  await expect(page.locator("#txtChord")).toBeHidden();
+});
+
 test("Create, Update, and Activate have distinct preset behavior", async ({
   page,
 }) => {

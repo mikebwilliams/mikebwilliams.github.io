@@ -214,6 +214,119 @@ test("Failed chord repeats wait for their current practice root", async ({
   });
 });
 
+for (const { label, radioId, mode } of [
+  {
+    label: "two-handed Type A",
+    radioId: "radVoicingUpperTypeA",
+    mode: "upper:typeA",
+  },
+  {
+    label: "one-handed Type A",
+    radioId: "radVoicingUpperOneTypeA",
+    mode: "upper1:typeA",
+  },
+]) {
+  test(`${label} defers incompatible queued triads until As Written`, async ({
+    page,
+  }) => {
+    await page.goto(TEST_URL);
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+
+    await page.click("label[for='tabOptionsVoicings']");
+    await page.click(`label:has(#${radioId})`);
+
+    const whileRestricted = await page.evaluate(() => {
+      spacedRepClearAll();
+      dom.enableSpacedRepetition.checked = true;
+      Object.values(dom.chordCheckboxes).forEach((checkbox) => {
+        checkbox.checked = checkbox.id === "chkChordSeventh";
+      });
+      keys = ["C"];
+      keyIndex = 0;
+      currentChordInternalName = "";
+
+      spacedRepHandleResult("chord", "C", true);
+      spacedQueueAll[0].counter = 0;
+      setRandomChord();
+
+      return {
+        mode: getVoicingMode(),
+        target: currentChordInternalName,
+        queuedChords: spacedQueueAll.map((entry) => entry.chord),
+        queuedChordCounter: spacedQueueAll[0].counter,
+        scheduledRepeat,
+      };
+    });
+
+    expect(whileRestricted).toEqual({
+      mode,
+      target: "C7",
+      queuedChords: ["C"],
+      queuedChordCounter: -1,
+      scheduledRepeat: null,
+    });
+
+    await page.click("label:has(#radVoicingDefault)");
+
+    const asWritten = await page.evaluate(() => {
+      keys = ["C"];
+      keyIndex = 0;
+      setRandomChord();
+      return {
+        mode: getVoicingMode(),
+        target: currentChordInternalName,
+        queuedChords: spacedQueueAll.map((entry) => entry.chord),
+        scheduledRepeat,
+      };
+    });
+
+    expect(asWritten).toEqual({
+      mode: "default",
+      target: "C",
+      queuedChords: ["C"],
+      scheduledRepeat: { kind: "chord", index: 0 },
+    });
+  });
+}
+
+test("3-7 mode skips incompatible repeats without blocking a compatible repeat", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+  await page.click("label[for='tabOptionsVoicings']");
+  await page.click("label:has(#radVoicingShell37)");
+
+  const result = await page.evaluate(() => {
+    spacedRepClearAll();
+    dom.enableSpacedRepetition.checked = true;
+    keys = ["C"];
+    keyIndex = 0;
+
+    spacedRepHandleResult("chord", "C", true);
+    spacedRepHandleResult("chord", "C7", true);
+    spacedQueueAll[0].counter = -2;
+    spacedQueueAll[1].counter = 0;
+    setRandomChord();
+
+    return {
+      mode: getVoicingMode(),
+      target: currentChordInternalName,
+      queuedChords: spacedQueueAll.map((entry) => entry.chord),
+      triadCounter: spacedQueueAll[0].counter,
+      scheduledRepeat,
+    };
+  });
+
+  expect(result).toEqual({
+    mode: "shell:37",
+    target: "C7",
+    queuedChords: ["C", "C7"],
+    triadCounter: -2,
+    scheduledRepeat: { kind: "chord", index: 1 },
+  });
+});
+
 test("Skipping a failed chord repeat does not grade its replacement", async ({
   page,
 }) => {

@@ -4756,7 +4756,16 @@ function sanitizeSettings(settings, defaults) {
   return mergeSettings(defaults, settings);
 }
 
-const presetIndependentSettingKeys = ["display", "spacedRep", "midi"];
+const presetIndependentSettingKeys = ["midi"];
+const presetIndependentDisplaySettingKeys = [
+  "theme",
+  "showKeyboard",
+  "showMetronome",
+  "showDailyStats",
+  "showTrainingSetup",
+  "highlightKeys",
+  "highlightDelay",
+];
 
 function settingsValuesEqual(left, right) {
   if (left === right) return true;
@@ -4787,18 +4796,50 @@ function getPresetComparisonValue(settings, key) {
   if (key === "flow" && value && value.mode === "random") {
     return { ...value, startKey: "" };
   }
+  if (key === "display" && value && typeof value === "object") {
+    const comparable = cloneObject(value);
+    presetIndependentDisplaySettingKeys.forEach(
+      (displayKey) => delete comparable[displayKey],
+    );
+    return comparable;
+  }
   return value;
 }
 
-function mergePresetWithCurrentPreferences(presetSettings, currentSettings) {
-  const next = cloneObject(presetSettings || {});
-  const current = currentSettings || {};
+function copyPresetIndependentSettings(targetSettings, sourceSettings) {
+  const target = targetSettings || {};
+  const source = sourceSettings || {};
   presetIndependentSettingKeys.forEach((key) => {
-    if (Object.prototype.hasOwnProperty.call(current, key)) {
-      next[key] = cloneObject(current[key]);
+    if (Object.prototype.hasOwnProperty.call(source, key)) {
+      target[key] = cloneObject(source[key]);
     }
   });
-  return next;
+  if (
+    source.display &&
+    typeof source.display === "object" &&
+    !Array.isArray(source.display)
+  ) {
+    if (
+      !target.display ||
+      typeof target.display !== "object" ||
+      Array.isArray(target.display)
+    ) {
+      target.display = {};
+    }
+    presetIndependentDisplaySettingKeys.forEach((key) => {
+      if (Object.prototype.hasOwnProperty.call(source.display, key)) {
+        target.display[key] = cloneObject(source.display[key]);
+      }
+    });
+  }
+  return target;
+}
+
+function mergePresetWithCurrentPreferences(presetSettings, currentSettings) {
+  return copyPresetIndependentSettings(
+    cloneObject(presetSettings || {}),
+    currentSettings,
+  );
 }
 
 function sanitizeSettingsPresetMap(collection, defaults) {
@@ -5041,10 +5082,10 @@ function settingsStoreFactory() {
         activePresetName: name,
       });
       if (!loaded) return false;
-      const canonicalPreset = cloneObject(this.current);
-      presetIndependentSettingKeys.forEach((key) => {
-        canonicalPreset[key] = cloneObject(presets[name][key]);
-      });
+      const canonicalPreset = copyPresetIndependentSettings(
+        cloneObject(this.current),
+        presets[name],
+      );
       presets[name] = canonicalPreset;
       this.savePresets(presets);
       this.notifyChange();
