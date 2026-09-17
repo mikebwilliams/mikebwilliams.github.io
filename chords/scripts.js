@@ -1520,22 +1520,14 @@ function generateChordName(root, chordType) {
   return root + chordType;
 }
 
-function chordDisplayUsesRealbookGlyphs() {
+function chordDisplayUsesBookTypography() {
   if (!documentAvailable || !document.documentElement) return false;
   const theme = document.documentElement.dataset.theme;
   return theme === "lightBook" || theme === "darkBook";
 }
 
-const REALBOOK_FLAT = "ь";
-const REALBOOK_SUFFIX_FLAT = "β";
-const REALBOOK_MINOR = "Μ";
-const REALBOOK_MAJOR = "ª";
-const REALBOOK_SEVENTH = "ί";
-const REALBOOK_SIXTH = "ή";
-const REALBOOK_NINTH = "α";
-const REALBOOK_PLUS = "δ";
-const REALBOOK_HALF_DIMINISHED = "Ø";
-const REALBOOK_DIMINISHED = "°";
+const MUSEJAZZ_MAJOR = "\ue18a";
+const MUSEJAZZ_PLUS = "\ue186";
 
 function formatStandardChordDisplayText(chordName) {
   return String(chordName || "")
@@ -1544,14 +1536,13 @@ function formatStandardChordDisplayText(chordName) {
     .replace(/Δ/g, "△");
 }
 
-function formatRealbookRootAccidental(accidental) {
-  if (accidental === "b" || accidental === "♭" || accidental === REALBOOK_FLAT)
-    return REALBOOK_FLAT;
-  if (accidental === "♯" || accidental === "#") return "#";
+function formatMuseJazzRootAccidental(accidental) {
+  if (accidental === "b" || accidental === "♭") return "♭";
+  if (accidental === "♯" || accidental === "#") return "♯";
   return "";
 }
 
-function formatRealbookChordSuffix(suffix) {
+function formatMuseJazzChordSuffix(suffix) {
   let text = String(suffix || "")
     .replace(/♭/g, "b")
     .replace(/♯/g, "#")
@@ -1559,84 +1550,77 @@ function formatRealbookChordSuffix(suffix) {
   const compact = text.replace(/\s+/g, "");
 
   if (/^(?:m|-)?7?b5$/.test(compact) || /^ø7?$/i.test(compact)) {
-    return REALBOOK_HALF_DIMINISHED;
+    return "ø";
   }
   if (/^(?:m|-)(?:M7?|ma7?|maj7?|△7?)$/.test(compact)) {
-    return REALBOOK_MINOR + REALBOOK_MAJOR;
+    return `m${MUSEJAZZ_MAJOR}`;
   }
 
-  text = text.replace(/^(?:maj|ma|M|△)7?/, REALBOOK_MAJOR);
-  text = text.replace(/^(?:min|mi|m)(?!aj)/, REALBOOK_MINOR);
-  text = text.replace(/^-/, REALBOOK_MINOR);
-  text = text.replace(/^dim/, REALBOOK_DIMINISHED);
-  text = text.replace(/^[oº°]/, REALBOOK_DIMINISHED);
-  text = text.replace(/^aug/, REALBOOK_PLUS);
+  text = text.replace(/^(?:maj|ma|M|△)7?/, MUSEJAZZ_MAJOR);
+  text = text.replace(/^(?:min|mi)(?!aj)/, "m");
+  text = text.replace(/^-/, "m");
+  text = text.replace(/^dim/, "°");
+  text = text.replace(/^[oº]/, "°");
+  text = text.replace(/^aug/, MUSEJAZZ_PLUS);
 
   return text
-    .replace(/ø/g, REALBOOK_HALF_DIMINISHED)
-    .replace(/Ø/g, REALBOOK_HALF_DIMINISHED)
-    .replace(/△/g, REALBOOK_MAJOR)
-    .replace(/7/g, REALBOOK_SEVENTH)
-    .replace(/6/g, REALBOOK_SIXTH)
-    .replace(/9/g, REALBOOK_NINTH)
-    .replace(/b/g, REALBOOK_SUFFIX_FLAT)
-    .replace(/\+/g, REALBOOK_PLUS);
+    .replace(/Ø/g, "ø")
+    .replace(/△7?/g, MUSEJAZZ_MAJOR)
+    .replace(/b/g, "♭")
+    .replace(/#/g, "♯")
+    .replace(/\+/g, MUSEJAZZ_PLUS);
 }
 
-function formatRealbookNoteName(noteName) {
-  const match = String(noteName || "").match(/^([A-G])([#b♯♭ь]?)$/);
+function formatMuseJazzNoteName(noteName) {
+  const match = String(noteName || "").match(/^([A-G])([#b♯♭]?)$/);
   if (!match) return noteName;
-  return match[1] + formatRealbookRootAccidental(match[2]);
+  return match[1] + formatMuseJazzRootAccidental(match[2]);
 }
 
-function formatRealbookChordToken(token) {
-  const match = String(token || "").match(/^([A-G])([#b♯♭ь]?)(.*)$/);
+function formatMuseJazzChordToken(token) {
+  const match = String(token || "").match(/^([A-G])([#b♯♭]?)(.*)$/);
   if (!match) return token;
 
-  const root = match[1] + formatRealbookRootAccidental(match[2]);
-  const slashMatch = match[3].match(/^([^/]*)(\/[A-G][#b♯♭ь]?)(.*)$/);
+  const root = match[1] + formatMuseJazzRootAccidental(match[2]);
+  const slashMatch = match[3].match(/^([^/]*)(\/[A-G][#b♯♭]?)(.*)$/);
   if (slashMatch) {
     const bass = slashMatch[2].slice(1);
     return (
       root +
-      formatRealbookChordSuffix(slashMatch[1]) +
+      formatMuseJazzChordSuffix(slashMatch[1]) +
       "/" +
-      formatRealbookNoteName(bass) +
+      formatMuseJazzNoteName(bass) +
       slashMatch[3]
     );
   }
 
-  return root + formatRealbookChordSuffix(match[3]);
+  return root + formatMuseJazzChordSuffix(match[3]);
 }
 
-function formatRealbookFallbackSymbols(text) {
+function formatMuseJazzFallbackSymbols(text) {
   return text
-    .replace(/(^|[\s(/|,-])b(?=[ivIV]+)/g, `$1${REALBOOK_FLAT}`)
-    .replace(/(?:maj|ma|M)7/g, REALBOOK_MAJOR)
-    .replace(/△7?|Δ7?/g, REALBOOK_MAJOR)
-    .replace(/ø7?/gi, REALBOOK_HALF_DIMINISHED)
-    .replace(/[♭ь]/g, REALBOOK_FLAT)
-    .replace(/♯/g, "#")
-    .replace(/o(?=7|$)/g, REALBOOK_DIMINISHED)
-    .replace(/º|°/g, REALBOOK_DIMINISHED)
-    .replace(/\+/g, REALBOOK_PLUS)
-    .replace(/7/g, REALBOOK_SEVENTH)
-    .replace(/6/g, REALBOOK_SIXTH)
-    .replace(/9/g, REALBOOK_NINTH);
+    .replace(/(^|[\s(/|,-])b(?=[ivIV]+)/g, "$1♭")
+    .replace(/(?:maj|ma|M)7/g, MUSEJAZZ_MAJOR)
+    .replace(/[△Δ]7?/g, MUSEJAZZ_MAJOR)
+    .replace(/ø7?/gi, "ø")
+    .replace(/#/g, "♯")
+    .replace(/o(?=7|$)/g, "°")
+    .replace(/º/g, "°")
+    .replace(/\+/g, MUSEJAZZ_PLUS);
 }
 
-function formatRealbookChordDisplayText(chordName) {
+function formatMuseJazzChordDisplayText(chordName) {
   const text = String(chordName || "");
   const withChordTokens = text.replace(
-    /[A-G][#b♯♭ь]?[^\s()[\]{}|,;:]*/g,
-    formatRealbookChordToken,
+    /[A-G][#b♯♭]?[^\s()[\]{}|,;:]*/g,
+    formatMuseJazzChordToken,
   );
-  return formatRealbookFallbackSymbols(withChordTokens);
+  return formatMuseJazzFallbackSymbols(withChordTokens);
 }
 
 function formatChordDisplayText(chordName) {
-  return chordDisplayUsesRealbookGlyphs()
-    ? formatRealbookChordDisplayText(chordName)
+  return chordDisplayUsesBookTypography()
+    ? formatMuseJazzChordDisplayText(chordName)
     : formatStandardChordDisplayText(chordName);
 }
 
@@ -1790,7 +1774,7 @@ function buildSongBarHtml(bar, location) {
 }
 
 function renderSongChordLabelHtml(label) {
-  const displayLabel = chordDisplayUsesRealbookGlyphs()
+  const displayLabel = chordDisplayUsesBookTypography()
     ? formatChordDisplayText(label)
     : label;
   return escapeHtml(displayLabel).replace(

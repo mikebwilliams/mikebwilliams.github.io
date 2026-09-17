@@ -442,6 +442,7 @@ test("malformed radio and flow settings fall back consistently", async ({
 test("Presets and workouts summary and arrows track active selections", async ({
   page,
 }) => {
+  test.setTimeout(5000);
   const presetA = `Preset A ${Date.now()}`;
   const presetB = `Preset B ${Date.now()}`;
   const workoutA = `Workout A ${Date.now()}`;
@@ -507,6 +508,7 @@ test("Presets and workouts summary and arrows track active selections", async ({
 test("Preset management preserves drafts and requires explicit actions", async ({
   page,
 }) => {
+  test.setTimeout(5000);
   const presetName = `Managed Preset ${Date.now()}`;
   const draftName = "Draft still in progress";
   const summary = page.locator("#txtTrainingSetupSummary");

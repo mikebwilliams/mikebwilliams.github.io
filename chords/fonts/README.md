@@ -1,10 +1,13 @@
-# RealbookRegular Web Font
+# MuseJazz Text Font
 
 Vendored from:
-https://github.com/vinzentt/jazz-lead-sheet/tree/master/fonts
+https://github.com/musescore/MuseScore/tree/deprecated_master/fonts/musejazz
 
-The upstream repository defines this font as `RealbookRegular` in
-`css/leadSheet.css`. The TTF internal family name is `GJM realbook`.
+The Real Book themes use the unmodified `MuseJazzText.otf` file. It includes
+ordinary uppercase and lowercase letters, jazz accidentals, a degree sign,
+half-diminished sign, and MuseScore's handwritten major-triangle glyph.
 
-License copied from upstream:
-`LICENSE.jazz-lead-sheet.txt`
+The chord formatter uses the same major-triangle code point (`U+E18A`) as
+MuseScore's official jazz chord description.
+
+License copied from upstream: `OFL.MuseJazz.txt`.

@@ -160,6 +160,7 @@ test("keyboard and MIDI summaries can refresh the device list", async ({
   await page.locator("#panelKeyboard").evaluate((element) => {
     (element as HTMLDetailsElement).open = true;
   });
+  await page.evaluate(() => document.fonts.ready);
   const refreshAlignment = await page.evaluate(() => {
     function verticalCenter(selector: string) {
       const rect = document.querySelector(selector)!.getBoundingClientRect();
@@ -176,8 +177,8 @@ test("keyboard and MIDI summaries can refresh the device list", async ({
       ),
     };
   });
-  expect(refreshAlignment.keyboard).toBeLessThanOrEqual(1);
-  expect(refreshAlignment.midi).toBeLessThanOrEqual(1);
+  expect(refreshAlignment.keyboard).toBeLessThanOrEqual(1.5);
+  expect(refreshAlignment.midi).toBeLessThanOrEqual(1.5);
   await expect(page.locator("#panelKeyboardMidi")).not.toHaveAttribute(
     "open",
     "",

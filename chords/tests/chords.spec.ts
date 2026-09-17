@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 const TEST_URL = process.env.PLAYWRIGHT_TEST_URL || "http://localhost:8001/";
+const MUSEJAZZ_MAJOR = "\ue18a";
 
 test("Chord type controls fit the desktop control rail without horizontal scrolling", async ({
   page,
@@ -58,7 +59,7 @@ test("Non-book themes display triangle major symbols instead of Greek delta", as
   await expect(page.locator("#txtChord")).toHaveText("C♯-△7");
 });
 
-test("Book themes display chord symbols with Realbook glyph codepoints", async ({
+test("Book themes display chord symbols with MuseJazz Text characters", async ({
   page,
 }) => {
   await page.goto(TEST_URL);
@@ -68,7 +69,7 @@ test("Book themes display chord symbols with Realbook glyph codepoints", async (
     currentChordName = "Cm7";
     updateDisplay();
   });
-  await expect(page.locator("#txtChord")).toHaveText("CΜί");
+  await expect(page.locator("#txtChord")).toHaveText("Cm7");
   await expect
     .poll(() =>
       page
@@ -79,31 +80,37 @@ test("Book themes display chord symbols with Realbook glyph codepoints", async (
           ),
         ),
     )
-    .toEqual(["43", "39c", "3af"]);
+    .toEqual(["43", "6d", "37"]);
 
   await page.evaluate(() => {
     currentChordName = "Cdim7";
     updateDisplay();
   });
-  await expect(page.locator("#txtChord")).toHaveText("C°ί");
+  await expect(page.locator("#txtChord")).toHaveText("C°7");
 
   await page.evaluate(() => {
     currentChordName = "Cmaj7";
     updateDisplay();
   });
-  await expect(page.locator("#txtChord")).toHaveText("Cª");
+  await expect(page.locator("#txtChord")).toHaveText(`C${MUSEJAZZ_MAJOR}`);
 
   await page.evaluate(() => {
     currentChordName = "Bbm7b5";
     updateDisplay();
   });
-  await expect(page.locator("#txtChord")).toHaveText("BьØ");
+  await expect(page.locator("#txtChord")).toHaveText("B♭ø");
 
   await page.evaluate(() => {
     currentChordName = "C#-Δ7";
     updateDisplay();
   });
-  await expect(page.locator("#txtChord")).toHaveText("C#Μª");
+  await expect(page.locator("#txtChord")).toHaveText(`C♯m${MUSEJAZZ_MAJOR}`);
+
+  await page.evaluate(() => {
+    currentChordName = "C7";
+    updateDisplay();
+  });
+  await expect(page.locator("#txtChord")).toHaveText("C7");
 
   await page.evaluate(() => {
     document.documentElement.dataset.theme = "classical";

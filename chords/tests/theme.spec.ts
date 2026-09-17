@@ -112,8 +112,7 @@ test("Real Book theme uses paper colors and handwritten chart typography", async
   expect(theme.bg).toBe("#d7c8a7");
   expect(theme.ink).toBe("#211b12");
   expect(theme.accent).toBe("#2b6683");
-  expect(theme.hand).toContain('"RealbookRegular"');
-  expect(theme.hand).toContain('"Comic Neue"');
+  expect(theme.hand).toBe('"MuseJazz Text", cursive');
   await expect(page.locator("#radThemeLightBook")).toBeChecked();
   await expect(page.locator("#panelThemePicker summary")).toBeVisible();
 
@@ -121,7 +120,7 @@ test("Real Book theme uses paper colors and handwritten chart typography", async
     .poll(() =>
       page.evaluate(async () => {
         await document.fonts.ready;
-        return document.fonts.check("24px RealbookRegular");
+        return document.fonts.check('24px "MuseJazz Text"');
       }),
     )
     .toBe(true);
@@ -150,11 +149,63 @@ test("Real Book theme uses paper colors and handwritten chart typography", async
   const currentChord = page.locator(".songMeasureChord--current").first();
   await expect(currentChord).toHaveCSS("color", "rgb(43, 102, 131)");
   await expect(currentChord).toHaveCSS("text-decoration-line", "underline");
-  await expect(currentChord).toHaveCSS("font-family", /RealbookRegular/);
+  await expect(currentChord).toHaveCSS("font-family", /MuseJazz Text/);
   await expect(page.locator(".songMeasure").first()).toHaveCSS(
     "border-radius",
     "2px",
   );
+});
+
+test("MuseJazz Text gives lowercase roman numerals a separate dotted i", async ({
+  page,
+}) => {
+  await page.goto(TEST_URL);
+
+  const inkBands = await page.evaluate(async () => {
+    const family = "MuseJazz Text";
+    await document.fonts.load(`120px "${family}"`);
+
+    const countHorizontalInkBands = (character: string) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 160;
+      canvas.height = 160;
+      const context = canvas.getContext("2d");
+      if (!context) return 0;
+
+      context.font = `120px "${family}"`;
+      context.fillText(character, 20, 130);
+      const pixels = context.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+      ).data;
+      let bands = 0;
+      let previousRowHasInk = false;
+
+      for (let y = 0; y < canvas.height; y += 1) {
+        let rowHasInk = false;
+        for (let x = 0; x < canvas.width; x += 1) {
+          if (pixels[(y * canvas.width + x) * 4 + 3] > 0) {
+            rowHasInk = true;
+            break;
+          }
+        }
+        if (rowHasInk && !previousRowHasInk) bands += 1;
+        previousRowHasInk = rowHasInk;
+      }
+
+      return bands;
+    };
+
+    return {
+      uppercase: countHorizontalInkBands("I"),
+      lowercase: countHorizontalInkBands("i"),
+    };
+  });
+
+  expect(inkBands.uppercase).toBe(1);
+  expect(inkBands.lowercase).toBe(2);
 });
 
 test("theme picker switches and persists alternate book themes", async ({
@@ -167,7 +218,7 @@ test("theme picker switches and persists alternate book themes", async ({
       bg: "#17120c",
       ink: "#f7edcf",
       accent: "#82b7cf",
-      font: "RealbookRegular",
+      font: "MuseJazz Text",
       weight: "400",
       smooth: false,
     },
@@ -265,7 +316,7 @@ test("theme picker re-renders visible chord symbols for the selected font", asyn
     currentChordName = "Bbm7b5";
     updateDisplay();
   });
-  await expect(page.locator("#txtChord")).toHaveText("BьØ");
+  await expect(page.locator("#txtChord")).toHaveText("B♭ø");
 
   await page.locator("#panelThemePicker summary").click();
   await page.getByLabel("Classical", { exact: true }).check();
@@ -277,7 +328,7 @@ test("theme picker re-renders visible chord symbols for the selected font", asyn
   await page.getByLabel("DarkBook", { exact: true }).check();
 
   await expect(page.locator("html")).toHaveAttribute("data-theme", "darkBook");
-  await expect(page.locator("#txtChord")).toHaveText("BьØ");
+  await expect(page.locator("#txtChord")).toHaveText("B♭ø");
 });
 
 test("loading a workout entry preserves the current theme", async ({

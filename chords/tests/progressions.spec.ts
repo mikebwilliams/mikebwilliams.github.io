@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 
 const TEST_URL = process.env.PLAYWRIGHT_TEST_URL || "http://localhost:8001/";
+const MUSEJAZZ_MAJOR = "\ue18a";
 
 async function openKeyboard(page: Page) {
   const panel = page.locator("#panelKeyboard");
@@ -95,7 +96,7 @@ test("Matching progression name is rendered once as the primary sequence", async
 
   const progression = page.locator("#txtProgressionHeadline");
   await expect(progression).toBeVisible();
-  await expect(progression).toContainText("iiί - Vί - Iª");
+  await expect(progression).toContainText(`ii7 - V7 - I${MUSEJAZZ_MAJOR}`);
   await expect(progression).toHaveCSS("text-transform", "none");
   await expect(page.locator("#txtProgression")).toBeHidden();
 
