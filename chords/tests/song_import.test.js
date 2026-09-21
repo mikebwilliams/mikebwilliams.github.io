@@ -7,6 +7,7 @@ const {
   buildSongDisplayRows,
   formatIRealProChordDisplay,
   formatKeyDisplay,
+  generateNotesFromChordName,
 } = require("../data.js");
 
 const tests = [];
@@ -154,6 +155,33 @@ test("buildPlayableSongEntries preserves altered fifths and ninths", () => {
         label: "B♭13♯9",
         rawLabel: "Bb13#9",
         playableChord: "Bb13#9",
+      },
+    ],
+  );
+});
+
+test("bare h is half-diminished while 7b5 remains dominant", () => {
+  const source =
+    "irealb://Round Midnight=Monk Thelonious==Medium Swing=Eb-==[*AT44Ch,B7b5 Z==0=0";
+  const parsed = parseIRealProSource(source);
+  const entries = buildPlayableSongEntries(parsed.songs[0]);
+
+  assert.deepStrictEqual(
+    entries.map((entry) => ({
+      label: entry.label,
+      playableChord: entry.playableChord,
+      notes: generateNotesFromChordName(entry.playableChord),
+    })),
+    [
+      {
+        label: "Cø",
+        playableChord: "Cm7b5",
+        notes: [0, 3, 6, 10],
+      },
+      {
+        label: "B7♭5",
+        playableChord: "B7b5",
+        notes: [11, 15, 17, 21],
       },
     ],
   );

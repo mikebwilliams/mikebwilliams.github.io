@@ -101,6 +101,12 @@ test("Book themes display chord symbols with MuseJazz Text characters", async ({
   await expect(page.locator("#txtChord")).toHaveText("B♭ø");
 
   await page.evaluate(() => {
+    currentChordName = "B7b5";
+    updateDisplay();
+  });
+  await expect(page.locator("#txtChord")).toHaveText("B7♭5");
+
+  await page.evaluate(() => {
     currentChordName = "C#-Δ7";
     updateDisplay();
   });

@@ -1549,7 +1549,7 @@ function formatMuseJazzChordSuffix(suffix) {
     .replace(/Δ/g, "△");
   const compact = text.replace(/\s+/g, "");
 
-  if (/^(?:m|-)?7?b5$/.test(compact) || /^ø7?$/i.test(compact)) {
+  if (/^(?:m|-)7b5$/.test(compact) || /^ø7?$/i.test(compact)) {
     return "ø";
   }
   if (/^(?:m|-)(?:M7?|ma7?|maj7?|△7?)$/.test(compact)) {
@@ -1913,9 +1913,14 @@ function resolveProgressionEntry(entry, options = {}) {
   if (isSongChordEntry(entry)) {
     const internalName = entry.playableChord;
     let notes = generateNotesFromChordName(entry.playableChord);
-    notes = addBassNoteToNotes(notes, entry.bassNote);
+    let voicingMode = "default";
     if (shouldApplyVoicing) {
+      voicingMode =
+        typeof getVoicingMode === "function" ? getVoicingMode() : "default";
       notes = applySelectedVoicing(notes, internalName);
+    }
+    if (!shouldApplyVoicing || voicingMode === "default") {
+      notes = addBassNoteToNotes(notes, entry.bassNote);
     }
     return {
       name: entry.label,
@@ -2697,7 +2702,6 @@ function checkChord(options = {}) {
       }
       return cachedIntervalVariants;
     };
-
     if (typeof getUpper1Mode === "function") {
       const upper1Mode = getUpper1Mode();
       if (
@@ -4309,7 +4313,11 @@ if (documentAvailable) {
           return;
         }
       } catch (_) {}
-      currentChordNotes = applySelectedVoicing(base);
+      if (modeIsSongs()) {
+        loadCurrentProgressionChord();
+      } else {
+        currentChordNotes = applySelectedVoicing(base);
+      }
       refreshKeyboardAnswerFeedback({
         immediateHighlight: wasShowingKeyboardAnswer,
       });

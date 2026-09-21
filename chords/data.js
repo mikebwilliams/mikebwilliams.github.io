@@ -1803,6 +1803,7 @@ const IREAL_PRO_QUALITY_TO_INTERNAL = {
   "-7": "m7",
   7: "7",
   "7sus": "sus4",
+  h: "m7b5",
   h7: "m7b5",
   o7: "dim7",
   "^9": "M9",
@@ -2901,7 +2902,6 @@ function normalizeIRealProQualityToInternal(quality) {
   }
   if (!normalized || normalized === "^") return "";
   if (normalized.includes("sus")) return "sus4";
-  if (normalized === "h") return "dim";
   if (normalized.startsWith("h")) return "m7b5";
   if (normalized.startsWith("o"))
     return normalized.includes("7") ? "dim7" : "dim";

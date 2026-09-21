@@ -105,6 +105,43 @@ test("How High the Moon distinguishes I major from i minor in roman numerals", a
   await expect(measures.nth(2)).toContainText("IV7");
 });
 
+test("Round Midnight distinguishes half-diminished from dominant flat-five", async ({
+  page,
+}) => {
+  const songUrl =
+    "irealbook://Round Midnight=Monk Thelonious=Medium Swing=Eb-=n=[*AT44Ch,B7b5 Z";
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => {
+    localStorage.clear();
+    document.documentElement.dataset.theme = "lightBook";
+  });
+  await page.click("label[for='tabModeSongs']");
+  await page.fill("#inputSongsUrl", songUrl);
+  await page.click("#btnSongsImport");
+
+  const chords = page.locator("#txtProgression .songMeasureChord");
+  await expect(chords.nth(0)).toHaveText("Cø");
+  await expect(chords.nth(1)).toHaveText("B7♭5");
+
+  const shellNotes = await page.evaluate((source) => {
+    const radio = document.querySelector("#radVoicingShell37");
+    radio.checked = true;
+    const song = parseIRealProSource(source).songs[0];
+    return buildPlayableSongEntries(song).map(
+      (entry) =>
+        resolveProgressionEntry(entry, {
+          wrap: true,
+          applyVoicing: true,
+        }).notes,
+    );
+  }, songUrl);
+  expect(shellNotes).toEqual([
+    [3, 10],
+    [15, 21],
+  ]);
+});
+
 test("Songs tab marks repeat symbols after the original chord is completed", async ({
   page,
 }) => {
@@ -376,6 +413,176 @@ test("Songs tab places parsed slash bass notes at the bottom", async ({
       notes: [10, 0, 3, 7],
     },
   ]);
+});
+
+test("Songs tab excludes slash bass notes from comping voicings", async ({
+  page,
+}) => {
+  const songUrl =
+    "irealbook://Slash Voicing Study=Doe John=Medium Swing=C=n=[*AT44C7/E |C7/G Z";
+
+  await page.goto(TEST_URL);
+
+  const resolved = await page.evaluate((source) => {
+    const parsed = parseIRealProSource(source);
+    const entries = buildPlayableSongEntries(parsed.songs[0]);
+    const modes = [
+      "default",
+      "normal:root",
+      "normal:triad",
+      "normal:noExtensions",
+      "shell:r37",
+      "shell:r3or7",
+      "shell:37",
+      "upper:typeA",
+      "upper:typeB",
+      "upper:either",
+      "upper1:typeA",
+      "upper1:typeB",
+      "upper1:either",
+    ];
+
+    return Object.fromEntries(
+      modes.map((mode) => {
+        const radio = document.querySelector(
+          `input[name="voicingMode"][value="${mode}"]`,
+        );
+        if (!(radio instanceof HTMLInputElement)) {
+          throw new Error(`Missing voicing radio for ${mode}`);
+        }
+        radio.checked = true;
+        const eBass = resolveProgressionEntry(entries[0], {
+          wrap: true,
+          applyVoicing: true,
+        }).notes;
+        const eBassAlternates = currentShellVoicingAlternates;
+        const gBass = resolveProgressionEntry(entries[1], {
+          wrap: true,
+          applyVoicing: true,
+        }).notes;
+        return [mode, { eBass, eBassAlternates, gBass }];
+      }),
+    );
+  }, songUrl);
+
+  expect(resolved).toEqual({
+    default: {
+      eBass: [4, 0, 7, 10],
+      eBassAlternates: null,
+      gBass: [7, 0, 4, 10],
+    },
+    "normal:root": {
+      eBass: [0],
+      eBassAlternates: null,
+      gBass: [0],
+    },
+    "normal:triad": {
+      eBass: [0, 4, 7],
+      eBassAlternates: null,
+      gBass: [0, 4, 7],
+    },
+    "normal:noExtensions": {
+      eBass: [0, 4, 7, 10],
+      eBassAlternates: null,
+      gBass: [0, 4, 7, 10],
+    },
+    "shell:r37": {
+      eBass: [0, 4, 10],
+      eBassAlternates: null,
+      gBass: [0, 4, 10],
+    },
+    "shell:r3or7": {
+      eBass: [0, 4, 10],
+      eBassAlternates: [
+        [0, 4],
+        [0, 10],
+      ],
+      gBass: [0, 4, 10],
+    },
+    "shell:37": {
+      eBass: [4, 10],
+      eBassAlternates: null,
+      gBass: [4, 10],
+    },
+    "upper:typeA": {
+      eBass: [4, 10, 14, 19],
+      eBassAlternates: null,
+      gBass: [4, 10, 14, 19],
+    },
+    "upper:typeB": {
+      eBass: [10, 16, 19, 26],
+      eBassAlternates: null,
+      gBass: [10, 16, 19, 26],
+    },
+    "upper:either": {
+      eBass: [4, 10, 14, 19],
+      eBassAlternates: null,
+      gBass: [4, 10, 14, 19],
+    },
+    "upper1:typeA": {
+      eBass: [4, 10, 14],
+      eBassAlternates: null,
+      gBass: [4, 10, 14],
+    },
+    "upper1:typeB": {
+      eBass: [10, 16, 19],
+      eBassAlternates: null,
+      gBass: [10, 16, 19],
+    },
+    "upper1:either": {
+      eBass: [4, 10, 14],
+      eBassAlternates: null,
+      gBass: [4, 10, 14],
+    },
+  });
+});
+
+test("Songs tab ignores slash basses in 3-7 and Type B modes", async ({
+  page,
+}) => {
+  const songUrl =
+    "irealbook://Slash Voicing Study=Doe John=Medium Swing=C=n=[*AT44C7/G |C7/E |F7 Z";
+
+  await page.goto(TEST_URL);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await page.click("label[for='tabModeSongs']");
+  await page.fill("#inputSongsUrl", songUrl);
+  await page.click("#btnSongsImport");
+
+  const chords = page.locator("#txtProgression .songMeasureChord");
+  await page.evaluate(() => {
+    const radio = document.querySelector("#radVoicingShell37");
+    radio.checked = true;
+    radio.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await expect
+    .poll(() => page.evaluate(() => currentChordNotes))
+    .toEqual([4, 10]);
+
+  await page.evaluate(() => {
+    [52, 58].forEach((note) => handleMidiMessage({ data: [144, note, 100] }));
+  });
+  await expect(chords.nth(0)).toHaveClass(/songMeasureChord--complete/);
+  await expect(chords.nth(1)).toHaveClass(/songMeasureChord--current/);
+
+  await page.evaluate(() => {
+    [52, 58].forEach((note) => handleMidiMessage({ data: [128, note, 0] }));
+    const radio = document.querySelector("#radVoicingUpperTypeB");
+    radio.checked = true;
+    radio.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await expect
+    .poll(() => page.evaluate(() => currentChordNotes))
+    .toEqual([10, 16, 19, 26]);
+
+  await page.evaluate(() => {
+    [58, 64, 67, 74].forEach((note) =>
+      handleMidiMessage({ data: [144, note, 100] }),
+    );
+  });
+  await expect(chords.nth(1)).toHaveClass(/songMeasureChord--complete/);
+  await expect(chords.nth(2)).toHaveClass(/songMeasureChord--current/);
 });
 
 test("Songs tab restores the last selected song after reload", async ({
