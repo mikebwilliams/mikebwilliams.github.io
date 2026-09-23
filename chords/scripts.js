@@ -1777,10 +1777,7 @@ function renderSongChordLabelHtml(label) {
   const displayLabel = chordDisplayUsesBookTypography()
     ? formatChordDisplayText(label)
     : label;
-  return escapeHtml(displayLabel).replace(
-    /[♭♯]/g,
-    (symbol) => `<span class="songMeasureAccidental">${symbol}</span>`,
-  );
+  return escapeHtml(displayLabel);
 }
 
 function buildSongChartHtml(
