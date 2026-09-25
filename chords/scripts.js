@@ -50,8 +50,13 @@ const logicSanitizeMetronomeSettings =
       Math.min(240, parseInt(source && source.tempo, 10) || 120),
     ),
     beatsPerMeasure: Math.max(
-      1,
-      Math.min(16, parseInt(source && source.beatsPerMeasure, 10) || 4),
+      0,
+      Math.min(
+        16,
+        parseInt(source && source.beatsPerMeasure, 10) === 0
+          ? 0
+          : parseInt(source && source.beatsPerMeasure, 10) || 4,
+      ),
     ),
     xMeasures: Math.max(
       0,
@@ -190,6 +195,7 @@ const logicGetMetronomeTickType =
   sharedGlobals.getMetronomeTickType ||
   runtimeRoot.getMetronomeTickType ||
   ((beatInMeasure, measureNumber, settings) => {
+    if (settings && settings.beatsPerMeasure === 0) return "normal";
     if (beatInMeasure !== 0) return "normal";
     if (
       settings &&
@@ -757,7 +763,12 @@ function isSongMetronomeCountInActive() {
   );
 }
 
+function isMetronomeMeasureless() {
+  return !isSongMetronomeSyncActive() && metronomeState.beatsPerMeasure === 0;
+}
+
 function getMetronomeBeatCountForMeasure(measureNumber) {
+  if (isMetronomeMeasureless()) return 1;
   if (isSongMetronomeSyncActive()) {
     const measure = getSongMetronomeMeasureForTransport(measureNumber);
     if (measure && measure.beatsPerMeasure) {
@@ -783,6 +794,7 @@ function getMetronomeTickTypeForBeat(beatInMeasure, measureNumber) {
     );
   }
   return logicGetMetronomeTickType(beatInMeasure, measureNumber, {
+    beatsPerMeasure: metronomeState.beatsPerMeasure,
     xMeasures: metronomeState.xMeasures,
     yMeasures: metronomeState.yMeasures,
   });
@@ -793,6 +805,11 @@ function updateMetronomeControlAvailability() {
   if (dom.metronomeBeatsInput) {
     dom.metronomeBeatsInput.disabled = synced;
   }
+  [dom.metronomeXMeasuresInput, dom.metronomeYMeasuresInput].forEach(
+    (input) => {
+      if (input) input.disabled = isMetronomeMeasureless();
+    },
+  );
 }
 
 function isMetronomeTypingTarget(target) {
@@ -827,20 +844,21 @@ function getMetronomeDigitFromKeyEvent(event) {
 
 function renderMetronomePulseGrid() {
   if (!dom.metronomePulseGrid || !documentAvailable) return;
+  const pulseCount = Math.max(1, metronomeState.beatsPerMeasure);
 
   dom.metronomePulseGrid.style.setProperty(
     "--beats-per-measure",
-    String(metronomeState.beatsPerMeasure),
+    String(pulseCount),
   );
   dom.metronomePulseGrid.innerHTML = "";
 
-  for (let index = 0; index < metronomeState.beatsPerMeasure; index += 1) {
+  for (let index = 0; index < pulseCount; index += 1) {
     const pulse = document.createElement("div");
     pulse.className = "metronomePulse";
     pulse.dataset.beat = String(index);
 
     const label = document.createElement("span");
-    label.textContent = String(index + 1);
+    label.textContent = isMetronomeMeasureless() ? "•" : String(index + 1);
     pulse.appendChild(label);
 
     dom.metronomePulseGrid.appendChild(pulse);
@@ -848,6 +866,7 @@ function renderMetronomePulseGrid() {
 }
 
 function getMetronomeSummaryTimeSignature() {
+  if (isMetronomeMeasureless()) return "Measureless";
   if (isSongMetronomeSyncActive()) {
     const measure = getSongMetronomeMeasure();
     if (measure && measure.timeSignature) return measure.timeSignature;
@@ -899,9 +918,10 @@ function updateMetronomeStatus() {
     metronomeState.yMeasures > 0
       ? `every ${metronomeState.yMeasures} measures`
       : "disabled";
-  let message =
-    `Downbeat on beat 1. X marker: ${xText}. Y marker: ${yText}. ` +
-    "Priority when markers overlap: Y, then X, then downbeat, then regular beats.";
+  let message = isMetronomeMeasureless()
+    ? "Measureless: regular clicks only. Measure and X/Y accents are off."
+    : `Downbeat on beat 1. X marker: ${xText}. Y marker: ${yText}. ` +
+      "Priority when markers overlap: Y, then X, then downbeat, then regular beats.";
 
   if (metronomeState.tempoEntryBuffer) {
     message += ` Pending tempo: ${metronomeState.tempoEntryBuffer}. Press Enter to apply, Backspace to edit, Escape to clear.`;
@@ -913,6 +933,24 @@ function updateMetronomeStatus() {
 function updateMetronomeReadout() {
   if (dom.metronomeTempoDisplay) {
     dom.metronomeTempoDisplay.textContent = String(metronomeState.tempo);
+  }
+  if (isMetronomeMeasureless()) {
+    [
+      dom.metronomeMeasureDisplay,
+      dom.metronomeBeatDisplay,
+      dom.metronomeTotalMeasuresDisplay,
+    ].forEach((element) => {
+      if (element) element.textContent = "—";
+    });
+    [dom.metronomeXRepeatDisplay, dom.metronomeYRepeatDisplay].forEach(
+      (element) => {
+        if (element) element.textContent = "Off";
+      },
+    );
+    updateMetronomeControlAvailability();
+    updateMetronomeSummary();
+    updateMetronomeStatus();
+    return;
   }
   if (dom.metronomeMeasureDisplay) {
     dom.metronomeMeasureDisplay.textContent = isSongMetronomeSyncActive()
@@ -1052,7 +1090,10 @@ function scheduleMetronomeVisual(beatInMeasure, measureNumber, tickType, time) {
     metronomeState.visualTimeouts.delete(timeoutId);
     if (!metronomeState.isRunning) return;
     const beatsForMeasure = getMetronomeBeatCountForMeasure(measureNumber);
-    if (metronomeState.beatsPerMeasure !== beatsForMeasure) {
+    if (
+      isSongMetronomeSyncActive() &&
+      metronomeState.beatsPerMeasure !== beatsForMeasure
+    ) {
       metronomeState.beatsPerMeasure = beatsForMeasure;
       renderMetronomePulseGrid();
     }

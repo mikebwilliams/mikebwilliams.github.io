@@ -2116,7 +2116,7 @@ function sanitizeMetronomeSettings(source) {
     ),
     beatsPerMeasure: sanitizeMetronomeInteger(
       settings.beatsPerMeasure,
-      1,
+      0,
       16,
       DEFAULT_METRONOME_SETTINGS.beatsPerMeasure,
     ),
@@ -2148,6 +2148,7 @@ function sanitizeMetronomeSettings(source) {
 
 function getMetronomeTickType(beatInMeasure, measureNumber, source) {
   const settings = sanitizeMetronomeSettings(source);
+  if (settings.beatsPerMeasure === 0) return "normal";
   if (beatInMeasure !== 0) return "normal";
   if (settings.yMeasures > 0 && measureNumber % settings.yMeasures === 0) {
     return "y";

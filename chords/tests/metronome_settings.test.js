@@ -61,7 +61,7 @@ test("sanitizeMetronomeSettings clamps values and falls back to defaults", () =>
     }),
     {
       tempo: 240,
-      beatsPerMeasure: 1,
+      beatsPerMeasure: 0,
       xMeasures: 0,
       yMeasures: 8,
       countInMeasures: 1,
@@ -89,6 +89,27 @@ test("sanitizeMetronomeSettings handles hostile numeric values", () => {
       countInMeasures: 1,
       syncToSongs: true,
     },
+  );
+});
+
+test("measureless mode suppresses downbeats and both phrase accents", () => {
+  for (const measure of [1, 2, 4, 8, 16]) {
+    assert.strictEqual(
+      getMetronomeTickType(0, measure, {
+        beatsPerMeasure: 0,
+        xMeasures: 4,
+        yMeasures: 8,
+      }),
+      "normal",
+    );
+  }
+  assert.strictEqual(
+    getMetronomeTickType(0, 1, {
+      beatsPerMeasure: 1,
+      xMeasures: 0,
+      yMeasures: 0,
+    }),
+    "measure",
   );
 });
 
